@@ -32,6 +32,9 @@ class ViperRepository @Inject constructor(
 
     suspend fun getPresetById(id: Long): Preset? = presetDao.getById(id)
 
+    suspend fun getPresetByNameAndFxType(name: String, fxType: Int): Preset? =
+        presetDao.getByNameAndFxType(name, fxType)
+
     suspend fun savePreset(preset: Preset): Long = presetDao.insert(preset)
 
     suspend fun updatePreset(preset: Preset) = presetDao.update(preset)

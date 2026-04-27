@@ -3271,9 +3271,34 @@ class MainViewModel @Inject constructor(
             val destDir = getFilesDir("Preset")
             val destFile = copyUriToFile(uri, destDir, "preset.json") ?: return false
             val json = destFile.readText()
-            deserializeAndApplyState(json)
-            viewModelScope.launch { persistCurrentState() }
-            applyFullState()
+            val obj = JSONObject(json)
+            val isSpk = obj.has("spkMasterEnabled") && !obj.has("masterEnabled")
+            val fxType = if (isSpk) ViperParams.FX_TYPE_SPEAKER else ViperParams.FX_TYPE_HEADPHONE
+            deserializeAndApplyStateForMode(json, fxType)
+            viewModelScope.launch { persistStateForMode(fxType) }
+            if (fxType == activeDeviceType) {
+                applyFullState()
+            }
+            val presetName = destFile.nameWithoutExtension
+            viewModelScope.launch {
+                val existing = repository.getPresetByNameAndFxType(presetName, fxType)
+                if (existing != null) {
+                    repository.updatePreset(
+                        existing.copy(
+                            settingsJson = json,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                    )
+                } else {
+                    repository.savePreset(
+                        Preset(
+                            name = presetName,
+                            fxType = fxType,
+                            settingsJson = json
+                        )
+                    )
+                }
+            }
             true
         } catch (e: Exception) {
             FileLogger.e("ViewModel", "Failed to import preset", e)
@@ -3616,18 +3641,6 @@ class MainViewModel @Inject constructor(
         return result
     }
 
-    private suspend fun persistCurrentState() {
-        val s = _uiState.value
-        saveEffectPrefs(repository, s, isSpk = false)
-        for ((bc, bands) in s.eqBandsMap) {
-            repository.setStringPreference("eq_bands_$bc", bands)
-        }
-        saveEffectPrefs(repository, s, isSpk = true)
-        for ((bc, bands) in s.spkEqBandsMap) {
-            repository.setStringPreference("spk_eq_bands_$bc", bands)
-        }
-    }
-
     private suspend fun persistStateForMode(fxType: Int) {
         val s = _uiState.value
         val isSpk = fxType != ViperParams.FX_TYPE_HEADPHONE
@@ -3819,15 +3832,6 @@ class MainViewModel @Inject constructor(
         val isSpk = fxType != ViperParams.FX_TYPE_HEADPHONE
         val obj = serializeEffectPrefs(state, isSpk)
         return obj.toString()
-    }
-
-    private fun deserializeAndApplyState(json: String) {
-        val obj = JSONObject(json)
-        _uiState.update { state ->
-            var s = deserializeEffectPrefs(obj, state, isSpk = false)
-            s = deserializeEffectPrefs(obj, s, isSpk = true)
-            s
-        }
     }
 
     private fun deserializeAndApplyStateForMode(json: String, fxType: Int) {
