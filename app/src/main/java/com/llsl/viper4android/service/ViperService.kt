@@ -471,16 +471,16 @@ class ViperService : LifecycleService() {
     private fun prepareByteArraysForState(state: MainUiState): List<ByteArrayParam>? {
         val result = mutableListOf<ByteArrayParam>()
         val ddcEnabled =
-            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.ddc.spkEnabled else state.ddc.enabled
+            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.ddc.spk.enabled else state.ddc.hp.enabled
         val ddcDevice =
-            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.ddc.spkDevice else state.ddc.device
+            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.ddc.spk.device else state.ddc.hp.device
         if (ddcEnabled && ddcDevice.isNotEmpty()) {
             prepareDdcByteArray(ddcDevice, state.fxType)?.let { result.add(it) }
         }
         val convolverEnabled =
-            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.convolver.spkEnabled else state.convolver.enabled
+            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.convolver.spk.enabled else state.convolver.hp.enabled
         val kernel =
-            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.convolver.spkKernel else state.convolver.kernel
+            if (state.fxType == ViperParams.FX_TYPE_SPEAKER) state.convolver.spk.kernel else state.convolver.hp.kernel
         if (convolverEnabled && kernel.isNotEmpty()) {
             prepareConvolverByteArray(kernel, state.fxType)?.let { result.add(it) }
         }
@@ -560,284 +560,304 @@ class ViperService : LifecycleService() {
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_OUTPUT_VOLUME,
-                intArrayOf(EffectDispatcher.OUTPUT_VOLUME_VALUES.getOrElse(state.out.volume) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_VOLUME_VALUES.getOrElse(state.out.hp.volume) { 100 })
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_CHANNEL_PAN, intArrayOf(state.out.channelPan)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_CHANNEL_PAN,
+                intArrayOf(state.out.hp.channelPan)
+            )
+        )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_LIMITER,
-                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.out.limiter) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.out.hp.limiter) { 100 })
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_AGC_ENABLE,
-                intArrayOf(if (state.agc.enabled) 1 else 0)
+                intArrayOf(if (state.agc.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_AGC_RATIO,
-                intArrayOf(EffectDispatcher.PLAYBACK_GAIN_RATIO_VALUES.getOrElse(state.agc.strength) { 50 })
+                intArrayOf(EffectDispatcher.PLAYBACK_GAIN_RATIO_VALUES.getOrElse(state.agc.hp.strength) { 50 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_AGC_MAX_SCALER,
-                intArrayOf(EffectDispatcher.MULTI_FACTOR_VALUES.getOrElse(state.agc.maxGain) { 100 })
+                intArrayOf(EffectDispatcher.MULTI_FACTOR_VALUES.getOrElse(state.agc.hp.maxGain) { 100 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_AGC_VOLUME,
-                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.agc.outputThreshold) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.agc.hp.outputThreshold) { 100 })
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE,
-                intArrayOf(if (state.fet.enabled) 100 else 0)
+                intArrayOf(if (state.fet.hp.enabled) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD,
-                intArrayOf(state.fet.threshold)
+                intArrayOf(state.fet.hp.threshold)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_RATIO,
-                intArrayOf(state.fet.ratio)
+                intArrayOf(state.fet.hp.ratio)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_KNEE,
-                intArrayOf(if (state.fet.autoKnee) 100 else 0)
+                intArrayOf(if (state.fet.hp.autoKnee) 100 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE, intArrayOf(state.fet.knee)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE,
+                intArrayOf(state.fet.hp.knee)
+            )
+        )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE_MULTI,
-                intArrayOf(state.fet.kneeMulti)
+                intArrayOf(state.fet.hp.kneeMulti)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_GAIN,
-                intArrayOf(if (state.fet.autoGain) 100 else 0)
+                intArrayOf(if (state.fet.hp.autoGain) 100 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN, intArrayOf(state.fet.gain)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN,
+                intArrayOf(state.fet.hp.gain)
+            )
+        )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_ATTACK,
-                intArrayOf(if (state.fet.autoAttack) 100 else 0)
+                intArrayOf(if (state.fet.hp.autoAttack) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK,
-                intArrayOf(state.fet.attack)
+                intArrayOf(state.fet.hp.attack)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK,
-                intArrayOf(state.fet.maxAttack)
+                intArrayOf(state.fet.hp.maxAttack)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_RELEASE,
-                intArrayOf(if (state.fet.autoRelease) 100 else 0)
+                intArrayOf(if (state.fet.hp.autoRelease) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE,
-                intArrayOf(state.fet.release)
+                intArrayOf(state.fet.hp.release)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE,
-                intArrayOf(state.fet.maxRelease)
+                intArrayOf(state.fet.hp.maxRelease)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_CREST,
-                intArrayOf(state.fet.crest)
+                intArrayOf(state.fet.hp.crest)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_ADAPT,
-                intArrayOf(state.fet.adapt)
+                intArrayOf(state.fet.hp.adapt)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FET_COMPRESSOR_NO_CLIP,
-                intArrayOf(if (state.fet.noClip) 100 else 0)
+                intArrayOf(if (state.fet.hp.noClip) 100 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_DDC_ENABLE,
-                intArrayOf(if (state.ddc.enabled && state.ddc.device.isNotEmpty()) 1 else 0)
+                intArrayOf(if (state.ddc.hp.enabled && state.ddc.hp.device.isNotEmpty()) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_SPECTRUM_EXTENSION_ENABLE,
-                intArrayOf(if (state.vse.enabled) 1 else 0)
+                intArrayOf(if (state.vse.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK,
-                intArrayOf(EffectDispatcher.VSE_BARK_VALUES.getOrElse(state.vse.strength) { 7600 })
+                intArrayOf(EffectDispatcher.VSE_BARK_VALUES.getOrElse(state.vse.hp.strength) { 7600 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT,
-                intArrayOf((state.vse.exciter * 5.6).toInt())
+                intArrayOf((state.vse.hp.exciter * 5.6).toInt())
             )
         )
 
-        params.add(ParamEntry(ViperParams.PARAM_HP_EQ_BAND_COUNT, intArrayOf(state.eq.bandCount)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_EQ_BAND_COUNT,
+                intArrayOf(state.eq.hp.bandCount)
+            )
+        )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_EQ_ENABLE,
-                intArrayOf(if (state.eq.enabled) 1 else 0)
+                intArrayOf(if (state.eq.hp.enabled) 1 else 0)
             )
         )
-        collectEqBandParams(params, ViperParams.PARAM_HP_EQ_BAND_LEVEL, state.eq.bands)
+        collectEqBandParams(params, ViperParams.PARAM_HP_EQ_BAND_LEVEL, state.eq.hp.bands)
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_CONVOLVER_ENABLE,
-                intArrayOf(if (state.convolver.enabled && state.convolver.kernel.isNotEmpty()) 1 else 0)
+                intArrayOf(if (state.convolver.hp.enabled && state.convolver.hp.kernel.isNotEmpty()) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_CONVOLVER_CROSS_CHANNEL,
-                intArrayOf(state.convolver.crossChannel)
+                intArrayOf(state.convolver.hp.crossChannel)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FIELD_SURROUND_ENABLE,
-                intArrayOf(if (state.fieldSurround.enabled) 1 else 0)
+                intArrayOf(if (state.fieldSurround.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FIELD_SURROUND_WIDENING,
-                intArrayOf(EffectDispatcher.FIELD_SURROUND_WIDENING_VALUES.getOrElse(state.fieldSurround.widening) { 0 })
+                intArrayOf(EffectDispatcher.FIELD_SURROUND_WIDENING_VALUES.getOrElse(state.fieldSurround.hp.widening) { 0 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FIELD_SURROUND_MID_IMAGE,
-                intArrayOf(state.fieldSurround.midImage * 10 + 100)
+                intArrayOf(state.fieldSurround.hp.midImage * 10 + 100)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_FIELD_SURROUND_DEPTH,
-                intArrayOf(state.fieldSurround.depth * 75 + 200)
+                intArrayOf(state.fieldSurround.hp.depth * 75 + 200)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_DIFF_SURROUND_ENABLE,
-                intArrayOf(if (state.diffSurround.enabled) 1 else 0)
+                intArrayOf(if (state.diffSurround.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_DIFF_SURROUND_DELAY,
-                intArrayOf(EffectDispatcher.DIFF_SURROUND_DELAY_VALUES.getOrElse(state.diffSurround.delay) { 500 })
+                intArrayOf(EffectDispatcher.DIFF_SURROUND_DELAY_VALUES.getOrElse(state.diffSurround.hp.delay) { 500 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_DIFF_SURROUND_REVERSE,
-                intArrayOf(if (state.diffSurround.reverse) 1 else 0)
+                intArrayOf(if (state.diffSurround.hp.reverse) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE,
-                intArrayOf(if (state.vhe.enabled) 1 else 0)
+                intArrayOf(if (state.vhe.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_HEADPHONE_SURROUND_STRENGTH,
-                intArrayOf(state.vhe.quality)
+                intArrayOf(state.vhe.hp.quality)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ENABLE,
-                intArrayOf(if (state.reverb.enabled) 1 else 0)
+                intArrayOf(if (state.reverb.hp.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ROOM_SIZE,
-                intArrayOf(state.reverb.roomSize * 10)
+                intArrayOf(state.reverb.hp.roomSize * 10)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ROOM_WIDTH,
-                intArrayOf(state.reverb.width * 10)
+                intArrayOf(state.reverb.hp.width * 10)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ROOM_DAMPENING,
-                intArrayOf(state.reverb.dampening)
+                intArrayOf(state.reverb.hp.dampening)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ROOM_WET_SIGNAL,
-                intArrayOf(state.reverb.wet)
+                intArrayOf(state.reverb.hp.wet)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_REVERB_ROOM_DRY_SIGNAL,
-                intArrayOf(state.reverb.dry)
+                intArrayOf(state.reverb.hp.dry)
             )
         )
 
         collectDynamicSystemParams(
             params,
-            state.dynamicSystem.enabled,
-            state.dynamicSystem.strength,
-            state.dynamicSystem.xLow, state.dynamicSystem.xHigh,
-            state.dynamicSystem.yLow, state.dynamicSystem.yHigh,
-            state.dynamicSystem.sideGainLow, state.dynamicSystem.sideGainHigh,
+            state.dynamicSystem.hp.enabled,
+            state.dynamicSystem.hp.strength,
+            state.dynamicSystem.hp.xLow, state.dynamicSystem.hp.xHigh,
+            state.dynamicSystem.hp.yLow, state.dynamicSystem.hp.yHigh,
+            state.dynamicSystem.hp.sideGainLow, state.dynamicSystem.hp.sideGainHigh,
             ViperParams.PARAM_HP_DYNAMIC_SYSTEM_ENABLE,
             ViperParams.PARAM_HP_DYNAMIC_SYSTEM_STRENGTH,
             ViperParams.PARAM_HP_DYNAMIC_SYSTEM_X_COEFFICIENTS,
@@ -848,402 +868,412 @@ class ViperService : LifecycleService() {
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_TUBE_SIMULATOR_ENABLE,
-                intArrayOf(if (state.tube.enabled) 1 else 0)
+                intArrayOf(if (state.tube.hp.enabled) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_ENABLE,
-                intArrayOf(if (state.bass.enabled) 1 else 0)
+                intArrayOf(if (state.bass.hp.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_BASS_MODE, intArrayOf(state.bass.mode)))
+        params.add(ParamEntry(ViperParams.PARAM_HP_BASS_MODE, intArrayOf(state.bass.hp.mode)))
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_FREQUENCY,
-                intArrayOf(state.bass.frequency + 15)
+                intArrayOf(state.bass.hp.frequency + 15)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_GAIN,
-                intArrayOf(state.bass.gain * 50 + 50)
+                intArrayOf(state.bass.hp.gain * 50 + 50)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_ANTI_POP,
-                intArrayOf(if (state.bass.antiPop) 1 else 0)
+                intArrayOf(if (state.bass.hp.antiPop) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_MONO_ENABLE,
-                intArrayOf(if (state.bassMono.enabled) 1 else 0)
+                intArrayOf(if (state.bassMono.hp.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_BASS_MONO_MODE, intArrayOf(state.bassMono.mode)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_BASS_MONO_MODE,
+                intArrayOf(state.bassMono.hp.mode)
+            )
+        )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_MONO_FREQUENCY,
-                intArrayOf(state.bassMono.frequency + 15)
+                intArrayOf(state.bassMono.hp.frequency + 15)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_MONO_GAIN,
-                intArrayOf(state.bassMono.gain * 50 + 50)
+                intArrayOf(state.bassMono.hp.gain * 50 + 50)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_BASS_MONO_ANTI_POP,
-                intArrayOf(if (state.bassMono.antiPop) 1 else 0)
+                intArrayOf(if (state.bassMono.hp.antiPop) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_CLARITY_ENABLE,
-                intArrayOf(if (state.clarity.enabled) 1 else 0)
+                intArrayOf(if (state.clarity.hp.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_CLARITY_MODE, intArrayOf(state.clarity.mode)))
+        params.add(ParamEntry(ViperParams.PARAM_HP_CLARITY_MODE, intArrayOf(state.clarity.hp.mode)))
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_CLARITY_GAIN,
-                intArrayOf(state.clarity.gain * 50)
+                intArrayOf(state.clarity.hp.gain * 50)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_CURE_ENABLE,
-                intArrayOf(if (state.cure.enabled) 1 else 0)
+                intArrayOf(if (state.cure.hp.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_CURE_STRENGTH, intArrayOf(state.cure.strength)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_CURE_STRENGTH,
+                intArrayOf(state.cure.hp.strength)
+            )
+        )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_HP_ANALOGX_ENABLE,
-                intArrayOf(if (state.analog.enabled) 1 else 0)
+                intArrayOf(if (state.analog.hp.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_HP_ANALOGX_MODE, intArrayOf(state.analog.mode)))
+        params.add(ParamEntry(ViperParams.PARAM_HP_ANALOGX_MODE, intArrayOf(state.analog.hp.mode)))
     }
 
     private fun collectSpeakerParams(params: MutableList<ParamEntry>, state: MainUiState) {
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_OUTPUT_VOLUME,
-                intArrayOf(EffectDispatcher.OUTPUT_VOLUME_VALUES.getOrElse(state.out.spkVolume) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_VOLUME_VALUES.getOrElse(state.out.spk.volume) { 100 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CHANNEL_PAN,
-                intArrayOf(state.out.spkChannelPan)
+                intArrayOf(state.out.spk.channelPan)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_LIMITER,
-                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.out.spkLimiter) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.out.spk.limiter) { 100 })
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_AGC_ENABLE,
-                intArrayOf(if (state.agc.spkEnabled) 1 else 0)
+                intArrayOf(if (state.agc.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_AGC_RATIO,
-                intArrayOf(EffectDispatcher.PLAYBACK_GAIN_RATIO_VALUES.getOrElse(state.agc.spkStrength) { 50 })
+                intArrayOf(EffectDispatcher.PLAYBACK_GAIN_RATIO_VALUES.getOrElse(state.agc.spk.strength) { 50 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_AGC_MAX_SCALER,
-                intArrayOf(EffectDispatcher.MULTI_FACTOR_VALUES.getOrElse(state.agc.spkMaxGain) { 100 })
+                intArrayOf(EffectDispatcher.MULTI_FACTOR_VALUES.getOrElse(state.agc.spk.maxGain) { 100 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_AGC_VOLUME,
-                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.agc.spkOutputThreshold) { 100 })
+                intArrayOf(EffectDispatcher.OUTPUT_DB_VALUES.getOrElse(state.agc.spk.outputThreshold) { 100 })
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_ENABLE,
-                intArrayOf(if (state.fet.spkEnabled) 100 else 0)
+                intArrayOf(if (state.fet.spk.enabled) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD,
-                intArrayOf(state.fet.spkThreshold)
+                intArrayOf(state.fet.spk.threshold)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_RATIO,
-                intArrayOf(state.fet.spkRatio)
+                intArrayOf(state.fet.spk.ratio)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_KNEE,
-                intArrayOf(if (state.fet.spkAutoKnee) 100 else 0)
+                intArrayOf(if (state.fet.spk.autoKnee) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE,
-                intArrayOf(state.fet.spkKnee)
+                intArrayOf(state.fet.spk.knee)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE_MULTI,
-                intArrayOf(state.fet.spkKneeMulti)
+                intArrayOf(state.fet.spk.kneeMulti)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_GAIN,
-                intArrayOf(if (state.fet.spkAutoGain) 100 else 0)
+                intArrayOf(if (state.fet.spk.autoGain) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN,
-                intArrayOf(state.fet.spkGain)
+                intArrayOf(state.fet.spk.gain)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_ATTACK,
-                intArrayOf(if (state.fet.spkAutoAttack) 100 else 0)
+                intArrayOf(if (state.fet.spk.autoAttack) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK,
-                intArrayOf(state.fet.spkAttack)
+                intArrayOf(state.fet.spk.attack)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK,
-                intArrayOf(state.fet.spkMaxAttack)
+                intArrayOf(state.fet.spk.maxAttack)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_RELEASE,
-                intArrayOf(if (state.fet.spkAutoRelease) 100 else 0)
+                intArrayOf(if (state.fet.spk.autoRelease) 100 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE,
-                intArrayOf(state.fet.spkRelease)
+                intArrayOf(state.fet.spk.release)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE,
-                intArrayOf(state.fet.spkMaxRelease)
+                intArrayOf(state.fet.spk.maxRelease)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST,
-                intArrayOf(state.fet.spkCrest)
+                intArrayOf(state.fet.spk.crest)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_ADAPT,
-                intArrayOf(state.fet.spkAdapt)
+                intArrayOf(state.fet.spk.adapt)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FET_COMPRESSOR_NO_CLIP,
-                intArrayOf(if (state.fet.spkNoClip) 100 else 0)
+                intArrayOf(if (state.fet.spk.noClip) 100 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CONVOLVER_ENABLE,
-                intArrayOf(if (state.convolver.spkEnabled && state.convolver.spkKernel.isNotEmpty()) 1 else 0)
+                intArrayOf(if (state.convolver.spk.enabled && state.convolver.spk.kernel.isNotEmpty()) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CONVOLVER_CROSS_CHANNEL,
-                intArrayOf(state.convolver.spkCrossChannel)
+                intArrayOf(state.convolver.spk.crossChannel)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_EQ_BAND_COUNT,
-                intArrayOf(state.eq.spkBandCount)
+                intArrayOf(state.eq.spk.bandCount)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_EQ_ENABLE,
-                intArrayOf(if (state.eq.spkEnabled) 1 else 0)
+                intArrayOf(if (state.eq.spk.enabled) 1 else 0)
             )
         )
-        collectEqBandParams(params, ViperParams.PARAM_SPK_EQ_BAND_LEVEL, state.eq.spkBands)
+        collectEqBandParams(params, ViperParams.PARAM_SPK_EQ_BAND_LEVEL, state.eq.spk.bands)
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ENABLE,
-                intArrayOf(if (state.reverb.spkEnabled) 1 else 0)
+                intArrayOf(if (state.reverb.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ROOM_SIZE,
-                intArrayOf(state.reverb.spkRoomSize * 10)
+                intArrayOf(state.reverb.spk.roomSize * 10)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ROOM_WIDTH,
-                intArrayOf(state.reverb.spkWidth * 10)
+                intArrayOf(state.reverb.spk.width * 10)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ROOM_DAMPENING,
-                intArrayOf(state.reverb.spkDampening)
+                intArrayOf(state.reverb.spk.dampening)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ROOM_WET_SIGNAL,
-                intArrayOf(state.reverb.spkWet)
+                intArrayOf(state.reverb.spk.wet)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_REVERB_ROOM_DRY_SIGNAL,
-                intArrayOf(state.reverb.spkDry)
+                intArrayOf(state.reverb.spk.dry)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_DDC_ENABLE,
-                intArrayOf(if (state.ddc.spkEnabled && state.ddc.spkDevice.isNotEmpty()) 1 else 0)
+                intArrayOf(if (state.ddc.spk.enabled && state.ddc.spk.device.isNotEmpty()) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_ENABLE,
-                intArrayOf(if (state.vse.spkEnabled) 1 else 0)
+                intArrayOf(if (state.vse.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK,
-                intArrayOf(EffectDispatcher.VSE_BARK_VALUES.getOrElse(state.vse.spkStrength) { 7600 })
+                intArrayOf(EffectDispatcher.VSE_BARK_VALUES.getOrElse(state.vse.spk.strength) { 7600 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT,
-                intArrayOf((state.vse.spkExciter * 5.6).toInt())
+                intArrayOf((state.vse.spk.exciter * 5.6).toInt())
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FIELD_SURROUND_ENABLE,
-                intArrayOf(if (state.fieldSurround.spkEnabled) 1 else 0)
+                intArrayOf(if (state.fieldSurround.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FIELD_SURROUND_WIDENING,
-                intArrayOf(EffectDispatcher.FIELD_SURROUND_WIDENING_VALUES.getOrElse(state.fieldSurround.spkWidening) { 0 })
+                intArrayOf(EffectDispatcher.FIELD_SURROUND_WIDENING_VALUES.getOrElse(state.fieldSurround.spk.widening) { 0 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FIELD_SURROUND_MID_IMAGE,
-                intArrayOf(state.fieldSurround.spkMidImage * 10 + 100)
+                intArrayOf(state.fieldSurround.spk.midImage * 10 + 100)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_FIELD_SURROUND_DEPTH,
-                intArrayOf(state.fieldSurround.spkDepth * 75 + 200)
+                intArrayOf(state.fieldSurround.spk.depth * 75 + 200)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_SPEAKER_CORRECTION_ENABLE,
-                intArrayOf(if (state.speakerOptEnabled) 1 else 0)
+                intArrayOf(if (state.speakerCorrection.spk.enabled) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_DIFF_SURROUND_ENABLE,
-                intArrayOf(if (state.diffSurround.spkEnabled) 1 else 0)
+                intArrayOf(if (state.diffSurround.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_DIFF_SURROUND_DELAY,
-                intArrayOf(EffectDispatcher.DIFF_SURROUND_DELAY_VALUES.getOrElse(state.diffSurround.spkDelay) { 500 })
+                intArrayOf(EffectDispatcher.DIFF_SURROUND_DELAY_VALUES.getOrElse(state.diffSurround.spk.delay) { 500 })
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_DIFF_SURROUND_REVERSE,
-                intArrayOf(if (state.diffSurround.spkReverse) 1 else 0)
+                intArrayOf(if (state.diffSurround.spk.reverse) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_HEADPHONE_SURROUND_ENABLE,
-                intArrayOf(if (state.vhe.spkEnabled) 1 else 0)
+                intArrayOf(if (state.vhe.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_HEADPHONE_SURROUND_STRENGTH,
-                intArrayOf(state.vhe.spkQuality)
+                intArrayOf(state.vhe.spk.quality)
             )
         )
 
         collectDynamicSystemParams(
             params,
-            state.dynamicSystem.spkEnabled,
-            state.dynamicSystem.spkStrength,
-            state.dynamicSystem.spkXLow, state.dynamicSystem.spkXHigh,
-            state.dynamicSystem.spkYLow, state.dynamicSystem.spkYHigh,
-            state.dynamicSystem.spkSideGainLow, state.dynamicSystem.spkSideGainHigh,
+            state.dynamicSystem.spk.enabled,
+            state.dynamicSystem.spk.strength,
+            state.dynamicSystem.spk.xLow, state.dynamicSystem.spk.xHigh,
+            state.dynamicSystem.spk.yLow, state.dynamicSystem.spk.yHigh,
+            state.dynamicSystem.spk.sideGainLow, state.dynamicSystem.spk.sideGainHigh,
             ViperParams.PARAM_SPK_DYNAMIC_SYSTEM_ENABLE,
             ViperParams.PARAM_SPK_DYNAMIC_SYSTEM_STRENGTH,
             ViperParams.PARAM_SPK_DYNAMIC_SYSTEM_X_COEFFICIENTS,
@@ -1254,106 +1284,111 @@ class ViperService : LifecycleService() {
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_TUBE_SIMULATOR_ENABLE,
-                intArrayOf(if (state.tube.spkEnabled) 1 else 0)
+                intArrayOf(if (state.tube.spk.enabled) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_ENABLE,
-                intArrayOf(if (state.bass.spkEnabled) 1 else 0)
+                intArrayOf(if (state.bass.spk.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_SPK_BASS_MODE, intArrayOf(state.bass.spkMode)))
+        params.add(ParamEntry(ViperParams.PARAM_SPK_BASS_MODE, intArrayOf(state.bass.spk.mode)))
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_FREQUENCY,
-                intArrayOf(state.bass.spkFrequency + 15)
+                intArrayOf(state.bass.spk.frequency + 15)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_GAIN,
-                intArrayOf(state.bass.spkGain * 50 + 50)
+                intArrayOf(state.bass.spk.gain * 50 + 50)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_ANTI_POP,
-                intArrayOf(if (state.bass.spkAntiPop) 1 else 0)
+                intArrayOf(if (state.bass.spk.antiPop) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_MONO_ENABLE,
-                intArrayOf(if (state.bassMono.spkEnabled) 1 else 0)
+                intArrayOf(if (state.bassMono.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_MONO_MODE,
-                intArrayOf(state.bassMono.spkMode)
+                intArrayOf(state.bassMono.spk.mode)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_MONO_FREQUENCY,
-                intArrayOf(state.bassMono.spkFrequency + 15)
+                intArrayOf(state.bassMono.spk.frequency + 15)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_MONO_GAIN,
-                intArrayOf(state.bassMono.spkGain * 50 + 50)
+                intArrayOf(state.bassMono.spk.gain * 50 + 50)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_BASS_MONO_ANTI_POP,
-                intArrayOf(if (state.bassMono.spkAntiPop) 1 else 0)
+                intArrayOf(if (state.bassMono.spk.antiPop) 1 else 0)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CLARITY_ENABLE,
-                intArrayOf(if (state.clarity.spkEnabled) 1 else 0)
+                intArrayOf(if (state.clarity.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CLARITY_MODE,
-                intArrayOf(state.clarity.spkMode)
+                intArrayOf(state.clarity.spk.mode)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CLARITY_GAIN,
-                intArrayOf(state.clarity.spkGain * 50)
+                intArrayOf(state.clarity.spk.gain * 50)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CURE_ENABLE,
-                intArrayOf(if (state.cure.spkEnabled) 1 else 0)
+                intArrayOf(if (state.cure.spk.enabled) 1 else 0)
             )
         )
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_CURE_STRENGTH,
-                intArrayOf(state.cure.spkStrength)
+                intArrayOf(state.cure.spk.strength)
             )
         )
 
         params.add(
             ParamEntry(
                 ViperParams.PARAM_SPK_ANALOGX_ENABLE,
-                intArrayOf(if (state.analog.spkEnabled) 1 else 0)
+                intArrayOf(if (state.analog.spk.enabled) 1 else 0)
             )
         )
-        params.add(ParamEntry(ViperParams.PARAM_SPK_ANALOGX_MODE, intArrayOf(state.analog.spkMode)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_ANALOGX_MODE,
+                intArrayOf(state.analog.spk.mode)
+            )
+        )
     }
 
     private fun collectEqBandParams(

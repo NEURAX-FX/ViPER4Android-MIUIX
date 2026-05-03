@@ -1,29 +1,47 @@
 package com.llsl.viper4android.ui.screens.main
 
+import com.llsl.viper4android.audio.ViperParams
 import com.llsl.viper4android.data.model.DsPreset
 import com.llsl.viper4android.data.model.EqPreset
 
-data class OutputState(
+data class OutputValues(
     val volume: Int = 11,
     val channelPan: Int = 0,
-    val limiter: Int = 5,
-    val spkVolume: Int = 11,
-    val spkChannelPan: Int = 0,
-    val spkLimiter: Int = 5,
+    val limiter: Int = 5
 )
 
-data class AgcState(
+data class OutputState(
+    val hp: OutputValues = OutputValues(),
+    val spk: OutputValues = OutputValues()
+) {
+    fun forType(fxType: Int): OutputValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: OutputValues.() -> OutputValues): OutputState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class AgcValues(
     val enabled: Boolean = false,
     val strength: Int = 0,
     val maxGain: Int = 3,
-    val outputThreshold: Int = 3,
-    val spkEnabled: Boolean = false,
-    val spkStrength: Int = 0,
-    val spkMaxGain: Int = 3,
-    val spkOutputThreshold: Int = 3
+    val outputThreshold: Int = 3
 )
 
-data class FetState(
+data class AgcState(
+    val hp: AgcValues = AgcValues(),
+    val spk: AgcValues = AgcValues()
+) {
+    fun forType(fxType: Int): AgcValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: AgcValues.() -> AgcValues): AgcState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class FetValues(
     val enabled: Boolean = false,
     val threshold: Int = -60,
     val ratio: Int = 100,
@@ -40,113 +58,179 @@ data class FetState(
     val maxRelease: Int = 200,
     val crest: Int = 100,
     val adapt: Int = 50,
-    val noClip: Boolean = true,
-    val spkEnabled: Boolean = false,
-    val spkThreshold: Int = -60,
-    val spkRatio: Int = 100,
-    val spkAutoKnee: Boolean = true,
-    val spkKnee: Int = 0,
-    val spkKneeMulti: Int = 0,
-    val spkAutoGain: Boolean = true,
-    val spkGain: Int = 0,
-    val spkAutoAttack: Boolean = true,
-    val spkAttack: Int = 1,
-    val spkMaxAttack: Int = 44,
-    val spkAutoRelease: Boolean = true,
-    val spkRelease: Int = 100,
-    val spkMaxRelease: Int = 200,
-    val spkCrest: Int = 100,
-    val spkAdapt: Int = 50,
-    val spkNoClip: Boolean = true
+    val noClip: Boolean = true
+)
+
+data class FetState(
+    val hp: FetValues = FetValues(),
+    val spk: FetValues = FetValues()
+) {
+    fun forType(fxType: Int): FetValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: FetValues.() -> FetValues): FetState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class DdcValues(
+    val enabled: Boolean = false,
+    val device: String = ""
 )
 
 data class DdcState(
+    val hp: DdcValues = DdcValues(),
+    val spk: DdcValues = DdcValues()
+) {
+    fun forType(fxType: Int): DdcValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: DdcValues.() -> DdcValues): DdcState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class VseValues(
     val enabled: Boolean = false,
-    val device: String = "",
-    val spkEnabled: Boolean = false,
-    val spkDevice: String = ""
+    val strength: Int = 10,
+    val exciter: Int = 0
 )
 
 data class VseState(
-    val enabled: Boolean = false,
-    val strength: Int = 10,
-    val exciter: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkStrength: Int = 10,
-    val spkExciter: Int = 0
-)
+    val hp: VseValues = VseValues(),
+    val spk: VseValues = VseValues()
+) {
+    fun forType(fxType: Int): VseValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
 
-data class EqState(
+    fun updateType(fxType: Int, transform: VseValues.() -> VseValues): VseState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class EqValues(
     val enabled: Boolean = false,
     val bandCount: Int = 10,
     val presetId: Long? = null,
     val bands: String = "0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;",
     val bandsMap: Map<Int, String> = mapOf(10 to "0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;"),
-    val presets: List<EqPreset> = emptyList(),
-    val spkEnabled: Boolean = false,
-    val spkBandCount: Int = 10,
-    val spkPresetId: Long? = null,
-    val spkBands: String = "0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;",
-    val spkBandsMap: Map<Int, String> = mapOf(10 to "0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;"),
-    val spkPresets: List<EqPreset> = emptyList()
+    val presets: List<EqPreset> = emptyList()
+)
+
+data class EqState(
+    val hp: EqValues = EqValues(),
+    val spk: EqValues = EqValues()
+) {
+    fun forType(fxType: Int): EqValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: EqValues.() -> EqValues): EqState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class ConvolverValues(
+    val enabled: Boolean = false,
+    val kernel: String = "",
+    val crossChannel: Int = 0
 )
 
 data class ConvolverState(
-    val enabled: Boolean = false,
-    val kernel: String = "",
-    val crossChannel: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkKernel: String = "",
-    val spkCrossChannel: Int = 0
-)
+    val hp: ConvolverValues = ConvolverValues(),
+    val spk: ConvolverValues = ConvolverValues()
+) {
+    fun forType(fxType: Int): ConvolverValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
 
-data class FieldSurroundState(
+    fun updateType(fxType: Int, transform: ConvolverValues.() -> ConvolverValues): ConvolverState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class FieldSurroundValues(
     val enabled: Boolean = false,
     val widening: Int = 0,
     val midImage: Int = 5,
-    val depth: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkWidening: Int = 0,
-    val spkMidImage: Int = 5,
-    val spkDepth: Int = 0
+    val depth: Int = 0
 )
 
-data class DiffSurroundState(
+data class FieldSurroundState(
+    val hp: FieldSurroundValues = FieldSurroundValues(),
+    val spk: FieldSurroundValues = FieldSurroundValues()
+) {
+    fun forType(fxType: Int): FieldSurroundValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: FieldSurroundValues.() -> FieldSurroundValues
+    ): FieldSurroundState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class DiffSurroundValues(
     val enabled: Boolean = false,
     val delay: Int = 4,
     val reverse: Boolean = false,
     val wetDryMix: Int = 100,
-    val lpCutoff: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkDelay: Int = 4,
-    val spkReverse: Boolean = false,
-    val spkWetDryMix: Int = 100,
-    val spkLpCutoff: Int = 0
+    val lpCutoff: Int = 0
+)
+
+data class DiffSurroundState(
+    val hp: DiffSurroundValues = DiffSurroundValues(),
+    val spk: DiffSurroundValues = DiffSurroundValues()
+) {
+    fun forType(fxType: Int): DiffSurroundValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: DiffSurroundValues.() -> DiffSurroundValues
+    ): DiffSurroundState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class VheValues(
+    val enabled: Boolean = false,
+    val quality: Int = 0
 )
 
 data class VheState(
-    val enabled: Boolean = false,
-    val quality: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkQuality: Int = 0
-)
+    val hp: VheValues = VheValues(),
+    val spk: VheValues = VheValues()
+) {
+    fun forType(fxType: Int): VheValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
 
-data class ReverbState(
+    fun updateType(fxType: Int, transform: VheValues.() -> VheValues): VheState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class ReverbValues(
     val enabled: Boolean = false,
     val roomSize: Int = 0,
     val width: Int = 0,
     val dampening: Int = 0,
     val wet: Int = 0,
-    val dry: Int = 50,
-    val spkEnabled: Boolean = false,
-    val spkRoomSize: Int = 0,
-    val spkWidth: Int = 0,
-    val spkDampening: Int = 0,
-    val spkWet: Int = 0,
-    val spkDry: Int = 50
+    val dry: Int = 50
 )
 
-data class DynamicSystemState(
+data class ReverbState(
+    val hp: ReverbValues = ReverbValues(),
+    val spk: ReverbValues = ReverbValues()
+) {
+    fun forType(fxType: Int): ReverbValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: ReverbValues.() -> ReverbValues): ReverbState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class DynamicSystemValues(
     val enabled: Boolean = false,
     val device: Int = 0,
     val strength: Int = 50,
@@ -157,70 +241,150 @@ data class DynamicSystemState(
     val yLow: Int = 40,
     val yHigh: Int = 80,
     val sideGainLow: Int = 50,
-    val sideGainHigh: Int = 50,
-    val spkEnabled: Boolean = false,
-    val spkDevice: Int = 0,
-    val spkStrength: Int = 50,
-    val spkPresetId: Long? = null,
-    val spkPresets: List<DsPreset> = emptyList(),
-    val spkXLow: Int = 100,
-    val spkXHigh: Int = 5600,
-    val spkYLow: Int = 40,
-    val spkYHigh: Int = 80,
-    val spkSideGainLow: Int = 50,
-    val spkSideGainHigh: Int = 50
+    val sideGainHigh: Int = 50
+)
+
+data class DynamicSystemState(
+    val hp: DynamicSystemValues = DynamicSystemValues(),
+    val spk: DynamicSystemValues = DynamicSystemValues()
+) {
+    fun forType(fxType: Int): DynamicSystemValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: DynamicSystemValues.() -> DynamicSystemValues
+    ): DynamicSystemState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class BassValues(
+    val enabled: Boolean = false,
+    val mode: Int = 0,
+    val frequency: Int = 55,
+    val gain: Int = 0,
+    val antiPop: Boolean = true
 )
 
 data class BassState(
+    val hp: BassValues = BassValues(),
+    val spk: BassValues = BassValues()
+) {
+    fun forType(fxType: Int): BassValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: BassValues.() -> BassValues): BassState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class BassMonoValues(
     val enabled: Boolean = false,
     val mode: Int = 0,
     val frequency: Int = 55,
     val gain: Int = 0,
-    val antiPop: Boolean = true,
-    val spkEnabled: Boolean = false,
-    val spkMode: Int = 0,
-    val spkFrequency: Int = 55,
-    val spkGain: Int = 0,
-    val spkAntiPop: Boolean = true,
+    val antiPop: Boolean = true
 )
 
 data class BassMonoState(
+    val hp: BassMonoValues = BassMonoValues(),
+    val spk: BassMonoValues = BassMonoValues()
+) {
+    fun forType(fxType: Int): BassMonoValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: BassMonoValues.() -> BassMonoValues): BassMonoState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class ClarityValues(
     val enabled: Boolean = false,
     val mode: Int = 0,
-    val frequency: Int = 55,
-    val gain: Int = 0,
-    val antiPop: Boolean = true,
-    val spkEnabled: Boolean = false,
-    val spkMode: Int = 0,
-    val spkFrequency: Int = 55,
-    val spkGain: Int = 0,
-    val spkAntiPop: Boolean = true
+    val gain: Int = 1
 )
 
 data class ClarityState(
+    val hp: ClarityValues = ClarityValues(),
+    val spk: ClarityValues = ClarityValues()
+) {
+    fun forType(fxType: Int): ClarityValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: ClarityValues.() -> ClarityValues): ClarityState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class CureValues(
     val enabled: Boolean = false,
-    val mode: Int = 0,
-    val gain: Int = 1,
-    val spkEnabled: Boolean = false,
-    val spkMode: Int = 0,
-    val spkGain: Int = 1
+    val strength: Int = 0
 )
 
 data class CureState(
+    val hp: CureValues = CureValues(),
+    val spk: CureValues = CureValues()
+) {
+    fun forType(fxType: Int): CureValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: CureValues.() -> CureValues): CureState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class AnalogXValues(
     val enabled: Boolean = false,
-    val strength: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkStrength: Int = 0,
+    val mode: Int = 0
 )
 
 data class AnalogXState(
-    val enabled: Boolean = false,
-    val mode: Int = 0,
-    val spkEnabled: Boolean = false,
-    val spkMode: Int = 0
+    val hp: AnalogXValues = AnalogXValues(),
+    val spk: AnalogXValues = AnalogXValues()
+) {
+    fun forType(fxType: Int): AnalogXValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: AnalogXValues.() -> AnalogXValues): AnalogXState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class TubeSimulatorValues(
+    val enabled: Boolean = false
 )
 
 data class TubeSimulatorState(
-    val enabled: Boolean = false,
-    val spkEnabled: Boolean = false,
+    val hp: TubeSimulatorValues = TubeSimulatorValues(),
+    val spk: TubeSimulatorValues = TubeSimulatorValues()
+) {
+    fun forType(fxType: Int): TubeSimulatorValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: TubeSimulatorValues.() -> TubeSimulatorValues
+    ): TubeSimulatorState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
+data class SpeakerCorrectionValues(
+    val enabled: Boolean = false
 )
+
+data class SpeakerCorrectionState(
+    val hp: SpeakerCorrectionValues = SpeakerCorrectionValues(),
+    val spk: SpeakerCorrectionValues = SpeakerCorrectionValues()
+) {
+    fun forType(fxType: Int): SpeakerCorrectionValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: SpeakerCorrectionValues.() -> SpeakerCorrectionValues
+    ): SpeakerCorrectionState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
