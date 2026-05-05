@@ -320,6 +320,7 @@ private fun EffectList(
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { MasterLimiterSection(state, viewModel, isSpkMode) }
         item { PlaybackGainSection(state, viewModel, isSpkMode) }
+        item { LUFSTargetingSection(state, viewModel, isSpkMode) }
         item { MultibandCompressorSection(state, viewModel, isSpkMode) }
         item { FetCompressorSection(state, viewModel, isSpkMode) }
         item { DdcSection(state, viewModel, isSpkMode) }

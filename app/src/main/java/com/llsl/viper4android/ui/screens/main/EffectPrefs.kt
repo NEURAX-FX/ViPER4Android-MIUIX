@@ -183,6 +183,52 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         setSp = { copy(agc = agc.copy(spk = agc.spk.copy(outputThreshold = it))) }
     ),
 
+    // LUFS
+    BoolPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_LUFS_ENABLE}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_LUFS_ENABLE}",
+        jsonKey = "lufsEnabled",
+        spkJsonKey = "spkLufsEnabled",
+        defaultValue = false,
+        getHp = { it.lufs.hp.enabled },
+        setHp = { copy(lufs = lufs.copy(hp = lufs.hp.copy(enabled = it))) },
+        getSp = { it.lufs.spk.enabled },
+        setSp = { copy(lufs = lufs.copy(spk = lufs.spk.copy(enabled = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_LUFS_TARGET}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_LUFS_TARGET}",
+        jsonKey = "lufsTarget",
+        spkJsonKey = "spkLufsTarget",
+        defaultValue = 140,
+        getHp = { it.lufs.hp.target },
+        setHp = { copy(lufs = lufs.copy(hp = lufs.hp.copy(target = it))) },
+        getSp = { it.lufs.spk.target },
+        setSp = { copy(lufs = lufs.copy(spk = lufs.spk.copy(target = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_LUFS_MAX_GAIN}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_LUFS_MAX_GAIN}",
+        jsonKey = "lufsMaxGain",
+        spkJsonKey = "spkLufsMaxGain",
+        defaultValue = 60,
+        getHp = { it.lufs.hp.maxGain },
+        setHp = { copy(lufs = lufs.copy(hp = lufs.hp.copy(maxGain = it))) },
+        getSp = { it.lufs.spk.maxGain },
+        setSp = { copy(lufs = lufs.copy(spk = lufs.spk.copy(maxGain = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_LUFS_SPEED}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_LUFS_SPEED}",
+        jsonKey = "lufsSpeed",
+        spkJsonKey = "spkLufsSpeed",
+        defaultValue = 1,
+        getHp = { it.lufs.hp.speed },
+        setHp = { copy(lufs = lufs.copy(hp = lufs.hp.copy(speed = it))) },
+        getSp = { it.lufs.spk.speed },
+        setSp = { copy(lufs = lufs.copy(spk = lufs.spk.copy(speed = it))) }
+    ),
+
     // FET Compressor
     BoolPref(
         hpPrefKey = "${ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE}",

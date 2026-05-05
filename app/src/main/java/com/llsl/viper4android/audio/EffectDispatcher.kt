@@ -341,6 +341,12 @@ object EffectDispatcher {
         effect.setParameter(ViperParams.PARAM_HP_AGC_MAX_SCALER, state.agc.hp.maxGain)
         effect.setParameter(ViperParams.PARAM_HP_AGC_VOLUME, state.agc.hp.outputThreshold)
 
+        // LUFS
+        effect.setParameter(ViperParams.PARAM_HP_LUFS_ENABLE, if (state.lufs.hp.enabled) 1 else 0)
+        effect.setParameter(ViperParams.PARAM_HP_LUFS_TARGET, state.lufs.hp.target)
+        effect.setParameter(ViperParams.PARAM_HP_LUFS_MAX_GAIN, state.lufs.hp.maxGain)
+        effect.setParameter(ViperParams.PARAM_HP_LUFS_SPEED, state.lufs.hp.speed)
+
         // FET Compressor
         effect.setParameter(
             ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE,
@@ -762,6 +768,12 @@ object EffectDispatcher {
         effect.setParameter(ViperParams.PARAM_SPK_AGC_RATIO, state.agc.spk.strength)
         effect.setParameter(ViperParams.PARAM_SPK_AGC_MAX_SCALER, state.agc.spk.maxGain)
         effect.setParameter(ViperParams.PARAM_SPK_AGC_VOLUME, state.agc.spk.outputThreshold)
+
+        // LUFS
+        effect.setParameter(ViperParams.PARAM_SPK_LUFS_ENABLE, if (state.lufs.spk.enabled) 1 else 0)
+        effect.setParameter(ViperParams.PARAM_SPK_LUFS_TARGET, state.lufs.spk.target)
+        effect.setParameter(ViperParams.PARAM_SPK_LUFS_MAX_GAIN, state.lufs.spk.maxGain)
+        effect.setParameter(ViperParams.PARAM_SPK_LUFS_SPEED, state.lufs.spk.speed)
 
         // FET Compressor
         effect.setParameter(

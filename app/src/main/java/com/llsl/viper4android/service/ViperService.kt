@@ -588,6 +588,22 @@ class ViperService : LifecycleService() {
             )
         )
 
+        // LUFS
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_LUFS_ENABLE,
+                intArrayOf(if (state.lufs.hp.enabled) 1 else 0)
+            )
+        )
+        params.add(ParamEntry(ViperParams.PARAM_HP_LUFS_TARGET, intArrayOf(state.lufs.hp.target)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_LUFS_MAX_GAIN,
+                intArrayOf(state.lufs.hp.maxGain)
+            )
+        )
+        params.add(ParamEntry(ViperParams.PARAM_HP_LUFS_SPEED, intArrayOf(state.lufs.hp.speed)))
+
         // FET Compressor
         params.add(
             ParamEntry(
@@ -1323,6 +1339,22 @@ class ViperService : LifecycleService() {
                 intArrayOf(state.agc.spk.outputThreshold)
             )
         )
+
+        // LUFS
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_LUFS_ENABLE,
+                intArrayOf(if (state.lufs.spk.enabled) 1 else 0)
+            )
+        )
+        params.add(ParamEntry(ViperParams.PARAM_SPK_LUFS_TARGET, intArrayOf(state.lufs.spk.target)))
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_LUFS_MAX_GAIN,
+                intArrayOf(state.lufs.spk.maxGain)
+            )
+        )
+        params.add(ParamEntry(ViperParams.PARAM_SPK_LUFS_SPEED, intArrayOf(state.lufs.spk.speed)))
 
         // FET Compressor
         params.add(

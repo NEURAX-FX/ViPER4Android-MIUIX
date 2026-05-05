@@ -62,6 +62,7 @@ data class MainUiState(
 
     val out: OutputState = OutputState(),
     val agc: AgcState = AgcState(),
+    val lufs: LufsState = LufsState(),
     val fet: FetState = FetState(),
     val mbc: MbcState = MbcState(),
     val ddc: DdcState = DdcState(),
@@ -629,6 +630,75 @@ class MainViewModel @Inject constructor(
         val param = if (isSpk) ViperParams.PARAM_SPK_AGC_VOLUME else ViperParams.PARAM_HP_AGC_VOLUME
         dispatchInt(param, value)
     }
+
+    fun setLufsEnabled(enabled: Boolean) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_LUFS_ENABLE}" else "${ViperParams.PARAM_HP_LUFS_ENABLE}"
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
+        val vals = _uiState.value.lufs.forType(activeDeviceType)
+        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+        viperService?.dispatchParamsBatch(
+            listOf(
+                ParamEntry(
+                    p(ViperParams.PARAM_HP_LUFS_ENABLE, ViperParams.PARAM_SPK_LUFS_ENABLE),
+                    intArrayOf(if (enabled) 1 else 0)
+                ),
+                ParamEntry(
+                    p(ViperParams.PARAM_HP_LUFS_TARGET, ViperParams.PARAM_SPK_LUFS_TARGET),
+                    intArrayOf(vals.target)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_LUFS_MAX_GAIN,
+                        ViperParams.PARAM_SPK_LUFS_MAX_GAIN
+                    ), intArrayOf(vals.maxGain)
+                ),
+                ParamEntry(
+                    p(ViperParams.PARAM_HP_LUFS_SPEED, ViperParams.PARAM_SPK_LUFS_SPEED),
+                    intArrayOf(vals.speed)
+                )
+            )
+        )
+    }
+
+    fun setLufsTarget(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(target = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_LUFS_TARGET}" else "${ViperParams.PARAM_HP_LUFS_TARGET}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_LUFS_TARGET else ViperParams.PARAM_HP_LUFS_TARGET
+        saveAndDispatchInt(prefKey, param, v)
+    }
+
+    fun setLufsMaxGain(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(maxGain = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_LUFS_MAX_GAIN}" else "${ViperParams.PARAM_HP_LUFS_MAX_GAIN}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_LUFS_MAX_GAIN else ViperParams.PARAM_HP_LUFS_MAX_GAIN
+        saveAndDispatchInt(prefKey, param, v)
+    }
+
+    fun setLufsSpeed(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(speed = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_LUFS_SPEED}" else "${ViperParams.PARAM_HP_LUFS_SPEED}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_LUFS_SPEED else ViperParams.PARAM_HP_LUFS_SPEED
+        saveAndDispatchInt(prefKey, param, v)
+    }
+
 
     fun setFetEnabled(enabled: Boolean) {
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER

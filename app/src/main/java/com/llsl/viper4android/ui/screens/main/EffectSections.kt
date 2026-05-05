@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.Compress
+import androidx.compose.material.icons.filled.CrisisAlert
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.GraphicEq
@@ -158,6 +159,57 @@ fun PlaybackGainSection(state: MainUiState, viewModel: MainViewModel, isSpkMode:
             onValueChange = { onThresholdChange(it.roundToInt()) },
             valueRange = 30f..100f,
             valueLabel = "${"%.1f".format(threshDb)}dB"
+        )
+    }
+}
+
+@Composable
+fun LUFSTargetingSection(state: MainUiState, viewModel: MainViewModel, isSpkMode: Boolean = false) {
+    val fxType = if (isSpkMode) ViperParams.FX_TYPE_SPEAKER else ViperParams.FX_TYPE_HEADPHONE
+    val vals = state.lufs.forType(fxType)
+    val enabled = vals.enabled
+    val target = vals.target
+    val maxGain = vals.maxGain
+    val speed = vals.speed
+
+    val onEnabledChange = viewModel::setLufsEnabled
+    val onTargetChange = viewModel::setLufsTarget
+    val onMaxGainChange = viewModel::setLufsMaxGain
+    val onSpeedChange = viewModel::setLufsSpeed
+
+    val speedNames = listOf(
+        stringResource(R.string.speed_slow),
+        stringResource(R.string.speed_medium),
+        stringResource(R.string.speed_fast)
+    )
+
+    EffectSection(
+        title = stringResource(R.string.section_lufs_targeting),
+        enabled = enabled,
+        onEnabledChange = onEnabledChange,
+        icon = Icons.Default.CrisisAlert
+    ) {
+        LabeledSlider(
+            label = stringResource(R.string.label_target_lufs),
+            value = target.toFloat(),
+            onValueChange = { onTargetChange(it.roundToInt()) },
+            valueRange = 80f..240f,
+            valueLabel = String.format(Locale.US, "%.1f LUFS", target / -10f)
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_max_gain),
+            value = maxGain.toFloat(),
+            onValueChange = { onMaxGainChange(it.roundToInt()) },
+            valueRange = 0f..120f,
+            valueLabel = String.format(Locale.US, "%.1f dB", maxGain / 10f)
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_speed),
+            value = speed.toFloat(),
+            onValueChange = { onSpeedChange(it.roundToInt()) },
+            valueRange = 0f..2f,
+            steps = 1,
+            valueLabel = speedNames.getOrElse(speed) { speedNames[1] }
         )
     }
 }

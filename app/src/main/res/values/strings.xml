@@ -29,6 +29,15 @@
     <string name="label_agc_max_gain">Max Gain</string>
     <string name="label_agc_output_threshold">Output Threshold</string>
 
+    <!-- LUFS Targeting -->
+    <string name="section_lufs_targeting">LUFS Targeting</string>
+    <string name="label_target_lufs">Target LUFS</string>
+    <string name="label_max_gain">Max Gain</string>
+    <string name="label_speed">Speed</string>
+    <string name="speed_slow">Slow</string>
+    <string name="speed_medium">Medium</string>
+    <string name="speed_fast">Fast</string>
+
     <!-- FET Compressor -->
     <string name="section_fet_compressor">FET Compressor</string>
     <string name="label_fet_threshold">Threshold</string>

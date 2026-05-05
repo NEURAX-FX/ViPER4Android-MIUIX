@@ -41,6 +41,25 @@ data class AgcState(
         else copy(hp = hp.transform())
 }
 
+data class LufsValues(
+    val enabled: Boolean = false,
+    val target: Int = 140,
+    val maxGain: Int = 60,
+    val speed: Int = 1
+)
+
+data class LufsState(
+    val hp: LufsValues = LufsValues(),
+    val spk: LufsValues = LufsValues()
+) {
+    fun forType(fxType: Int): LufsValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: LufsValues.() -> LufsValues): LufsState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
 data class FetValues(
     val enabled: Boolean = false,
     val threshold: Int = -18,
