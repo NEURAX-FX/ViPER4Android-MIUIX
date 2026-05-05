@@ -545,6 +545,53 @@ object EffectDispatcher {
         effect.setParameter(ViperParams.PARAM_HP_EQ_ENABLE, if (state.eq.hp.enabled) 1 else 0)
         dispatchEqBands(effect, ViperParams.PARAM_HP_EQ_BAND_LEVEL, state.eq.hp.bands)
 
+        // Dynamic EQ
+        effect.setParameter(
+            ViperParams.PARAM_HP_DYNAMIC_EQ_ENABLE,
+            if (state.dynamicEq.hp.enabled) 1 else 0
+        )
+        for (b in 0 until state.dynamicEq.hp.bandCount) {
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ,
+                b,
+                state.dynamicEq.hp.freqs.split(";").getOrNull(b)?.toIntOrNull() ?: 1000
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q,
+                b,
+                state.dynamicEq.hp.qs.split(";").getOrNull(b)?.toIntOrNull() ?: 150
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN,
+                b,
+                state.dynamicEq.hp.gains.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD,
+                b,
+                state.dynamicEq.hp.thresholds.split(";").getOrNull(b)?.toIntOrNull() ?: -300
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK,
+                b,
+                state.dynamicEq.hp.attacks.split(";").getOrNull(b)?.toIntOrNull() ?: 10
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE,
+                b,
+                state.dynamicEq.hp.releases.split(";").getOrNull(b)?.toIntOrNull() ?: 100
+            )
+            effect.setParameter(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                b,
+                state.dynamicEq.hp.filterTypes.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+            )
+        }
+        effect.setParameter(
+            ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_COUNT,
+            state.dynamicEq.hp.bandCount
+        )
+
         // Convolver
         effect.setParameter(
             ViperParams.PARAM_HP_CONVOLVER_ENABLE,
@@ -924,6 +971,53 @@ object EffectDispatcher {
         effect.setParameter(ViperParams.PARAM_SPK_EQ_BAND_COUNT, state.eq.spk.bandCount)
         effect.setParameter(ViperParams.PARAM_SPK_EQ_ENABLE, if (state.eq.spk.enabled) 1 else 0)
         dispatchEqBands(effect, ViperParams.PARAM_SPK_EQ_BAND_LEVEL, state.eq.spk.bands)
+
+        // Dynamic EQ
+        effect.setParameter(
+            ViperParams.PARAM_SPK_DYNAMIC_EQ_ENABLE,
+            if (state.dynamicEq.spk.enabled) 1 else 0
+        )
+        for (b in 0 until state.dynamicEq.spk.bandCount) {
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ,
+                b,
+                state.dynamicEq.spk.freqs.split(";").getOrNull(b)?.toIntOrNull() ?: 1000
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q,
+                b,
+                state.dynamicEq.spk.qs.split(";").getOrNull(b)?.toIntOrNull() ?: 150
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN,
+                b,
+                state.dynamicEq.spk.gains.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD,
+                b,
+                state.dynamicEq.spk.thresholds.split(";").getOrNull(b)?.toIntOrNull() ?: -300
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK,
+                b,
+                state.dynamicEq.spk.attacks.split(";").getOrNull(b)?.toIntOrNull() ?: 10
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE,
+                b,
+                state.dynamicEq.spk.releases.split(";").getOrNull(b)?.toIntOrNull() ?: 100
+            )
+            effect.setParameter(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                b,
+                state.dynamicEq.spk.filterTypes.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+            )
+        }
+        effect.setParameter(
+            ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_COUNT,
+            state.dynamicEq.spk.bandCount
+        )
 
         // Convolver
         effect.setParameter(

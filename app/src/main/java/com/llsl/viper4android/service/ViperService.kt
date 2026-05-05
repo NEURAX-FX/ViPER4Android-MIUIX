@@ -930,6 +930,85 @@ class ViperService : LifecycleService() {
         )
         collectEqBandParams(params, ViperParams.PARAM_HP_EQ_BAND_LEVEL, state.eq.hp.bands)
 
+        // Dynamic EQ
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_ENABLE,
+                intArrayOf(if (state.dynamicEq.hp.enabled) 1 else 0)
+            )
+        )
+        for (b in 0 until state.dynamicEq.hp.bandCount) {
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.freqs.split(";").getOrNull(b)?.toIntOrNull() ?: 1000
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.qs.split(";").getOrNull(b)?.toIntOrNull() ?: 150
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.gains.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.thresholds.split(";").getOrNull(b)?.toIntOrNull() ?: -300
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.attacks.split(";").getOrNull(b)?.toIntOrNull() ?: 10
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.releases.split(";").getOrNull(b)?.toIntOrNull() ?: 100
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.hp.filterTypes.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+                    )
+                )
+            )
+        }
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_COUNT,
+                intArrayOf(state.dynamicEq.hp.bandCount)
+            )
+        )
+
         // Convolver
         params.add(
             ParamEntry(
@@ -1586,6 +1665,86 @@ class ViperService : LifecycleService() {
             )
         )
         collectEqBandParams(params, ViperParams.PARAM_SPK_EQ_BAND_LEVEL, state.eq.spk.bands)
+
+        // Dynamic EQ
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_ENABLE,
+                intArrayOf(if (state.dynamicEq.spk.enabled) 1 else 0)
+            )
+        )
+        for (b in 0 until state.dynamicEq.spk.bandCount) {
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.freqs.split(";").getOrNull(b)?.toIntOrNull() ?: 1000
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.qs.split(";").getOrNull(b)?.toIntOrNull() ?: 150
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.gains.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.thresholds.split(";").getOrNull(b)?.toIntOrNull()
+                            ?: -300
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.attacks.split(";").getOrNull(b)?.toIntOrNull() ?: 10
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.releases.split(";").getOrNull(b)?.toIntOrNull() ?: 100
+                    )
+                )
+            )
+            params.add(
+                ParamEntry(
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                    intArrayOf(
+                        b,
+                        state.dynamicEq.spk.filterTypes.split(";").getOrNull(b)?.toIntOrNull() ?: 0
+                    )
+                )
+            )
+        }
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_COUNT,
+                intArrayOf(state.dynamicEq.spk.bandCount)
+            )
+        )
 
         // Convolver
         params.add(

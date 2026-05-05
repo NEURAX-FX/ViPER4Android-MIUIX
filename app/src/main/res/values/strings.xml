@@ -74,6 +74,17 @@
     <string name="label_eq_bands">Band Count</string>
     <string name="label_eq_n_bands">%d Bands</string>
 
+    <!-- Dynamic EQ -->
+    <string name="section_dynamic_eq">Dynamic EQ</string>
+    <string name="label_frequency">Frequency</string>
+    <string name="label_q_factor">Q Factor</string>
+    <string name="label_target_gain">Target Gain</string>
+    <string name="label_filter_type">Filter Type</string>
+    <string name="filter_peak">Peak</string>
+    <string name="filter_low_shelf">Low Shelf</string>
+    <string name="filter_high_shelf">High Shelf</string>
+    <string name="dialog_delete_band">Delete Band</string>
+
     <!-- Convolver -->
     <string name="section_convolver">Convolver</string>
     <string name="label_convolver_kernel">Kernel File</string>

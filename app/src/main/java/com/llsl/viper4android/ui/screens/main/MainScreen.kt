@@ -325,6 +325,7 @@ private fun EffectList(
         item { DdcSection(state, viewModel, isSpkMode) }
         item { SpectrumExtensionSection(state, viewModel, isSpkMode) }
         item { EqualizerSection(state, viewModel, isSpkMode) }
+        item { DynamicEqSection(state, viewModel, isSpkMode) }
         item { ConvolverSection(state, viewModel, isSpkMode) }
         item { FieldSurroundSection(state, viewModel, isSpkMode) }
         item { DiffSurroundSection(state, viewModel, isSpkMode) }

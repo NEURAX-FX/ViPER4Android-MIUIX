@@ -67,6 +67,7 @@ data class MainUiState(
     val ddc: DdcState = DdcState(),
     val vse: VseState = VseState(),
     val eq: EqState = EqState(),
+    val dynamicEq: DynamicEqState = DynamicEqState(),
     val convolver: ConvolverState = ConvolverState(),
     val fieldSurround: FieldSurroundState = FieldSurroundState(),
     val diffSurround: DiffSurroundState = DiffSurroundState(),
@@ -320,10 +321,7 @@ class MainViewModel @Inject constructor(
         _uiState.update {
             state.copy(
                 eq = state.eq.copy(
-                    spk = state.eq.spk.copy(
-                        bands = spkEqBands,
-                        bandsMap = spkEqBandsMap
-                    )
+                    spk = state.eq.spk.copy(bands = spkEqBands, bandsMap = spkEqBandsMap)
                 )
             )
         }
@@ -918,6 +916,12 @@ class MainViewModel @Inject constructor(
         saveAndDispatchFetBool(prefKey, param, value)
     }
 
+    private fun removeFromString(s: String, index: Int, default: Int, count: Int): String {
+        val list = parseInts(s, default, count).toMutableList()
+        if (index in list.indices) list.removeAt(index)
+        return list.joinToString(";")
+    }
+
     private fun isMbcBandEnabled(band: Int): Boolean =
         parseBools(_uiState.value.mbc.forType(activeDeviceType).bandEnables).getOrElse(band) { true }
 
@@ -947,16 +951,16 @@ class MainViewModel @Inject constructor(
                 ), intArrayOf(i, crossovers[i])
             )
         )
-        val bandEnables = parseBools(vals.bandEnables)
-        val thresholds = parseInts(vals.thresholds, -18)
-        val ratios = parseInts(vals.ratios, 50)
-        val gains = parseInts(vals.gains, 24)
-        val attacks = parseInts(vals.attacks, 1)
-        val releases = parseInts(vals.releases, 100)
-        val knees = parseInts(vals.knees, 0)
-        val autoGains = parseBools(vals.autoGains)
-        val autoAttacks = parseBools(vals.autoAttacks)
-        val autoReleases = parseBools(vals.autoReleases)
+        val bandEnables = parseBools(vals.bandEnables, count = 5)
+        val thresholds = parseInts(vals.thresholds, -18, 5)
+        val ratios = parseInts(vals.ratios, 50, 5)
+        val gains = parseInts(vals.gains, 24, 5)
+        val attacks = parseInts(vals.attacks, 1, 5)
+        val releases = parseInts(vals.releases, 100, 5)
+        val knees = parseInts(vals.knees, 0, 5)
+        val autoGains = parseBools(vals.autoGains, count = 5)
+        val autoAttacks = parseBools(vals.autoAttacks, count = 5)
+        val autoReleases = parseBools(vals.autoReleases, count = 5)
         for (b in 0..4) {
             entries.add(
                 ParamEntry(
@@ -1051,8 +1055,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandEnable(band: Int, value: Boolean) {
-        val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).bandEnables, band, value)
+        val updated = updateBool(
+            _uiState.value.mbc.forType(activeDeviceType).bandEnables,
+            band,
+            value,
+            count = 5
+        )
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(bandEnables = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1096,7 +1104,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandThreshold(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).thresholds, band, value, -18)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).thresholds, band, value, -18, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(thresholds = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1121,7 +1129,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandRatio(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).ratios, band, value, 50)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).ratios, band, value, 50, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(ratios = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1139,7 +1147,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandGain(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).gains, band, value, 24)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).gains, band, value, 24, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(gains = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1164,7 +1172,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandKnee(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).knees, band, value, 0)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).knees, band, value, 0, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(knees = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1189,7 +1197,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandKneeMulti(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).kneeMultis, band, value, 0)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).kneeMultis, band, value, 0, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(kneeMultis = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1202,7 +1210,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandAttack(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).attacks, band, value, 1)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).attacks, band, value, 1, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(attacks = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1227,7 +1235,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandMaxAttack(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxAttacks, band, value, 44)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxAttacks, band, value, 44, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(maxAttacks = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1240,7 +1248,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandRelease(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).releases, band, value, 100)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).releases, band, value, 100, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(releases = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1265,7 +1273,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandMaxRelease(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxReleases, band, value, 200)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxReleases, band, value, 200, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(maxReleases = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1278,7 +1286,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandCrest(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).crests, band, value, 100)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).crests, band, value, 100, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(crests = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1291,7 +1299,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandAdapt(band: Int, value: Int) {
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).adapts, band, value, 50)
+            updateInt(_uiState.value.mbc.forType(activeDeviceType).adapts, band, value, 50, 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(adapts = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1303,8 +1311,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoKnee(band: Int, value: Boolean) {
-        val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).autoKnees, band, value)
+        val updated = updateBool(
+            _uiState.value.mbc.forType(activeDeviceType).autoKnees,
+            band,
+            value,
+            count = 5
+        )
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoKnees = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1316,8 +1328,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoGain(band: Int, value: Boolean) {
-        val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).autoGains, band, value)
+        val updated = updateBool(
+            _uiState.value.mbc.forType(activeDeviceType).autoGains,
+            band,
+            value,
+            count = 5
+        )
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoGains = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1341,8 +1357,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoAttack(band: Int, value: Boolean) {
-        val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).autoAttacks, band, value)
+        val updated = updateBool(
+            _uiState.value.mbc.forType(activeDeviceType).autoAttacks,
+            band,
+            value,
+            count = 5
+        )
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoAttacks = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1366,8 +1386,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoRelease(band: Int, value: Boolean) {
-        val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).autoReleases, band, value)
+        val updated = updateBool(
+            _uiState.value.mbc.forType(activeDeviceType).autoReleases,
+            band,
+            value,
+            count = 5
+        )
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoReleases = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1392,7 +1416,7 @@ class MainViewModel @Inject constructor(
 
     fun setMbcBandNoClip(band: Int, value: Boolean) {
         val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).noClips, band, value)
+            updateBool(_uiState.value.mbc.forType(activeDeviceType).noClips, band, value, count = 5)
         _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(noClips = updated) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
@@ -1633,6 +1657,457 @@ class MainViewModel @Inject constructor(
         val prefKey =
             if (isSpk) "spk_${ViperRepository.PREF_EQ_PRESET_ID}" else ViperRepository.PREF_EQ_PRESET_ID
         viewModelScope.launch { repository.setIntPreference(prefKey, -1) }
+    }
+
+    fun setDynamicEqEnabled(enabled: Boolean) {
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(enabled = enabled)
+            })
+        }
+        viewModelScope.launch {
+            repository.setBooleanPreference(
+                "${ViperParams.PARAM_HP_DYNAMIC_EQ_ENABLE}",
+                enabled
+            )
+        }
+        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        val count = vals.bandCount
+        val entries = mutableListOf<ParamEntry>()
+        val freqs = parseInts(vals.freqs, 1000, 8)
+        val qs = parseInts(vals.qs, 150, 8)
+        val gains = parseInts(vals.gains, 0, 8)
+        val thresholds = parseInts(vals.thresholds, -300, 8)
+        val attacks = parseInts(vals.attacks, 10, 8)
+        val releases = parseInts(vals.releases, 100, 8)
+        val filterTypes = parseInts(vals.filterTypes, 0, 8)
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+        for (b in 0 until count) {
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ
+                    ), intArrayOf(b, freqs[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q
+                    ), intArrayOf(b, qs[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN
+                    ), intArrayOf(b, gains[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD
+                    ), intArrayOf(b, thresholds[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK
+                    ), intArrayOf(b, attacks[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE
+                    ), intArrayOf(b, releases[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE
+                    ), intArrayOf(b, filterTypes[b])
+                )
+            )
+        }
+        entries.add(
+            ParamEntry(
+                p(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_COUNT,
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_COUNT
+                ), intArrayOf(count)
+            )
+        )
+        entries.add(
+            ParamEntry(
+                p(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_ENABLE,
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_ENABLE
+                ), intArrayOf(if (enabled) 1 else 0)
+            )
+        )
+        viperService?.dispatchParamsBatch(entries)
+    }
+
+    fun setDynamicEqBandFreq(band: Int, value: Int) {
+        val updated = updateInt(
+            _uiState.value.dynamicEq.forType(activeDeviceType).freqs,
+            band,
+            value,
+            1000,
+            8
+        )
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(freqs = updated) }) }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_freqs", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandQ(band: Int, value: Int) {
+        val updated =
+            updateInt(_uiState.value.dynamicEq.forType(activeDeviceType).qs, band, value, 150, 8)
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(qs = updated) }) }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_qs", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandGain(band: Int, value: Int) {
+        val updated =
+            updateInt(_uiState.value.dynamicEq.forType(activeDeviceType).gains, band, value, 0, 8)
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(gains = updated) }) }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_gains", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandThreshold(band: Int, value: Int) {
+        val updated = updateInt(
+            _uiState.value.dynamicEq.forType(activeDeviceType).thresholds,
+            band,
+            value,
+            -300,
+            8
+        )
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(thresholds = updated)
+            })
+        }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_thresholds", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandAttack(band: Int, value: Int) {
+        val updated = updateInt(
+            _uiState.value.dynamicEq.forType(activeDeviceType).attacks,
+            band,
+            value,
+            10,
+            8
+        )
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(attacks = updated)
+            })
+        }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_attacks", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandRelease(band: Int, value: Int) {
+        val updated = updateInt(
+            _uiState.value.dynamicEq.forType(activeDeviceType).releases,
+            band,
+            value,
+            100,
+            8
+        )
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(releases = updated)
+            })
+        }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_releases", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun setDynamicEqBandFilterType(band: Int, value: Int) {
+        val updated = updateInt(
+            _uiState.value.dynamicEq.forType(activeDeviceType).filterTypes,
+            band,
+            value,
+            0,
+            8
+        )
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(filterTypes = updated)
+            })
+        }
+        viewModelScope.launch { repository.setStringPreference("dynamic_eq_filter_types", updated) }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE
+        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+    }
+
+    fun addDynamicEqBand() {
+        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        val count = vals.bandCount
+        if (count >= 8) return
+        val freqs = parseInts(vals.freqs, 1000, 8)
+        val newFreq = if (count == 0) 1000 else (freqs[count - 1] * 2).coerceAtMost(20000)
+        val updatedFreqs = updateInt(vals.freqs, count, newFreq, 1000, 8)
+        val updatedQs = updateInt(vals.qs, count, 150, 150, 8)
+        val updatedGains = updateInt(vals.gains, count, 0, 0, 8)
+        val updatedThresholds = updateInt(vals.thresholds, count, -300, -300, 8)
+        val updatedAttacks = updateInt(vals.attacks, count, 10, 10, 8)
+        val updatedReleases = updateInt(vals.releases, count, 100, 100, 8)
+        val updatedFilterTypes = updateInt(vals.filterTypes, count, 0, 0, 8)
+        val newCount = count + 1
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(
+                    bandCount = newCount,
+                    freqs = updatedFreqs,
+                    qs = updatedQs,
+                    gains = updatedGains,
+                    thresholds = updatedThresholds,
+                    attacks = updatedAttacks,
+                    releases = updatedReleases,
+                    filterTypes = updatedFilterTypes
+                )
+            })
+        }
+        viewModelScope.launch {
+            repository.setIntPreference("dynamic_eq_band_count", newCount)
+            repository.setStringPreference("dynamic_eq_freqs", updatedFreqs)
+            repository.setStringPreference("dynamic_eq_qs", updatedQs)
+            repository.setStringPreference("dynamic_eq_gains", updatedGains)
+            repository.setStringPreference("dynamic_eq_thresholds", updatedThresholds)
+            repository.setStringPreference("dynamic_eq_attacks", updatedAttacks)
+            repository.setStringPreference("dynamic_eq_releases", updatedReleases)
+            repository.setStringPreference("dynamic_eq_filter_types", updatedFilterTypes)
+        }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+        val entries = mutableListOf<ParamEntry>()
+        val fList = parseInts(updatedFreqs, 1000, 8)
+        val qList = parseInts(updatedQs, 150, 8)
+        val gList = parseInts(updatedGains, 0, 8)
+        val tList = parseInts(updatedThresholds, -300, 8)
+        val aList = parseInts(updatedAttacks, 10, 8)
+        val rList = parseInts(updatedReleases, 100, 8)
+        val ftList = parseInts(updatedFilterTypes, 0, 8)
+        for (b in 0 until newCount) {
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ
+                    ), intArrayOf(b, fList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q
+                    ), intArrayOf(b, qList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN
+                    ), intArrayOf(b, gList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD
+                    ), intArrayOf(b, tList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK
+                    ), intArrayOf(b, aList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE
+                    ), intArrayOf(b, rList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE
+                    ), intArrayOf(b, ftList[b])
+                )
+            )
+        }
+        entries.add(
+            ParamEntry(
+                p(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_COUNT,
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_COUNT
+                ), intArrayOf(newCount)
+            )
+        )
+        viperService?.dispatchParamsBatch(entries)
+    }
+
+    fun removeDynamicEqBand(index: Int) {
+        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        val count = vals.bandCount
+        if (count <= 0 || index !in 0 until count) return
+        val updatedFreqs = removeFromString(vals.freqs, index, 1000, count)
+        val updatedQs = removeFromString(vals.qs, index, 150, count)
+        val updatedGains = removeFromString(vals.gains, index, 0, count)
+        val updatedThresholds = removeFromString(vals.thresholds, index, -300, count)
+        val updatedAttacks = removeFromString(vals.attacks, index, 10, count)
+        val updatedReleases = removeFromString(vals.releases, index, 100, count)
+        val updatedFilterTypes = removeFromString(vals.filterTypes, index, 0, count)
+        val newCount = count - 1
+        _uiState.update {
+            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+                copy(
+                    bandCount = newCount,
+                    freqs = updatedFreqs,
+                    qs = updatedQs,
+                    gains = updatedGains,
+                    thresholds = updatedThresholds,
+                    attacks = updatedAttacks,
+                    releases = updatedReleases,
+                    filterTypes = updatedFilterTypes
+                )
+            })
+        }
+        viewModelScope.launch {
+            repository.setIntPreference("dynamic_eq_band_count", newCount)
+            repository.setStringPreference("dynamic_eq_freqs", updatedFreqs)
+            repository.setStringPreference("dynamic_eq_qs", updatedQs)
+            repository.setStringPreference("dynamic_eq_gains", updatedGains)
+            repository.setStringPreference("dynamic_eq_thresholds", updatedThresholds)
+            repository.setStringPreference("dynamic_eq_attacks", updatedAttacks)
+            repository.setStringPreference("dynamic_eq_releases", updatedReleases)
+            repository.setStringPreference("dynamic_eq_filter_types", updatedFilterTypes)
+        }
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+        val entries = mutableListOf<ParamEntry>()
+        val fList = parseInts(updatedFreqs, 1000, 8)
+        val qList = parseInts(updatedQs, 150, 8)
+        val gList = parseInts(updatedGains, 0, 8)
+        val tList = parseInts(updatedThresholds, -300, 8)
+        val aList = parseInts(updatedAttacks, 10, 8)
+        val rList = parseInts(updatedReleases, 100, 8)
+        val ftList = parseInts(updatedFilterTypes, 0, 8)
+        for (b in 0 until newCount) {
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ
+                    ), intArrayOf(b, fList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q
+                    ), intArrayOf(b, qList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN
+                    ), intArrayOf(b, gList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD
+                    ), intArrayOf(b, tList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK
+                    ), intArrayOf(b, aList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE
+                    ), intArrayOf(b, rList[b])
+                )
+            )
+            entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE,
+                        ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE
+                    ), intArrayOf(b, ftList[b])
+                )
+            )
+        }
+        entries.add(
+            ParamEntry(
+                p(
+                    ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_COUNT,
+                    ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_COUNT
+                ), intArrayOf(newCount)
+            )
+        )
+        viperService?.dispatchParamsBatch(entries)
     }
 
     fun setConvolverEnabled(enabled: Boolean) {
@@ -1896,9 +2371,7 @@ class MainViewModel @Inject constructor(
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
             it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) {
-                copy(
-                    enabled = enabled
-                )
+                copy(enabled = enabled)
             })
         }
         val prefKey =
@@ -1949,78 +2422,63 @@ class MainViewModel @Inject constructor(
     }
 
     fun setStereoImgLowWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
-            it.copy(
-                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowWidth = v) })
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH}"
         val param =
-            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH; saveAndDispatchInt(
-            prefKey,
-            param,
-            v
-        )
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH
+        saveAndDispatchInt(prefKey, param, v)
     }
 
     fun setStereoImgMidWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
-            it.copy(
-                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(midWidth = v) })
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(midWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH}"
         val param =
-            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH; saveAndDispatchInt(
-            prefKey,
-            param,
-            v
-        )
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH
+        saveAndDispatchInt(prefKey, param, v)
     }
 
     fun setStereoImgHighWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
-            it.copy(
-                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highWidth = v) })
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH}"
         val param =
-            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH; saveAndDispatchInt(
-            prefKey,
-            param,
-            v
-        )
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH
+        saveAndDispatchInt(prefKey, param, v)
     }
 
     fun setStereoImgLowCrossover(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
-            it.copy(
-                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowCrossover = v) })
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowCrossover = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER}"
         val param =
-            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER; saveAndDispatchInt(
-            prefKey,
-            param,
-            v
-        )
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER
+        saveAndDispatchInt(prefKey, param, v)
     }
 
     fun setStereoImgHighCrossover(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
-            it.copy(
-                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highCrossover = v) })
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highCrossover = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER}"
         val param =
-            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER; saveAndDispatchInt(
-            prefKey,
-            param,
-            v
-        )
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER
+        saveAndDispatchInt(prefKey, param, v)
     }
 
     fun setVheEnabled(enabled: Boolean) {
@@ -2358,10 +2816,9 @@ class MainViewModel @Inject constructor(
             val curPresetId = _uiState.value.dynamicSystem.forType(activeDeviceType).presetId
             if (curPresetId == presetId) {
                 _uiState.update {
-                    it.copy(
-                        dynamicSystem = it.dynamicSystem.updateType(
-                            activeDeviceType
-                        ) { copy(presetId = null) })
+                    it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+                        copy(presetId = null)
+                    })
                 }
                 repository.setIntPreference(
                     "${pfx}${ViperRepository.PERF_DYNAMIC_SYS_PRESET_ID}",
@@ -2840,10 +3297,7 @@ class MainViewModel @Inject constructor(
                 val existing = repository.getPresetByNameAndFxType(presetName, fxType)
                 if (existing != null) {
                     repository.updatePreset(
-                        existing.copy(
-                            settingsJson = json,
-                            updatedAt = System.currentTimeMillis()
-                        )
+                        existing.copy(settingsJson = json, updatedAt = System.currentTimeMillis())
                     )
                 } else {
                     repository.savePreset(
@@ -2933,13 +3387,7 @@ class MainViewModel @Inject constructor(
             val state = _uiState.value
             if (state.convolver.hp.kernel == fileName) {
                 _uiState.update {
-                    it.copy(
-                        convolver = it.convolver.copy(
-                            hp = it.convolver.hp.copy(
-                                kernel = ""
-                            )
-                        )
-                    )
+                    it.copy(convolver = it.convolver.copy(hp = it.convolver.hp.copy(kernel = "")))
                 }
                 viewModelScope.launch {
                     repository.setStringPreference(
@@ -2950,13 +3398,7 @@ class MainViewModel @Inject constructor(
             }
             if (state.convolver.spk.kernel == fileName) {
                 _uiState.update {
-                    it.copy(
-                        convolver = it.convolver.copy(
-                            spk = it.convolver.spk.copy(
-                                kernel = ""
-                            )
-                        )
-                    )
+                    it.copy(convolver = it.convolver.copy(spk = it.convolver.spk.copy(kernel = "")))
                 }
                 viewModelScope.launch {
                     repository.setStringPreference(
@@ -3307,10 +3749,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val preset = repository.getPresetById(id) ?: return@launch
             repository.updatePreset(
-                preset.copy(
-                    name = newName,
-                    updatedAt = System.currentTimeMillis()
-                )
+                preset.copy(name = newName, updatedAt = System.currentTimeMillis())
             )
             try {
                 val presetDir = getFilesDir("Preset")

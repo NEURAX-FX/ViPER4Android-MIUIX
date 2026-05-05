@@ -387,7 +387,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.bandEnables },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(bandEnables = it))) },
         getSp = { it.mbc.spk.bandEnables },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(bandEnables = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(bandEnables = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_crossovers",
         spkPrefKey = "spk_mbc_crossovers",
@@ -397,7 +398,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.crossovers },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(crossovers = it))) },
         getSp = { it.mbc.spk.crossovers },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(crossovers = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(crossovers = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_thresholds",
         spkPrefKey = "spk_mbc_thresholds",
@@ -407,7 +409,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.thresholds },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(thresholds = it))) },
         getSp = { it.mbc.spk.thresholds },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(thresholds = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(thresholds = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_ratios",
         spkPrefKey = "spk_mbc_ratios",
@@ -417,7 +420,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.ratios },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(ratios = it))) },
         getSp = { it.mbc.spk.ratios },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(ratios = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(ratios = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_gains",
         spkPrefKey = "spk_mbc_gains",
@@ -427,7 +431,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.gains },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(gains = it))) },
         getSp = { it.mbc.spk.gains },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(gains = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(gains = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_knees",
         spkPrefKey = "spk_mbc_knees",
@@ -437,7 +442,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.knees },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(knees = it))) },
         getSp = { it.mbc.spk.knees },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(knees = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(knees = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_knee_multis",
         spkPrefKey = "spk_mbc_knee_multis",
@@ -447,7 +453,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.kneeMultis },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(kneeMultis = it))) },
         getSp = { it.mbc.spk.kneeMultis },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(kneeMultis = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(kneeMultis = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_attacks",
         spkPrefKey = "spk_mbc_attacks",
@@ -457,7 +464,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.attacks },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(attacks = it))) },
         getSp = { it.mbc.spk.attacks },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(attacks = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(attacks = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_max_attacks",
         spkPrefKey = "spk_mbc_max_attacks",
@@ -467,7 +475,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.maxAttacks },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(maxAttacks = it))) },
         getSp = { it.mbc.spk.maxAttacks },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(maxAttacks = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(maxAttacks = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_releases",
         spkPrefKey = "spk_mbc_releases",
@@ -477,7 +486,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.releases },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(releases = it))) },
         getSp = { it.mbc.spk.releases },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(releases = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(releases = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_max_releases",
         spkPrefKey = "spk_mbc_max_releases",
@@ -487,7 +497,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.maxReleases },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(maxReleases = it))) },
         getSp = { it.mbc.spk.maxReleases },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(maxReleases = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(maxReleases = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_crests",
         spkPrefKey = "spk_mbc_crests",
@@ -497,7 +508,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.crests },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(crests = it))) },
         getSp = { it.mbc.spk.crests },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(crests = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(crests = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_adapts",
         spkPrefKey = "spk_mbc_adapts",
@@ -507,7 +519,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.adapts },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(adapts = it))) },
         getSp = { it.mbc.spk.adapts },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(adapts = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(adapts = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_auto_knees",
         spkPrefKey = "spk_mbc_auto_knees",
@@ -517,7 +530,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.autoKnees },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(autoKnees = it))) },
         getSp = { it.mbc.spk.autoKnees },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoKnees = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoKnees = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_auto_gains",
         spkPrefKey = "spk_mbc_auto_gains",
@@ -527,7 +541,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.autoGains },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(autoGains = it))) },
         getSp = { it.mbc.spk.autoGains },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoGains = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoGains = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_auto_attacks",
         spkPrefKey = "spk_mbc_auto_attacks",
@@ -537,7 +552,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.autoAttacks },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(autoAttacks = it))) },
         getSp = { it.mbc.spk.autoAttacks },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoAttacks = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoAttacks = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_auto_releases",
         spkPrefKey = "spk_mbc_auto_releases",
@@ -547,7 +563,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.autoReleases },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(autoReleases = it))) },
         getSp = { it.mbc.spk.autoReleases },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoReleases = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(autoReleases = it))) }
+    ),
     StringPref(
         hpPrefKey = "mbc_no_clips",
         spkPrefKey = "spk_mbc_no_clips",
@@ -557,7 +574,8 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         getHp = { it.mbc.hp.noClips },
         setHp = { copy(mbc = mbc.copy(hp = mbc.hp.copy(noClips = it))) },
         getSp = { it.mbc.spk.noClips },
-        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(noClips = it))) }),
+        setSp = { copy(mbc = mbc.copy(spk = mbc.spk.copy(noClips = it))) }
+    ),
 
     // DDC
     BoolPref(
@@ -658,6 +676,107 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         setHp = { copy(eq = eq.copy(hp = eq.hp.copy(presetId = it))) },
         getSp = { it.eq.spk.presetId },
         setSp = { copy(eq = eq.copy(spk = eq.spk.copy(presetId = it))) }
+    ),
+
+    // Dynamic EQ
+    BoolPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_DYNAMIC_EQ_ENABLE}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_DYNAMIC_EQ_ENABLE}",
+        jsonKey = "dynamicEqEnabled",
+        spkJsonKey = "spkDynamicEqEnabled",
+        defaultValue = false,
+        getHp = { it.dynamicEq.hp.enabled },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(enabled = it))) },
+        getSp = { it.dynamicEq.spk.enabled },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(enabled = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "dynamic_eq_band_count",
+        spkPrefKey = "spk_dynamic_eq_band_count",
+        jsonKey = "dynamicEqBandCount",
+        spkJsonKey = "spkDynamicEqBandCount",
+        defaultValue = 3,
+        getHp = { it.dynamicEq.hp.bandCount },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(bandCount = it))) },
+        getSp = { it.dynamicEq.spk.bandCount },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(bandCount = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_freqs",
+        spkPrefKey = "spk_dynamic_eq_freqs",
+        jsonKey = "dynamicEqFreqs",
+        spkJsonKey = "spkDynamicEqFreqs",
+        defaultValue = "60;150;400;1000;2500;5000;8000;12000",
+        getHp = { it.dynamicEq.hp.freqs },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(freqs = it))) },
+        getSp = { it.dynamicEq.spk.freqs },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(freqs = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_qs",
+        spkPrefKey = "spk_dynamic_eq_qs",
+        jsonKey = "dynamicEqQs",
+        spkJsonKey = "spkDynamicEqQs",
+        defaultValue = "100;100;150;150;150;200;200;200",
+        getHp = { it.dynamicEq.hp.qs },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(qs = it))) },
+        getSp = { it.dynamicEq.spk.qs },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(qs = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_gains",
+        spkPrefKey = "spk_dynamic_eq_gains",
+        jsonKey = "dynamicEqGains",
+        spkJsonKey = "spkDynamicEqGains",
+        defaultValue = "0;0;0;0;0;0;0;0",
+        getHp = { it.dynamicEq.hp.gains },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(gains = it))) },
+        getSp = { it.dynamicEq.spk.gains },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(gains = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_thresholds",
+        spkPrefKey = "spk_dynamic_eq_thresholds",
+        jsonKey = "dynamicEqThresholds",
+        spkJsonKey = "spkDynamicEqThresholds",
+        defaultValue = "-300;-300;-250;-250;-200;-200;-200;-200",
+        getHp = { it.dynamicEq.hp.thresholds },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(thresholds = it))) },
+        getSp = { it.dynamicEq.spk.thresholds },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(thresholds = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_attacks",
+        spkPrefKey = "spk_dynamic_eq_attacks",
+        jsonKey = "dynamicEqAttacks",
+        spkJsonKey = "spkDynamicEqAttacks",
+        defaultValue = "10;10;10;10;10;10;10;10",
+        getHp = { it.dynamicEq.hp.attacks },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(attacks = it))) },
+        getSp = { it.dynamicEq.spk.attacks },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(attacks = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_releases",
+        spkPrefKey = "spk_dynamic_eq_releases",
+        jsonKey = "dynamicEqReleases",
+        spkJsonKey = "spkDynamicEqReleases",
+        defaultValue = "100;100;100;100;100;100;100;100",
+        getHp = { it.dynamicEq.hp.releases },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(releases = it))) },
+        getSp = { it.dynamicEq.spk.releases },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(releases = it))) }
+    ),
+    StringPref(
+        hpPrefKey = "dynamic_eq_filter_types",
+        spkPrefKey = "spk_dynamic_eq_filter_types",
+        jsonKey = "dynamicEqFilterTypes",
+        spkJsonKey = "spkDynamicEqFilterTypes",
+        defaultValue = "0;0;0;0;0;0;0;0",
+        getHp = { it.dynamicEq.hp.filterTypes },
+        setHp = { copy(dynamicEq = dynamicEq.copy(hp = dynamicEq.hp.copy(filterTypes = it))) },
+        getSp = { it.dynamicEq.spk.filterTypes },
+        setSp = { copy(dynamicEq = dynamicEq.copy(spk = dynamicEq.spk.copy(filterTypes = it))) }
     ),
 
     // Convolver

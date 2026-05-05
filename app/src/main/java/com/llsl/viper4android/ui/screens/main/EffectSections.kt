@@ -1,6 +1,9 @@
 package com.llsl.viper4android.ui.screens.main
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.HealthAndSafety
 import androidx.compose.material.icons.filled.Hearing
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.RestartAlt
@@ -33,6 +37,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -43,6 +48,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -311,7 +317,6 @@ fun FetCompressorSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
     }
 }
 
-//@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MultibandCompressorSection(
     state: MainUiState,
@@ -686,6 +691,185 @@ fun EqualizerSection(state: MainUiState, viewModel: MainViewModel, isSpkMode: Bo
                 onReset = onReset,
                 onDismiss = { showEqDialog = false },
                 bandCount = bandCount
+            )
+        }
+    }
+}
+
+@Composable
+fun DynamicEqSection(state: MainUiState, viewModel: MainViewModel, isSpkMode: Boolean = false) {
+    val fxType = if (isSpkMode) ViperParams.FX_TYPE_SPEAKER else ViperParams.FX_TYPE_HEADPHONE
+    val dynVals = state.dynamicEq.forType(fxType)
+    val enabled = dynVals.enabled
+    val onEnabledChange = viewModel::setDynamicEqEnabled
+    val bandCount = dynVals.bandCount
+
+    fun parseInts(s: String, def: Int) = s.split(";").map { it.toIntOrNull() ?: def }
+
+    val freqs = parseInts(dynVals.freqs, 1000).take(bandCount)
+    val qs = parseInts(dynVals.qs, 150).take(bandCount)
+    val gains = parseInts(dynVals.gains, 0).take(bandCount)
+    val thresholds = parseInts(dynVals.thresholds, -300).take(bandCount)
+    val attacks = parseInts(dynVals.attacks, 10).take(bandCount)
+    val releases = parseInts(dynVals.releases, 100).take(bandCount)
+    val filterTypes = parseInts(dynVals.filterTypes, 0).take(bandCount)
+
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val safeTab = if (bandCount > 0) selectedTab.coerceIn(0, bandCount - 1) else 0
+    var deleteBandIndex by remember { mutableIntStateOf(-1) }
+
+    fun formatFreq(hz: Int): String = when {
+        hz >= 1000 -> "${hz / 1000}kHz"
+        else -> "${hz}Hz"
+    }
+
+    if (deleteBandIndex >= 0) {
+        AlertDialog(
+            onDismissRequest = { deleteBandIndex = -1 },
+            title = { Text(stringResource(R.string.dialog_delete_band)) },
+            text = { Text("Remove ${formatFreq(freqs.getOrElse(deleteBandIndex) { 1000 })} band?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val i = deleteBandIndex
+                    deleteBandIndex = -1
+                    viewModel.removeDynamicEqBand(i)
+                    if (selectedTab >= bandCount - 1) selectedTab = maxOf(0, bandCount - 2)
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    deleteBandIndex = -1
+                }) { Text(stringResource(R.string.action_cancel)) }
+            }
+        )
+    }
+
+    EffectSection(
+        title = stringResource(R.string.section_dynamic_eq),
+        enabled = enabled,
+        onEnabledChange = onEnabledChange,
+        icon = Icons.Default.Insights
+    ) {
+        PrimaryScrollableTabRow(
+            selectedTabIndex = safeTab,
+            edgePadding = 0.dp
+        ) {
+            for (i in 0 until bandCount) {
+                val isSelected = safeTab == i
+                val color =
+                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .combinedClickable(
+                            onClick = { selectedTab = i },
+                            onLongClick = { if (bandCount > 1) deleteBandIndex = i }
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = formatFreq(freqs.getOrElse(i) { 1000 }),
+                        color = color,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
+            if (bandCount < 8) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .clickable {
+                            viewModel.addDynamicEqBand()
+                            selectedTab = bandCount
+                        }
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        if (bandCount > 0) {
+            val freq = freqs.getOrElse(safeTab) { 1000 }
+            val q = qs.getOrElse(safeTab) { 150 }
+            val gain = gains.getOrElse(safeTab) { 0 }
+            val threshold = thresholds.getOrElse(safeTab) { -300 }
+            val attack = attacks.getOrElse(safeTab) { 10 }
+            val release = releases.getOrElse(safeTab) { 100 }
+            val filterType = filterTypes.getOrElse(safeTab) { 0 }.coerceIn(0, 2)
+
+            val minFreq =
+                if (safeTab > 0) (freqs.getOrElse(safeTab - 1) { 20 } + 5).toFloat() else 20f
+            val maxFreq =
+                if (safeTab < bandCount - 1) (freqs.getOrElse(safeTab + 1) { 20000 } - 5).toFloat() else 20000f
+
+            val onFreqChange: (Int) -> Unit = { viewModel.setDynamicEqBandFreq(safeTab, it) }
+            val onQChange: (Int) -> Unit = { viewModel.setDynamicEqBandQ(safeTab, it) }
+            val onGainChange: (Int) -> Unit = { viewModel.setDynamicEqBandGain(safeTab, it) }
+            val onThresholdChange: (Int) -> Unit =
+                { viewModel.setDynamicEqBandThreshold(safeTab, it) }
+            val onAttackChange: (Int) -> Unit = { viewModel.setDynamicEqBandAttack(safeTab, it) }
+            val onReleaseChange: (Int) -> Unit = { viewModel.setDynamicEqBandRelease(safeTab, it) }
+            val onFilterTypeChange: (Int) -> Unit =
+                { viewModel.setDynamicEqBandFilterType(safeTab, it) }
+
+            LabeledSlider(
+                label = stringResource(R.string.label_frequency),
+                value = freq.toFloat(),
+                onValueChange = { onFreqChange(it.roundToInt()) },
+                valueRange = minFreq..maxFreq,
+                steps = ((maxFreq - minFreq) / 5f).toInt().coerceAtLeast(1) - 1,
+                valueLabel = "$freq Hz"
+            )
+            LabeledSlider(
+                label = stringResource(R.string.label_q_factor),
+                value = q.toFloat(),
+                onValueChange = { onQChange(it.roundToInt()) },
+                valueRange = 50f..800f,
+                valueLabel = String.format(Locale.US, "%.1f", q / 100f)
+            )
+            LabeledSlider(
+                label = stringResource(R.string.label_target_gain),
+                value = gain.toFloat(),
+                onValueChange = { onGainChange(it.roundToInt()) },
+                valueRange = -120f..120f,
+                valueLabel = String.format(Locale.US, "%.1f dB", gain / 10f)
+            )
+            LabeledSlider(
+                label = stringResource(R.string.label_threshold),
+                value = threshold.toFloat(),
+                onValueChange = { onThresholdChange(it.roundToInt()) },
+                valueRange = -800f..0f,
+                valueLabel = "${threshold / 10} dB"
+            )
+            LabeledSlider(
+                label = stringResource(R.string.label_attack),
+                value = attack.toFloat(),
+                onValueChange = { onAttackChange(it.roundToInt()) },
+                valueRange = 1f..100f,
+                valueLabel = "$attack ms"
+            )
+            LabeledSlider(
+                label = stringResource(R.string.label_release),
+                value = release.toFloat(),
+                onValueChange = { onReleaseChange(it.roundToInt()) },
+                valueRange = 10f..500f,
+                valueLabel = "$release ms"
+            )
+            val filterTypeNames = listOf(
+                stringResource(R.string.filter_peak),
+                stringResource(R.string.filter_low_shelf),
+                stringResource(R.string.filter_high_shelf)
+            )
+            LabeledDropdown(
+                label = stringResource(R.string.label_filter_type),
+                selectedValue = filterTypeNames[filterType],
+                options = filterTypeNames,
+                onOptionSelected = { index, _ -> onFilterTypeChange(index) }
             )
         }
     }

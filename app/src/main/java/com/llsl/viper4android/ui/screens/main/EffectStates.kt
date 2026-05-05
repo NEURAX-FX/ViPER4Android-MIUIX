@@ -163,6 +163,30 @@ data class EqState(
         else copy(hp = hp.transform())
 }
 
+data class DynamicValues(
+    val enabled: Boolean = false,
+    val bandCount: Int = 3,
+    val freqs: String = "60;150;400;1000;2500;5000;8000;12000",
+    val qs: String = "100;100;150;150;150;200;200;200",
+    val gains: String = "0;0;0;0;0;0;0;0",
+    val thresholds: String = "-300;-300;-250;-250;-200;-200;-200;-200",
+    val attacks: String = "10;10;10;10;10;10;10;10",
+    val releases: String = "100;100;100;100;100;100;100;100",
+    val filterTypes: String = "0;0;0;0;0;0;0;0"
+)
+
+data class DynamicEqState(
+    val hp: DynamicValues = DynamicValues(),
+    val spk: DynamicValues = DynamicValues()
+) {
+    fun forType(fxType: Int): DynamicValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(fxType: Int, transform: DynamicValues.() -> DynamicValues): DynamicEqState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
 data class ConvolverValues(
     val enabled: Boolean = false,
     val kernel: String = "",
