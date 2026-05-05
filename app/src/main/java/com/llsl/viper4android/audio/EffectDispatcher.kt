@@ -595,6 +595,32 @@ object EffectDispatcher {
             state.diffSurround.hp.lpCutoff
         )
 
+        // Stereo Imager
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE,
+            if (state.stereoImg.hp.enabled) 1 else 0
+        )
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH,
+            state.stereoImg.hp.lowWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH,
+            state.stereoImg.hp.midWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH,
+            state.stereoImg.hp.highWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER,
+            state.stereoImg.hp.lowCrossover
+        )
+        effect.setParameter(
+            ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER,
+            state.stereoImg.hp.highCrossover
+        )
+
         // Headphone Surround
         effect.setParameter(
             ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE,
@@ -947,6 +973,32 @@ object EffectDispatcher {
         effect.setParameter(
             ViperParams.PARAM_SPK_DIFF_SURROUND_LP_CUTOFF,
             state.diffSurround.spk.lpCutoff
+        )
+
+        // Stereo Imager
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE,
+            if (state.stereoImg.spk.enabled) 1 else 0
+        )
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH,
+            state.stereoImg.spk.lowWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH,
+            state.stereoImg.spk.midWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH,
+            state.stereoImg.spk.highWidth
+        )
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER,
+            state.stereoImg.spk.lowCrossover
+        )
+        effect.setParameter(
+            ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER,
+            state.stereoImg.spk.highCrossover
         )
 
         // Headphone Surround

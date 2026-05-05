@@ -798,6 +798,74 @@ val EFFECT_PREFS: List<EffectPref<*>> = listOf(
         setSp = { copy(diffSurround = diffSurround.copy(spk = diffSurround.spk.copy(lpCutoff = it))) }
     ),
 
+    // Stereo Imager
+    BoolPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE}",
+        jsonKey = "stereoImgEnabled",
+        spkJsonKey = "spkStereoImgEnabled",
+        defaultValue = false,
+        getHp = { it.stereoImg.hp.enabled },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(enabled = it))) },
+        getSp = { it.stereoImg.spk.enabled },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(enabled = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH}",
+        jsonKey = "stereoImgLowWidth",
+        spkJsonKey = "spkStereoImgLowWidth",
+        defaultValue = 100,
+        getHp = { it.stereoImg.hp.lowWidth },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(lowWidth = it))) },
+        getSp = { it.stereoImg.spk.lowWidth },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(lowWidth = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH}",
+        jsonKey = "stereoImgMidWidth",
+        spkJsonKey = "spkStereoImgMidWidth",
+        defaultValue = 100,
+        getHp = { it.stereoImg.hp.midWidth },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(midWidth = it))) },
+        getSp = { it.stereoImg.spk.midWidth },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(midWidth = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH}",
+        jsonKey = "stereoImgHighWidth",
+        spkJsonKey = "spkStereoImgHighWidth",
+        defaultValue = 100,
+        getHp = { it.stereoImg.hp.highWidth },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(highWidth = it))) },
+        getSp = { it.stereoImg.spk.highWidth },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(highWidth = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER}",
+        jsonKey = "stereoImgLowCrossover",
+        spkJsonKey = "spkStereoImgLowCrossover",
+        defaultValue = 200,
+        getHp = { it.stereoImg.hp.lowCrossover },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(lowCrossover = it))) },
+        getSp = { it.stereoImg.spk.lowCrossover },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(lowCrossover = it))) }
+    ),
+    IntPref(
+        hpPrefKey = "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER}",
+        spkPrefKey = "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER}",
+        jsonKey = "stereoImgHighCrossover",
+        spkJsonKey = "spkStereoImgHighCrossover",
+        defaultValue = 4000,
+        getHp = { it.stereoImg.hp.highCrossover },
+        setHp = { copy(stereoImg = stereoImg.copy(hp = stereoImg.hp.copy(highCrossover = it))) },
+        getSp = { it.stereoImg.spk.highCrossover },
+        setSp = { copy(stereoImg = stereoImg.copy(spk = stereoImg.spk.copy(highCrossover = it))) }
+    ),
+
     // VHE (Headphone Surround)
     BoolPref(
         hpPrefKey = "${ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE}",

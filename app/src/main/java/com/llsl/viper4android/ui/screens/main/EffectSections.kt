@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.Delete
@@ -96,7 +97,7 @@ fun MasterLimiterSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
                 value = channelPan.toFloat(),
                 onValueChange = { onChannelPanChange(it.roundToInt()) },
                 valueRange = -100f..100f,
-                valueLabel = "${left}:${right}"
+                valueLabel = "$left:$right"
             )
         }
         val limDb = if (limiter > 0) 20.0 * log10(limiter / 100.0) else -99.9
@@ -409,7 +410,7 @@ fun MultibandCompressorSection(
         val highFreq =
             if (b < 4) crossovers.getOrElse(b) { crossoverDefaults.getOrElse(b) { 20000 } } else 20000
         Text(
-            text = "${lowFreq} - ${if (b < 4) "$highFreq" else "20000+"} Hz",
+            text = "$lowFreq - ${if (b < 4) "$highFreq" else "20000+"} Hz",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
@@ -618,7 +619,7 @@ fun SpectrumExtensionSection(
             value = exciter.toFloat(),
             onValueChange = { onExciterChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${exciter}%"
+            valueLabel = "$exciter%"
         )
     }
 }
@@ -815,7 +816,7 @@ fun DiffSurroundSection(state: MainUiState, viewModel: MainViewModel, isSpkMode:
             value = wetDryMix.toFloat(),
             onValueChange = { onWetDryMixChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${wetDryMix}%"
+            valueLabel = "$wetDryMix%"
         )
         LabeledSlider(
             label = stringResource(R.string.label_lp_cutoff),
@@ -823,7 +824,71 @@ fun DiffSurroundSection(state: MainUiState, viewModel: MainViewModel, isSpkMode:
             onValueChange = { onLpCutoffChange(it.roundToInt()) },
             valueRange = 0f..20000f,
             steps = 3999,
-            valueLabel = if (lpCutoff == 0) stringResource(R.string.value_off) else "${lpCutoff} Hz"
+            valueLabel = if (lpCutoff == 0) stringResource(R.string.value_off) else "$lpCutoff Hz"
+        )
+    }
+}
+
+@Composable
+fun StereoImagerSection(state: MainUiState, viewModel: MainViewModel, isSpkMode: Boolean = false) {
+    val fxType = if (isSpkMode) ViperParams.FX_TYPE_SPEAKER else ViperParams.FX_TYPE_HEADPHONE
+    val vals = state.stereoImg.forType(fxType)
+    val enabled = vals.enabled
+    val lowWidth = vals.lowWidth
+    val midWidth = vals.midWidth
+    val highWidth = vals.highWidth
+    val lowCrossover = vals.lowCrossover
+    val highCrossover = vals.highCrossover
+
+    val onEnabledChange = viewModel::setStereoImgEnabled
+    val onLowWidthChange = viewModel::setStereoImgLowWidth
+    val onMidWidthChange = viewModel::setStereoImgMidWidth
+    val onHighWidthChange = viewModel::setStereoImgHighWidth
+    val onLowCrossoverChange = viewModel::setStereoImgLowCrossover
+    val onHighCrossoverChange = viewModel::setStereoImgHighCrossover
+
+    EffectSection(
+        title = stringResource(R.string.section_stereo_imager),
+        enabled = enabled,
+        onEnabledChange = onEnabledChange,
+        icon = Icons.Default.AspectRatio
+    ) {
+        LabeledSlider(
+            label = stringResource(R.string.label_low_width),
+            value = lowWidth.toFloat(),
+            onValueChange = { onLowWidthChange(it.roundToInt()) },
+            valueRange = 0f..200f,
+            valueLabel = "$lowWidth%"
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_mid_width),
+            value = midWidth.toFloat(),
+            onValueChange = { onMidWidthChange(it.roundToInt()) },
+            valueRange = 0f..200f,
+            valueLabel = "$midWidth%"
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_high_width),
+            value = highWidth.toFloat(),
+            onValueChange = { onHighWidthChange(it.roundToInt()) },
+            valueRange = 0f..200f,
+            valueLabel = "$highWidth%"
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_low_crossover),
+            value = lowCrossover.toFloat(),
+            onValueChange = { onLowCrossoverChange(it.roundToInt()) },
+            valueRange = 80f..400f,
+            steps = 63,
+            valueLabel = "$lowCrossover Hz"
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_high_crossover),
+            value = highCrossover.toFloat(),
+            onValueChange = { onHighCrossoverChange(it.roundToInt()) },
+            valueRange = 2000f..8000f,
+            steps = 1199,
+            valueLabel = "$highCrossover Hz"
         )
     }
 }
@@ -908,14 +973,14 @@ fun ReverberationSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
             value = wet.toFloat(),
             onValueChange = { onWetChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${wet}%"
+            valueLabel = "$wet%"
         )
         LabeledSlider(
             label = stringResource(R.string.label_reverb_dry),
             value = dry.toFloat(),
             onValueChange = { onDryChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${dry}%"
+            valueLabel = "$dry%"
         )
     }
 }
@@ -1003,7 +1068,7 @@ fun DynamicSystemSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
             value = strength.toFloat(),
             onValueChange = { onStrengthChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${strength}%"
+            valueLabel = "$strength%"
         )
 
         LabeledSlider(
@@ -1047,7 +1112,7 @@ fun DynamicSystemSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
             value = sideGainLow.toFloat(),
             onValueChange = { onSideGainLowChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${sideGainLow}%"
+            valueLabel = "$sideGainLow%"
         )
 
         LabeledSlider(
@@ -1055,7 +1120,7 @@ fun DynamicSystemSection(state: MainUiState, viewModel: MainViewModel, isSpkMode
             value = sideGainHigh.toFloat(),
             onValueChange = { onSideGainHighChange(it.roundToInt()) },
             valueRange = 0f..100f,
-            valueLabel = "${sideGainHigh}%"
+            valueLabel = "$sideGainHigh%"
         )
     }
 
@@ -1317,8 +1382,8 @@ fun AnalogXSection(state: MainUiState, viewModel: MainViewModel, isSpkMode: Bool
         stringResource(R.string.analogx_mode_strong)
     )
 
-    val onEnabledChange = viewModel::setAnalogxEnabled
-    val onModeChange = viewModel::setAnalogxMode
+    val onEnabledChange = viewModel::setAnalogXEnabled
+    val onModeChange = viewModel::setAnalogXMode
 
     EffectSection(
         title = stringResource(R.string.section_analogx),

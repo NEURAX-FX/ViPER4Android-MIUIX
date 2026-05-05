@@ -1002,6 +1002,44 @@ class ViperService : LifecycleService() {
             )
         )
 
+        // Stereo Imager
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE,
+                intArrayOf(if (state.stereoImg.hp.enabled) 1 else 0)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH,
+                intArrayOf(state.stereoImg.hp.lowWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH,
+                intArrayOf(state.stereoImg.hp.midWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH,
+                intArrayOf(state.stereoImg.hp.highWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER,
+                intArrayOf(state.stereoImg.hp.lowCrossover)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER,
+                intArrayOf(state.stereoImg.hp.highCrossover)
+            )
+        )
+
         // Headphone Surround
         params.add(
             ParamEntry(
@@ -1618,6 +1656,44 @@ class ViperService : LifecycleService() {
             ParamEntry(
                 ViperParams.PARAM_SPK_DIFF_SURROUND_LP_CUTOFF,
                 intArrayOf(state.diffSurround.spk.lpCutoff)
+            )
+        )
+
+        // Stereo Imager
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE,
+                intArrayOf(if (state.stereoImg.spk.enabled) 1 else 0)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH,
+                intArrayOf(state.stereoImg.spk.lowWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH,
+                intArrayOf(state.stereoImg.spk.midWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH,
+                intArrayOf(state.stereoImg.spk.highWidth)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER,
+                intArrayOf(state.stereoImg.spk.lowCrossover)
+            )
+        )
+        params.add(
+            ParamEntry(
+                ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER,
+                intArrayOf(state.stereoImg.spk.highCrossover)
             )
         )
 

@@ -328,6 +328,7 @@ private fun EffectList(
         item { ConvolverSection(state, viewModel, isSpkMode) }
         item { FieldSurroundSection(state, viewModel, isSpkMode) }
         item { DiffSurroundSection(state, viewModel, isSpkMode) }
+        item { StereoImagerSection(state, viewModel, isSpkMode) }
         item { HeadphoneSurroundSection(state, viewModel, isSpkMode) }
         item { ReverberationSection(state, viewModel, isSpkMode) }
         item { DynamicSystemSection(state, viewModel, isSpkMode) }

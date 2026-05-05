@@ -70,6 +70,7 @@ data class MainUiState(
     val convolver: ConvolverState = ConvolverState(),
     val fieldSurround: FieldSurroundState = FieldSurroundState(),
     val diffSurround: DiffSurroundState = DiffSurroundState(),
+    val stereoImg: StereoImagerState = StereoImagerState(),
     val vhe: VheState = VheState(),
     val reverb: ReverbState = ReverbState(),
     val dynamicSystem: DynamicSystemState = DynamicSystemState(),
@@ -1891,6 +1892,137 @@ class MainViewModel @Inject constructor(
         saveAndDispatchInt(prefKey, param, v)
     }
 
+    fun setStereoImgEnabled(enabled: Boolean) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update {
+            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) {
+                copy(
+                    enabled = enabled
+                )
+            })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE}"
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
+        val vals = _uiState.value.stereoImg.forType(activeDeviceType)
+        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+        viperService?.dispatchParamsBatch(
+            listOf(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE
+                    ), intArrayOf(if (enabled) 1 else 0)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH
+                    ), intArrayOf(vals.lowWidth)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH
+                    ), intArrayOf(vals.midWidth)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH
+                    ), intArrayOf(vals.highWidth)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER
+                    ), intArrayOf(vals.lowCrossover)
+                ),
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER,
+                        ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER
+                    ), intArrayOf(vals.highCrossover)
+                )
+            )
+        )
+    }
+
+    fun setStereoImgLowWidth(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
+            it.copy(
+                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowWidth = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH; saveAndDispatchInt(
+            prefKey,
+            param,
+            v
+        )
+    }
+
+    fun setStereoImgMidWidth(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
+            it.copy(
+                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(midWidth = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH; saveAndDispatchInt(
+            prefKey,
+            param,
+            v
+        )
+    }
+
+    fun setStereoImgHighWidth(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
+            it.copy(
+                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highWidth = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH; saveAndDispatchInt(
+            prefKey,
+            param,
+            v
+        )
+    }
+
+    fun setStereoImgLowCrossover(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
+            it.copy(
+                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowCrossover = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER; saveAndDispatchInt(
+            prefKey,
+            param,
+            v
+        )
+    }
+
+    fun setStereoImgHighCrossover(v: Int) {
+        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER; _uiState.update {
+            it.copy(
+                stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highCrossover = v) })
+        }
+        val prefKey =
+            if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER}"
+        val param =
+            if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER; saveAndDispatchInt(
+            prefKey,
+            param,
+            v
+        )
+    }
+
     fun setVheEnabled(enabled: Boolean) {
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
@@ -2536,7 +2668,7 @@ class MainViewModel @Inject constructor(
         saveAndDispatchInt(prefKey, param, value)
     }
 
-    fun setAnalogxEnabled(enabled: Boolean) {
+    fun setAnalogXEnabled(enabled: Boolean) {
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "AnalogX ($mode): ${if (enabled) "ON" else "OFF"}")
@@ -2562,7 +2694,7 @@ class MainViewModel @Inject constructor(
         )
     }
 
-    fun setAnalogxMode(mode: Int) {
+    fun setAnalogXMode(mode: Int) {
         _uiState.update { it.copy(analog = it.analog.updateType(activeDeviceType) { copy(mode = mode) }) }
         val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =

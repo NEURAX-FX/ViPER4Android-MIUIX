@@ -94,6 +94,14 @@
     <string name="label_lp_cutoff">LP Cutoff</string>
     <string name="value_off">Off</string>
 
+    <!-- Stereo Imager -->
+    <string name="section_stereo_imager">Stereo Imager</string>
+    <string name="label_low_width">Low Width</string>
+    <string name="label_mid_width">Mid Width</string>
+    <string name="label_high_width">High Width</string>
+    <string name="label_low_crossover">Low Crossover</string>
+    <string name="label_high_crossover">High Crossover</string>
+
     <!-- Headphone Surround -->
     <string name="section_headphone_surround">Headphone Surround+</string>
     <string name="label_vhe_quality">Quality Level</string>

@@ -226,6 +226,30 @@ data class DiffSurroundState(
         else copy(hp = hp.transform())
 }
 
+data class StereoImagerValues(
+    val enabled: Boolean = false,
+    val lowWidth: Int = 100,
+    val midWidth: Int = 100,
+    val highWidth: Int = 100,
+    val lowCrossover: Int = 200,
+    val highCrossover: Int = 4000
+)
+
+data class StereoImagerState(
+    val hp: StereoImagerValues = StereoImagerValues(),
+    val spk: StereoImagerValues = StereoImagerValues()
+) {
+    fun forType(fxType: Int): StereoImagerValues =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) spk else hp
+
+    fun updateType(
+        fxType: Int,
+        transform: StereoImagerValues.() -> StereoImagerValues
+    ): StereoImagerState =
+        if (fxType == ViperParams.FX_TYPE_SPEAKER) copy(spk = spk.transform())
+        else copy(hp = hp.transform())
+}
+
 data class VheValues(
     val enabled: Boolean = false,
     val quality: Int = 0
