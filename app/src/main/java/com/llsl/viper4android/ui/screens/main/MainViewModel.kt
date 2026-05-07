@@ -138,6 +138,7 @@ class MainViewModel @Inject constructor(
     private var serviceBound = false
     private val audioOutputDetector = AudioOutputDetector(application)
     private var activeDeviceType: Int = ViperParams.FX_TYPE_HEADPHONE
+    private val editingFxType: Int get() = _uiState.value.fxType
     private var currentDeviceId: String = AudioDevice.ID_SPEAKER
     private var eqPresetsJob: Job? = null
     private var spkEqPresetsJob: Job? = null
@@ -537,454 +538,528 @@ class MainViewModel @Inject constructor(
     }
 
     fun setOutputVolume(value: Int) {
-        _uiState.update { it.copy(out = it.out.updateType(activeDeviceType) { copy(volume = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(out = it.out.updateType(fxType) { copy(volume = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_OUTPUT_VOLUME}" else "${ViperParams.PARAM_HP_OUTPUT_VOLUME}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_OUTPUT_VOLUME else ViperParams.PARAM_HP_OUTPUT_VOLUME
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_OUTPUT_VOLUME else ViperParams.PARAM_HP_OUTPUT_VOLUME
+            dispatchInt(param, value)
+        }
     }
 
     fun setChannelPan(value: Int) {
-        _uiState.update { it.copy(out = it.out.updateType(activeDeviceType) { copy(channelPan = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(out = it.out.updateType(fxType) { copy(channelPan = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CHANNEL_PAN}" else "${ViperParams.PARAM_HP_CHANNEL_PAN}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_CHANNEL_PAN else ViperParams.PARAM_HP_CHANNEL_PAN
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setLimiter(value: Int) {
-        _uiState.update { it.copy(out = it.out.updateType(activeDeviceType) { copy(limiter = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(out = it.out.updateType(fxType) { copy(limiter = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_LIMITER}" else "${ViperParams.PARAM_HP_LIMITER}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param = if (isSpk) ViperParams.PARAM_SPK_LIMITER else ViperParams.PARAM_HP_LIMITER
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param = if (isSpk) ViperParams.PARAM_SPK_LIMITER else ViperParams.PARAM_HP_LIMITER
+            dispatchInt(param, value)
+        }
     }
 
     fun setAgcEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "AGC ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(agc = it.agc.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(agc = it.agc.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_AGC_ENABLE}" else "${ViperParams.PARAM_HP_AGC_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.agc.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_AGC_ENABLE, ViperParams.PARAM_SPK_AGC_ENABLE),
-                    intArrayOf(if (enabled) 1 else 0)
-                ),
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_AGC_RATIO, ViperParams.PARAM_SPK_AGC_RATIO),
-                    intArrayOf(vals.strength)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_AGC_MAX_SCALER,
-                        ViperParams.PARAM_SPK_AGC_MAX_SCALER
-                    ), intArrayOf(vals.maxGain)
-                ),
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_AGC_VOLUME, ViperParams.PARAM_SPK_AGC_VOLUME),
-                    intArrayOf(vals.outputThreshold)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.agc.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_AGC_ENABLE, ViperParams.PARAM_SPK_AGC_ENABLE),
+                        intArrayOf(if (enabled) 1 else 0)
+                    ),
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_AGC_RATIO, ViperParams.PARAM_SPK_AGC_RATIO),
+                        intArrayOf(vals.strength)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_AGC_MAX_SCALER,
+                            ViperParams.PARAM_SPK_AGC_MAX_SCALER
+                        ), intArrayOf(vals.maxGain)
+                    ),
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_AGC_VOLUME, ViperParams.PARAM_SPK_AGC_VOLUME),
+                        intArrayOf(vals.outputThreshold)
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setAgcStrength(value: Int) {
-        _uiState.update { it.copy(agc = it.agc.updateType(activeDeviceType) { copy(strength = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(agc = it.agc.updateType(fxType) { copy(strength = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_AGC_RATIO}" else "${ViperParams.PARAM_HP_AGC_RATIO}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param = if (isSpk) ViperParams.PARAM_SPK_AGC_RATIO else ViperParams.PARAM_HP_AGC_RATIO
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_AGC_RATIO else ViperParams.PARAM_HP_AGC_RATIO
+            dispatchInt(param, value)
+        }
     }
 
     fun setAgcMaxGain(value: Int) {
-        _uiState.update { it.copy(agc = it.agc.updateType(activeDeviceType) { copy(maxGain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(agc = it.agc.updateType(fxType) { copy(maxGain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_AGC_MAX_SCALER}" else "${ViperParams.PARAM_HP_AGC_MAX_SCALER}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_AGC_MAX_SCALER else ViperParams.PARAM_HP_AGC_MAX_SCALER
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_AGC_MAX_SCALER else ViperParams.PARAM_HP_AGC_MAX_SCALER
+            dispatchInt(param, value)
+        }
     }
 
     fun setAgcOutputThreshold(value: Int) {
-        _uiState.update { it.copy(agc = it.agc.updateType(activeDeviceType) { copy(outputThreshold = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(agc = it.agc.updateType(fxType) { copy(outputThreshold = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_AGC_VOLUME}" else "${ViperParams.PARAM_HP_AGC_VOLUME}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param = if (isSpk) ViperParams.PARAM_SPK_AGC_VOLUME else ViperParams.PARAM_HP_AGC_VOLUME
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_AGC_VOLUME else ViperParams.PARAM_HP_AGC_VOLUME
+            dispatchInt(param, value)
+        }
     }
 
     fun setLufsEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        _uiState.update { it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(lufs = it.lufs.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_LUFS_ENABLE}" else "${ViperParams.PARAM_HP_LUFS_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.lufs.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_LUFS_ENABLE, ViperParams.PARAM_SPK_LUFS_ENABLE),
-                    intArrayOf(if (enabled) 1 else 0)
-                ),
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_LUFS_TARGET, ViperParams.PARAM_SPK_LUFS_TARGET),
-                    intArrayOf(vals.target)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_LUFS_MAX_GAIN,
-                        ViperParams.PARAM_SPK_LUFS_MAX_GAIN
-                    ), intArrayOf(vals.maxGain)
-                ),
-                ParamEntry(
-                    p(ViperParams.PARAM_HP_LUFS_SPEED, ViperParams.PARAM_SPK_LUFS_SPEED),
-                    intArrayOf(vals.speed)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.lufs.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_LUFS_ENABLE, ViperParams.PARAM_SPK_LUFS_ENABLE),
+                        intArrayOf(if (enabled) 1 else 0)
+                    ),
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_LUFS_TARGET, ViperParams.PARAM_SPK_LUFS_TARGET),
+                        intArrayOf(vals.target)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_LUFS_MAX_GAIN,
+                            ViperParams.PARAM_SPK_LUFS_MAX_GAIN
+                        ), intArrayOf(vals.maxGain)
+                    ),
+                    ParamEntry(
+                        p(ViperParams.PARAM_HP_LUFS_SPEED, ViperParams.PARAM_SPK_LUFS_SPEED),
+                        intArrayOf(vals.speed)
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setLufsTarget(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(target = v) })
+            it.copy(lufs = it.lufs.updateType(fxType) { copy(target = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_LUFS_TARGET}" else "${ViperParams.PARAM_HP_LUFS_TARGET}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_LUFS_TARGET else ViperParams.PARAM_HP_LUFS_TARGET
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setLufsMaxGain(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(maxGain = v) })
+            it.copy(lufs = it.lufs.updateType(fxType) { copy(maxGain = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_LUFS_MAX_GAIN}" else "${ViperParams.PARAM_HP_LUFS_MAX_GAIN}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_LUFS_MAX_GAIN else ViperParams.PARAM_HP_LUFS_MAX_GAIN
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setLufsSpeed(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(lufs = it.lufs.updateType(activeDeviceType) { copy(speed = v) })
+            it.copy(lufs = it.lufs.updateType(fxType) { copy(speed = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_LUFS_SPEED}" else "${ViperParams.PARAM_HP_LUFS_SPEED}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_LUFS_SPEED else ViperParams.PARAM_HP_LUFS_SPEED
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
 
     fun setFetEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "FET Compressor ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_ENABLE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.fet.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_ENABLE
-                    ), intArrayOf(if (enabled) 100 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD
-                    ), intArrayOf(EffectDispatcher.fetThresholdToRaw(vals.threshold))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_RATIO,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_RATIO
-                    ), intArrayOf(vals.ratio)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_KNEE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_KNEE
-                    ), intArrayOf(if (vals.autoKnee) 100 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE
-                    ), intArrayOf(EffectDispatcher.fetKneeToRaw(vals.knee))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE_MULTI,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE_MULTI
-                    ), intArrayOf(vals.kneeMulti)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_GAIN,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_GAIN
-                    ), intArrayOf(if (vals.autoGain) 100 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN
-                    ), intArrayOf(EffectDispatcher.fetGainToRaw(vals.gain))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_ATTACK,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_ATTACK
-                    ), intArrayOf(if (vals.autoAttack) 100 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK
-                    ), intArrayOf(EffectDispatcher.fetAttackMsToRaw(vals.attack))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK
-                    ), intArrayOf(EffectDispatcher.fetAttackMsToRaw(vals.maxAttack))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_RELEASE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_RELEASE
-                    ), intArrayOf(if (vals.autoRelease) 100 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE
-                    ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.release))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE
-                    ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.maxRelease))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_CREST,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST
-                    ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.crest))
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_ADAPT,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_ADAPT
-                    ), intArrayOf(vals.adapt)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_FET_COMPRESSOR_NO_CLIP,
-                        ViperParams.PARAM_SPK_FET_COMPRESSOR_NO_CLIP
-                    ), intArrayOf(if (vals.noClip) 100 else 0)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.fet.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_ENABLE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_ENABLE
+                        ), intArrayOf(if (enabled) 100 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD
+                        ), intArrayOf(EffectDispatcher.fetThresholdToRaw(vals.threshold))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_RATIO,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_RATIO
+                        ), intArrayOf(vals.ratio)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_KNEE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_KNEE
+                        ), intArrayOf(if (vals.autoKnee) 100 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE
+                        ), intArrayOf(EffectDispatcher.fetKneeToRaw(vals.knee))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE_MULTI,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE_MULTI
+                        ), intArrayOf(vals.kneeMulti)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_GAIN,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_GAIN
+                        ), intArrayOf(if (vals.autoGain) 100 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN
+                        ), intArrayOf(EffectDispatcher.fetGainToRaw(vals.gain))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_ATTACK,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_ATTACK
+                        ), intArrayOf(if (vals.autoAttack) 100 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK
+                        ), intArrayOf(EffectDispatcher.fetAttackMsToRaw(vals.attack))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK
+                        ), intArrayOf(EffectDispatcher.fetAttackMsToRaw(vals.maxAttack))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_RELEASE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_RELEASE
+                        ), intArrayOf(if (vals.autoRelease) 100 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE
+                        ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.release))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE
+                        ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.maxRelease))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_CREST,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST
+                        ), intArrayOf(EffectDispatcher.fetReleaseMsToRaw(vals.crest))
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_ADAPT,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_ADAPT
+                        ), intArrayOf(vals.adapt)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_FET_COMPRESSOR_NO_CLIP,
+                            ViperParams.PARAM_SPK_FET_COMPRESSOR_NO_CLIP
+                        ), intArrayOf(if (vals.noClip) 100 else 0)
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setFetThreshold(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(threshold = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(threshold = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD else ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetThresholdToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_THRESHOLD else ViperParams.PARAM_HP_FET_COMPRESSOR_THRESHOLD
+            dispatchInt(param, EffectDispatcher.fetThresholdToRaw(value))
+        }
     }
 
     fun setFetRatio(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(ratio = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(ratio = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_RATIO}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_RATIO}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_RATIO else ViperParams.PARAM_HP_FET_COMPRESSOR_RATIO
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setFetAutoKnee(value: Boolean) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(autoKnee = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(autoKnee = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_KNEE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_KNEE}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_KNEE else ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_KNEE
-        saveAndDispatchFetBool(prefKey, param, value)
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, if (value) 100 else 0)
     }
 
     fun setFetKnee(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(knee = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(knee = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE else ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetKneeToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE else ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE
+            dispatchInt(param, EffectDispatcher.fetKneeToRaw(value))
+        }
     }
 
     fun setFetKneeMulti(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(kneeMulti = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(kneeMulti = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE_MULTI}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE_MULTI}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_KNEE_MULTI else ViperParams.PARAM_HP_FET_COMPRESSOR_KNEE_MULTI
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setFetAutoGain(value: Boolean) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(autoGain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(autoGain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_GAIN}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_GAIN}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_GAIN else ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_GAIN
-        saveAndDispatchFetBool(prefKey, param, value)
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, if (value) 100 else 0)
     }
 
     fun setFetGain(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(gain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(gain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN else ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetGainToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_GAIN else ViperParams.PARAM_HP_FET_COMPRESSOR_GAIN
+            dispatchInt(param, EffectDispatcher.fetGainToRaw(value))
+        }
     }
 
     fun setFetAutoAttack(value: Boolean) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(autoAttack = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(autoAttack = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_ATTACK}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_ATTACK}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_ATTACK else ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_ATTACK
-        saveAndDispatchFetBool(prefKey, param, value)
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, if (value) 100 else 0)
     }
 
     fun setFetAttack(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(attack = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(attack = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK else ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetAttackMsToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_ATTACK else ViperParams.PARAM_HP_FET_COMPRESSOR_ATTACK
+            dispatchInt(param, EffectDispatcher.fetAttackMsToRaw(value))
+        }
     }
 
     fun setFetMaxAttack(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(maxAttack = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(maxAttack = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK else ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetAttackMsToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_ATTACK else ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_ATTACK
+            dispatchInt(param, EffectDispatcher.fetAttackMsToRaw(value))
+        }
     }
 
     fun setFetAutoRelease(value: Boolean) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(autoRelease = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(autoRelease = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_RELEASE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_RELEASE}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_AUTO_RELEASE else ViperParams.PARAM_HP_FET_COMPRESSOR_AUTO_RELEASE
-        saveAndDispatchFetBool(prefKey, param, value)
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, if (value) 100 else 0)
     }
 
     fun setFetRelease(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(release = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(release = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE else ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_RELEASE else ViperParams.PARAM_HP_FET_COMPRESSOR_RELEASE
+            dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        }
     }
 
     fun setFetMaxRelease(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(maxRelease = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(maxRelease = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE else ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_MAX_RELEASE else ViperParams.PARAM_HP_FET_COMPRESSOR_MAX_RELEASE
+            dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        }
     }
 
     fun setFetCrest(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(crest = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(crest = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_CREST}"
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST else ViperParams.PARAM_HP_FET_COMPRESSOR_CREST
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_CREST else ViperParams.PARAM_HP_FET_COMPRESSOR_CREST
+            dispatchInt(param, EffectDispatcher.fetReleaseMsToRaw(value))
+        }
     }
 
     fun setFetAdapt(value: Int) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(adapt = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(adapt = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_ADAPT}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_ADAPT}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_ADAPT else ViperParams.PARAM_HP_FET_COMPRESSOR_ADAPT
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setFetNoClip(value: Boolean) {
-        _uiState.update { it.copy(fet = it.fet.updateType(activeDeviceType) { copy(noClip = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(fet = it.fet.updateType(fxType) { copy(noClip = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_FET_COMPRESSOR_NO_CLIP}" else "${ViperParams.PARAM_HP_FET_COMPRESSOR_NO_CLIP}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_FET_COMPRESSOR_NO_CLIP else ViperParams.PARAM_HP_FET_COMPRESSOR_NO_CLIP
-        saveAndDispatchFetBool(prefKey, param, value)
+        viewModelScope.launch { repository.setBooleanPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, if (value) 100 else 0)
     }
 
     private fun removeFromString(s: String, index: Int, default: Int, count: Int): String {
@@ -994,197 +1069,207 @@ class MainViewModel @Inject constructor(
     }
 
     private fun isMbcBandEnabled(band: Int): Boolean =
-        parseBools(_uiState.value.mbc.forType(activeDeviceType).bandEnables).getOrElse(band) { true }
+        parseBools(_uiState.value.mbc.forType(editingFxType).bandEnables).getOrElse(band) { true }
 
     fun setMbcEnabled(enabled: Boolean) {
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(enabled = enabled) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(enabled = enabled) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_MULTIBAND_COMP_ENABLE}" else "${ViperParams.PARAM_HP_MULTIBAND_COMP_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.mbc.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        val entries = mutableListOf<ParamEntry>()
-        entries.add(
-            ParamEntry(
-                p(
-                    ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_COUNT,
-                    ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_COUNT
-                ), intArrayOf(5)
-            )
-        )
-        val crossovers = parseInts(vals.crossovers, 0, listOf(120, 500, 4000, 8000))
-        for (i in crossovers.indices) entries.add(
-            ParamEntry(
-                p(
-                    ViperParams.PARAM_HP_MULTIBAND_COMP_CROSSOVER_FREQ,
-                    ViperParams.PARAM_SPK_MULTIBAND_COMP_CROSSOVER_FREQ
-                ), intArrayOf(i, crossovers[i])
-            )
-        )
-        val bandEnables = parseBools(vals.bandEnables, count = 5)
-        val thresholds = parseInts(vals.thresholds, -18, 5)
-        val ratios = parseInts(vals.ratios, 50, 5)
-        val gains = parseInts(vals.gains, 24, 5)
-        val attacks = parseInts(vals.attacks, 1, 5)
-        val releases = parseInts(vals.releases, 100, 5)
-        val knees = parseInts(vals.knees, 0, 5)
-        val autoGains = parseBools(vals.autoGains, count = 5)
-        val autoAttacks = parseBools(vals.autoAttacks, count = 5)
-        val autoReleases = parseBools(vals.autoReleases, count = 5)
-        for (b in 0..4) {
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.mbc.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            val entries = mutableListOf<ParamEntry>()
             entries.add(
                 ParamEntry(
                     p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ENABLE,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ENABLE
-                    ), intArrayOf(b, if (bandEnables[b]) 100 else 0)
+                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_COUNT,
+                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_COUNT
+                    ), intArrayOf(5)
                 )
             )
+            val crossovers = parseInts(vals.crossovers, 0, listOf(120, 500, 4000, 8000))
+            for (i in crossovers.indices) entries.add(
+                ParamEntry(
+                    p(
+                        ViperParams.PARAM_HP_MULTIBAND_COMP_CROSSOVER_FREQ,
+                        ViperParams.PARAM_SPK_MULTIBAND_COMP_CROSSOVER_FREQ
+                    ), intArrayOf(i, crossovers[i])
+                )
+            )
+            val bandEnables = parseBools(vals.bandEnables, count = 5)
+            val thresholds = parseInts(vals.thresholds, -18, 5)
+            val ratios = parseInts(vals.ratios, 50, 5)
+            val gains = parseInts(vals.gains, 24, 5)
+            val attacks = parseInts(vals.attacks, 1, 5)
+            val releases = parseInts(vals.releases, 100, 5)
+            val knees = parseInts(vals.knees, 0, 5)
+            val autoGains = parseBools(vals.autoGains, count = 5)
+            val autoAttacks = parseBools(vals.autoAttacks, count = 5)
+            val autoReleases = parseBools(vals.autoReleases, count = 5)
+            for (b in 0..4) {
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ENABLE,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ENABLE
+                        ), intArrayOf(b, if (bandEnables[b]) 100 else 0)
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_THRESHOLD,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_THRESHOLD
+                        ), intArrayOf(b, EffectDispatcher.fetThresholdToRaw(thresholds[b]))
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RATIO,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RATIO
+                        ), intArrayOf(b, ratios[b])
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_GAIN,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_GAIN
+                        ), intArrayOf(b, EffectDispatcher.fetGainToRaw(gains[b]))
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ATTACK,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ATTACK
+                        ), intArrayOf(b, EffectDispatcher.fetAttackMsToRaw(attacks[b]))
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RELEASE,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RELEASE
+                        ), intArrayOf(b, EffectDispatcher.fetReleaseMsToRaw(releases[b]))
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_KNEE,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_KNEE
+                        ), intArrayOf(b, EffectDispatcher.fetKneeToRaw(knees[b]))
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_GAIN,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_GAIN
+                        ), intArrayOf(b, if (autoGains[b]) 100 else 0)
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_ATTACK,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_ATTACK
+                        ), intArrayOf(b, if (autoAttacks[b]) 100 else 0)
+                    )
+                )
+                entries.add(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_RELEASE,
+                            ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_RELEASE
+                        ), intArrayOf(b, if (autoReleases[b]) 100 else 0)
+                    )
+                )
+            }
             entries.add(
                 ParamEntry(
                     p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_THRESHOLD,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_THRESHOLD
-                    ), intArrayOf(b, EffectDispatcher.fetThresholdToRaw(thresholds[b]))
+                        ViperParams.PARAM_HP_MULTIBAND_COMP_ENABLE,
+                        ViperParams.PARAM_SPK_MULTIBAND_COMP_ENABLE
+                    ), intArrayOf(if (enabled) 1 else 0)
                 )
             )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RATIO,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RATIO
-                    ), intArrayOf(b, ratios[b])
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_GAIN,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_GAIN
-                    ), intArrayOf(b, EffectDispatcher.fetGainToRaw(gains[b]))
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ATTACK,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ATTACK
-                    ), intArrayOf(b, EffectDispatcher.fetAttackMsToRaw(attacks[b]))
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RELEASE,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RELEASE
-                    ), intArrayOf(b, EffectDispatcher.fetReleaseMsToRaw(releases[b]))
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_KNEE,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_KNEE
-                    ), intArrayOf(b, EffectDispatcher.fetKneeToRaw(knees[b]))
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_GAIN,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_GAIN
-                    ), intArrayOf(b, if (autoGains[b]) 100 else 0)
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_ATTACK,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_ATTACK
-                    ), intArrayOf(b, if (autoAttacks[b]) 100 else 0)
-                )
-            )
-            entries.add(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_RELEASE,
-                        ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_RELEASE
-                    ), intArrayOf(b, if (autoReleases[b]) 100 else 0)
-                )
-            )
+            viperService?.dispatchParamsBatch(entries)
         }
-        entries.add(
-            ParamEntry(
-                p(
-                    ViperParams.PARAM_HP_MULTIBAND_COMP_ENABLE,
-                    ViperParams.PARAM_SPK_MULTIBAND_COMP_ENABLE
-                ), intArrayOf(if (enabled) 1 else 0)
-            )
-        )
-        viperService?.dispatchParamsBatch(entries)
     }
 
     fun setMbcBandEnable(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated = updateBool(
-            _uiState.value.mbc.forType(activeDeviceType).bandEnables,
+            _uiState.value.mbc.forType(fxType).bandEnables,
             band,
             value,
             count = 5
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(bandEnables = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(bandEnables = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_band_enables" else "mbc_band_enables",
                 updated
             )
         }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ENABLE else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ENABLE
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    param,
-                    intArrayOf(band, if (value) 100 else 0)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ENABLE else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ENABLE
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        param,
+                        intArrayOf(band, if (value) 100 else 0)
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setMbcCrossover(index: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.mbc.forType(activeDeviceType).crossovers,
+            _uiState.value.mbc.forType(fxType).crossovers,
             index,
             value,
             0,
             listOf(120, 500, 4000, 8000)
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(crossovers = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(crossovers = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_crossovers" else "mbc_crossovers",
                 updated
             )
         }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_CROSSOVER_FREQ else ViperParams.PARAM_HP_MULTIBAND_COMP_CROSSOVER_FREQ
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(index, value))))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_CROSSOVER_FREQ else ViperParams.PARAM_HP_MULTIBAND_COMP_CROSSOVER_FREQ
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(index, value))))
+        }
     }
 
     fun setMbcBandThreshold(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).thresholds, band, value, -18, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(thresholds = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).thresholds, band, value, -18, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(thresholds = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_thresholds" else "mbc_thresholds",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_THRESHOLD else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_THRESHOLD
             viperService?.dispatchParamsBatch(
@@ -1199,17 +1284,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandRatio(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).ratios, band, value, 50, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(ratios = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).ratios, band, value, 50, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(ratios = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_ratios" else "mbc_ratios",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RATIO else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RATIO
             viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
@@ -1217,17 +1303,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandGain(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).gains, band, value, 24, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(gains = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).gains, band, value, 24, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(gains = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_gains" else "mbc_gains",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_GAIN else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_GAIN
             viperService?.dispatchParamsBatch(
@@ -1242,17 +1329,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandKnee(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).knees, band, value, 0, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(knees = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).knees, band, value, 0, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(knees = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_knees" else "mbc_knees",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_KNEE else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_KNEE
             viperService?.dispatchParamsBatch(
@@ -1267,10 +1355,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandKneeMulti(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).kneeMultis, band, value, 0, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(kneeMultis = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).kneeMultis, band, value, 0, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(kneeMultis = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_knee_multis" else "mbc_knee_multis",
@@ -1280,17 +1369,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAttack(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).attacks, band, value, 1, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(attacks = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).attacks, band, value, 1, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(attacks = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_attacks" else "mbc_attacks",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_ATTACK else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_ATTACK
             viperService?.dispatchParamsBatch(
@@ -1305,10 +1395,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandMaxAttack(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxAttacks, band, value, 44, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(maxAttacks = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).maxAttacks, band, value, 44, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(maxAttacks = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_max_attacks" else "mbc_max_attacks",
@@ -1318,17 +1409,18 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandRelease(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).releases, band, value, 100, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(releases = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).releases, band, value, 100, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(releases = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_releases" else "mbc_releases",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_RELEASE else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_RELEASE
             viperService?.dispatchParamsBatch(
@@ -1343,10 +1435,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandMaxRelease(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).maxReleases, band, value, 200, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(maxReleases = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).maxReleases, band, value, 200, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(maxReleases = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_max_releases" else "mbc_max_releases",
@@ -1356,10 +1449,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandCrest(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).crests, band, value, 100, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(crests = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).crests, band, value, 100, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(crests = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_crests" else "mbc_crests",
@@ -1369,10 +1463,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAdapt(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.mbc.forType(activeDeviceType).adapts, band, value, 50, 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(adapts = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateInt(_uiState.value.mbc.forType(fxType).adapts, band, value, 50, 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(adapts = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_adapts" else "mbc_adapts",
@@ -1382,14 +1477,15 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoKnee(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated = updateBool(
-            _uiState.value.mbc.forType(activeDeviceType).autoKnees,
+            _uiState.value.mbc.forType(fxType).autoKnees,
             band,
             value,
             count = 5
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoKnees = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(autoKnees = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_auto_knees" else "mbc_auto_knees",
@@ -1399,21 +1495,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoGain(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated = updateBool(
-            _uiState.value.mbc.forType(activeDeviceType).autoGains,
+            _uiState.value.mbc.forType(fxType).autoGains,
             band,
             value,
             count = 5
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoGains = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(autoGains = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_auto_gains" else "mbc_auto_gains",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_GAIN else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_GAIN
             viperService?.dispatchParamsBatch(
@@ -1428,21 +1525,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoAttack(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated = updateBool(
-            _uiState.value.mbc.forType(activeDeviceType).autoAttacks,
+            _uiState.value.mbc.forType(fxType).autoAttacks,
             band,
             value,
             count = 5
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoAttacks = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(autoAttacks = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_auto_attacks" else "mbc_auto_attacks",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_ATTACK else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_ATTACK
             viperService?.dispatchParamsBatch(
@@ -1457,21 +1555,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandAutoRelease(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated = updateBool(
-            _uiState.value.mbc.forType(activeDeviceType).autoReleases,
+            _uiState.value.mbc.forType(fxType).autoReleases,
             band,
             value,
             count = 5
         )
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(autoReleases = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(autoReleases = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_auto_releases" else "mbc_auto_releases",
                 updated
             )
         }
-        if (isMbcBandEnabled(band)) {
+        if (fxType == activeDeviceType && isMbcBandEnabled(band)) {
             val param =
                 if (isSpk) ViperParams.PARAM_SPK_MULTIBAND_COMP_BAND_AUTO_RELEASE else ViperParams.PARAM_HP_MULTIBAND_COMP_BAND_AUTO_RELEASE
             viperService?.dispatchParamsBatch(
@@ -1486,10 +1585,11 @@ class MainViewModel @Inject constructor(
     }
 
     fun setMbcBandNoClip(band: Int, value: Boolean) {
+        val fxType = editingFxType
         val updated =
-            updateBool(_uiState.value.mbc.forType(activeDeviceType).noClips, band, value, count = 5)
-        _uiState.update { it.copy(mbc = it.mbc.updateType(activeDeviceType) { copy(noClips = updated) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+            updateBool(_uiState.value.mbc.forType(fxType).noClips, band, value, count = 5)
+        _uiState.update { it.copy(mbc = it.mbc.updateType(fxType) { copy(noClips = updated) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.setStringPreference(
                 if (isSpk) "spk_mbc_no_clips" else "mbc_no_clips",
@@ -1499,123 +1599,143 @@ class MainViewModel @Inject constructor(
     }
 
     fun setDdcEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "DDC ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(ddc = it.ddc.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(ddc = it.ddc.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DDC_ENABLE}" else "${ViperParams.PARAM_HP_DDC_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.ddc.forType(activeDeviceType)
-        val enableParam =
-            if (isSpk) ViperParams.PARAM_SPK_DDC_ENABLE else ViperParams.PARAM_HP_DDC_ENABLE
-        val effectiveEnabled = enabled && vals.device.isNotEmpty()
-        if (effectiveEnabled) {
-            loadVdcByName(vals.device, enableParam)
-        } else {
-            dispatchInt(enableParam, 0)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.ddc.forType(fxType)
+            val enableParam =
+                if (isSpk) ViperParams.PARAM_SPK_DDC_ENABLE else ViperParams.PARAM_HP_DDC_ENABLE
+            val effectiveEnabled = enabled && vals.device.isNotEmpty()
+            if (effectiveEnabled) {
+                loadVdcByName(vals.device, enableParam)
+            } else {
+                dispatchInt(enableParam, 0)
+            }
         }
     }
 
     fun setDdcDevice(device: String) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "DDC ($mode) selected: $device")
-        _uiState.update { it.copy(ddc = it.ddc.updateType(activeDeviceType) { copy(device = device) }) }
+        _uiState.update { it.copy(ddc = it.ddc.updateType(fxType) { copy(device = device) }) }
         val prefKey =
             if (isSpk) "spk_${ViperRepository.PREF_DDC_DEVICE}" else ViperRepository.PREF_DDC_DEVICE
         viewModelScope.launch { repository.setStringPreference(prefKey, device) }
-        val enableParam =
-            if (isSpk) ViperParams.PARAM_SPK_DDC_ENABLE else ViperParams.PARAM_HP_DDC_ENABLE
-        if (device.isEmpty()) {
-            dispatchInt(enableParam, 0)
-        } else {
-            val vals = _uiState.value.ddc.forType(activeDeviceType)
-            val ep = if (vals.enabled) enableParam else null
-            loadVdcByName(device, ep)
+        if (fxType == activeDeviceType) {
+            val enableParam =
+                if (isSpk) ViperParams.PARAM_SPK_DDC_ENABLE else ViperParams.PARAM_HP_DDC_ENABLE
+            if (device.isEmpty()) {
+                dispatchInt(enableParam, 0)
+            } else {
+                val vals = _uiState.value.ddc.forType(fxType)
+                val ep = if (vals.enabled) enableParam else null
+                loadVdcByName(device, ep)
+            }
         }
     }
 
     fun setVseEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "VSE ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(vse = it.vse.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(vse = it.vse.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_ENABLE}" else "${ViperParams.PARAM_HP_SPECTRUM_EXTENSION_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.vse.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_SPECTRUM_EXTENSION_ENABLE,
-                        ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_ENABLE
-                    ), intArrayOf(if (enabled) 1 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK,
-                        ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK
-                    ), intArrayOf(vals.strength)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT,
-                        ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT
-                    ), intArrayOf(EffectDispatcher.vseExciterToRaw(vals.exciter))
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.vse.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_SPECTRUM_EXTENSION_ENABLE,
+                            ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_ENABLE
+                        ), intArrayOf(if (enabled) 1 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK,
+                            ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK
+                        ), intArrayOf(vals.strength)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT,
+                            ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT
+                        ), intArrayOf(EffectDispatcher.vseExciterToRaw(vals.exciter))
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setVseStrength(value: Int) {
-        _uiState.update { it.copy(vse = it.vse.updateType(activeDeviceType) { copy(strength = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(vse = it.vse.updateType(fxType) { copy(strength = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK}" else "${ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK else ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK else ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK
+            dispatchInt(param, value)
+        }
     }
 
     fun setVseExciter(value: Int) {
-        _uiState.update { it.copy(vse = it.vse.updateType(activeDeviceType) { copy(exciter = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(vse = it.vse.updateType(fxType) { copy(exciter = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT}" else "${ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT else ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT
-        dispatchInt(param, EffectDispatcher.vseExciterToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_SPECTRUM_EXTENSION_BARK_RECONSTRUCT else ViperParams.PARAM_HP_SPECTRUM_EXTENSION_BARK_RECONSTRUCT
+            dispatchInt(param, EffectDispatcher.vseExciterToRaw(value))
+        }
     }
 
     fun setEqEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "EQ ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(eq = it.eq.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(eq = it.eq.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_EQ_ENABLE}" else "${ViperParams.PARAM_HP_EQ_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val param = if (isSpk) ViperParams.PARAM_SPK_EQ_ENABLE else ViperParams.PARAM_HP_EQ_ENABLE
-        viperService?.dispatchParamsBatch(
-            listOf(ParamEntry(param, intArrayOf(if (enabled) 1 else 0)))
-        )
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_EQ_ENABLE else ViperParams.PARAM_HP_EQ_ENABLE
+            viperService?.dispatchParamsBatch(
+                listOf(ParamEntry(param, intArrayOf(if (enabled) 1 else 0)))
+            )
+        }
     }
 
     fun setEqPreset(presetId: Long) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val eqVals = _uiState.value.eq.forType(activeDeviceType)
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        val eqVals = _uiState.value.eq.forType(fxType)
         val preset = eqVals.presets.find { it.id == presetId } ?: return
         val bands = preset.bands
         val bandCount = eqVals.bandCount
         _uiState.update { state ->
-            val curVals = state.eq.forType(activeDeviceType)
+            val curVals = state.eq.forType(fxType)
             val updatedMap = curVals.bandsMap.toMutableMap().apply { put(bandCount, bands) }
-            state.copy(eq = state.eq.updateType(activeDeviceType) {
+            state.copy(eq = state.eq.updateType(fxType) {
                 copy(presetId = presetId, bands = bands, bandsMap = updatedMap)
             })
         }
@@ -1629,18 +1749,21 @@ class MainViewModel @Inject constructor(
             repository.setStringPreference(bandLevelKey, bands)
             repository.setStringPreference(bandsMapKey, bands)
         }
-        val dispatchParam =
-            if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
-        dispatchEqBands(dispatchParam, bands)
+        if (fxType == activeDeviceType) {
+            val dispatchParam =
+                if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
+            dispatchEqBands(dispatchParam, bands)
+        }
     }
 
     fun setEqBands(bands: String) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val bandCount = _uiState.value.eq.forType(activeDeviceType).bandCount
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        val bandCount = _uiState.value.eq.forType(fxType).bandCount
         _uiState.update { state ->
-            val curVals = state.eq.forType(activeDeviceType)
+            val curVals = state.eq.forType(fxType)
             val updatedMap = curVals.bandsMap.toMutableMap().apply { put(bandCount, bands) }
-            state.copy(eq = state.eq.updateType(activeDeviceType) {
+            state.copy(eq = state.eq.updateType(fxType) {
                 copy(bands = bands, bandsMap = updatedMap)
             })
         }
@@ -1651,14 +1774,17 @@ class MainViewModel @Inject constructor(
             repository.setStringPreference(bandLevelKey, bands)
             repository.setStringPreference(bandsMapKey, bands)
         }
-        val dispatchParam =
-            if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
-        dispatchEqBands(dispatchParam, bands)
+        if (fxType == activeDeviceType) {
+            val dispatchParam =
+                if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
+            dispatchEqBands(dispatchParam, bands)
+        }
     }
 
     fun setEqBandCount(count: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val eqVals = _uiState.value.eq.forType(activeDeviceType)
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        val eqVals = _uiState.value.eq.forType(fxType)
         val oldCount = eqVals.bandCount
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.d("ViewModel", "EQ ($mode) band count: $oldCount -> $count")
@@ -1667,7 +1793,7 @@ class MainViewModel @Inject constructor(
             List(count) { 0f }.joinToString(";") { String.format(Locale.US, "%.1f", it) } + ";"
         val bands = updatedMap[count] ?: defaultBands
         _uiState.update {
-            it.copy(eq = it.eq.updateType(activeDeviceType) {
+            it.copy(eq = it.eq.updateType(fxType) {
                 copy(bandCount = count, bands = bands, presetId = null, bandsMap = updatedMap)
             })
         }
@@ -1683,21 +1809,24 @@ class MainViewModel @Inject constructor(
             repository.setStringPreference(oldBandsMapKey, eqVals.bands)
             repository.setStringPreference(newBandsMapKey, bands)
         }
-        val dispatchBandLevel =
-            if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
-        val dispatchBandCount =
-            if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_COUNT else ViperParams.PARAM_HP_EQ_BAND_COUNT
-        dispatchEqBands(dispatchBandLevel, bands, dispatchBandCount, count)
+        if (fxType == activeDeviceType) {
+            val dispatchBandLevel =
+                if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_LEVEL else ViperParams.PARAM_HP_EQ_BAND_LEVEL
+            val dispatchBandCount =
+                if (isSpk) ViperParams.PARAM_SPK_EQ_BAND_COUNT else ViperParams.PARAM_HP_EQ_BAND_COUNT
+            dispatchEqBands(dispatchBandLevel, bands, dispatchBandCount, count)
+        }
         loadEqPresetsForBandCount(count, isSpk = isSpk)
     }
 
     fun addEqPreset(name: String) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val eqVals = _uiState.value.eq.forType(activeDeviceType)
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        val eqVals = _uiState.value.eq.forType(fxType)
         val preset = EqPreset(name = name, bandCount = eqVals.bandCount, bands = eqVals.bands)
         viewModelScope.launch {
             val id = repository.saveEqPreset(preset)
-            _uiState.update { it.copy(eq = it.eq.updateType(activeDeviceType) { copy(presetId = id) }) }
+            _uiState.update { it.copy(eq = it.eq.updateType(fxType) { copy(presetId = id) }) }
             val prefKey =
                 if (isSpk) "spk_${ViperRepository.PREF_EQ_PRESET_ID}" else ViperRepository.PREF_EQ_PRESET_ID
             repository.setIntPreference(prefKey, id.toInt())
@@ -1705,12 +1834,13 @@ class MainViewModel @Inject constructor(
     }
 
     fun deleteEqPreset(presetId: Long) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         viewModelScope.launch {
             repository.deleteEqPresetById(presetId)
-            val curPresetId = _uiState.value.eq.forType(activeDeviceType).presetId
+            val curPresetId = _uiState.value.eq.forType(fxType).presetId
             if (curPresetId == presetId) {
-                _uiState.update { it.copy(eq = it.eq.updateType(activeDeviceType) { copy(presetId = null) }) }
+                _uiState.update { it.copy(eq = it.eq.updateType(fxType) { copy(presetId = null) }) }
                 val prefKey =
                     if (isSpk) "spk_${ViperRepository.PREF_EQ_PRESET_ID}" else ViperRepository.PREF_EQ_PRESET_ID
                 repository.setIntPreference(prefKey, -1)
@@ -1719,20 +1849,22 @@ class MainViewModel @Inject constructor(
     }
 
     fun resetEqBands() {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val bandCount = _uiState.value.eq.forType(activeDeviceType).bandCount
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+        val bandCount = _uiState.value.eq.forType(fxType).bandCount
         val flatBands =
             List(bandCount) { 0f }.joinToString(";") { String.format(Locale.US, "%.1f", it) } + ";"
         setEqBands(flatBands)
-        _uiState.update { it.copy(eq = it.eq.updateType(activeDeviceType) { copy(presetId = null) }) }
+        _uiState.update { it.copy(eq = it.eq.updateType(fxType) { copy(presetId = null) }) }
         val prefKey =
             if (isSpk) "spk_${ViperRepository.PREF_EQ_PRESET_ID}" else ViperRepository.PREF_EQ_PRESET_ID
         viewModelScope.launch { repository.setIntPreference(prefKey, -1) }
     }
 
     fun setDynamicEqEnabled(enabled: Boolean) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
@@ -1742,7 +1874,8 @@ class MainViewModel @Inject constructor(
                 enabled
             )
         }
-        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.dynamicEq.forType(fxType)
         val count = vals.bandCount
         val entries = mutableListOf<ParamEntry>()
         val freqs = parseInts(vals.freqs, 1000, 8)
@@ -1752,7 +1885,7 @@ class MainViewModel @Inject constructor(
         val attacks = parseInts(vals.attacks, 10, 8)
         val releases = parseInts(vals.releases, 100, 8)
         val filterTypes = parseInts(vals.filterTypes, 0, 8)
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         for (b in 0 until count) {
             entries.add(
@@ -1832,125 +1965,127 @@ class MainViewModel @Inject constructor(
     }
 
     fun setDynamicEqBandFreq(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.dynamicEq.forType(activeDeviceType).freqs,
-            band,
-            value,
-            1000,
-            8
+            _uiState.value.dynamicEq.forType(fxType).freqs, band, value, 1000, 8
         )
-        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(freqs = updated) }) }
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(fxType) { copy(freqs = updated) }) }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_freqs", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FREQ else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FREQ
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandQ(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.dynamicEq.forType(activeDeviceType).qs, band, value, 150, 8)
-        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(qs = updated) }) }
+            updateInt(_uiState.value.dynamicEq.forType(fxType).qs, band, value, 150, 8)
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(fxType) { copy(qs = updated) }) }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_qs", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_Q else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_Q
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandGain(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated =
-            updateInt(_uiState.value.dynamicEq.forType(activeDeviceType).gains, band, value, 0, 8)
-        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) { copy(gains = updated) }) }
+            updateInt(_uiState.value.dynamicEq.forType(fxType).gains, band, value, 0, 8)
+        _uiState.update { it.copy(dynamicEq = it.dynamicEq.updateType(fxType) { copy(gains = updated) }) }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_gains", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_GAIN else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_GAIN
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandThreshold(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.dynamicEq.forType(activeDeviceType).thresholds,
-            band,
-            value,
-            -300,
-            8
+            _uiState.value.dynamicEq.forType(fxType).thresholds, band, value, -300, 8
         )
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(thresholds = updated)
             })
         }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_thresholds", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_THRESHOLD else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_THRESHOLD
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandAttack(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.dynamicEq.forType(activeDeviceType).attacks,
-            band,
-            value,
-            10,
-            8
+            _uiState.value.dynamicEq.forType(fxType).attacks, band, value, 10, 8
         )
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(attacks = updated)
             })
         }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_attacks", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_ATTACK else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_ATTACK
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandRelease(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.dynamicEq.forType(activeDeviceType).releases,
-            band,
-            value,
-            100,
-            8
+            _uiState.value.dynamicEq.forType(fxType).releases, band, value, 100, 8
         )
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(releases = updated)
             })
         }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_releases", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_RELEASE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_RELEASE
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun setDynamicEqBandFilterType(band: Int, value: Int) {
+        val fxType = editingFxType
         val updated = updateInt(
-            _uiState.value.dynamicEq.forType(activeDeviceType).filterTypes,
-            band,
-            value,
-            0,
-            8
+            _uiState.value.dynamicEq.forType(fxType).filterTypes, band, value, 0, 8
         )
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(filterTypes = updated)
             })
         }
         viewModelScope.launch { repository.setStringPreference("dynamic_eq_filter_types", updated) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE
-        viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        if (fxType == activeDeviceType) {
+            val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DYNAMIC_EQ_BAND_FILTER_TYPE else ViperParams.PARAM_HP_DYNAMIC_EQ_BAND_FILTER_TYPE
+            viperService?.dispatchParamsBatch(listOf(ParamEntry(param, intArrayOf(band, value))))
+        }
     }
 
     fun addDynamicEqBand() {
-        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        val fxType = editingFxType
+        val vals = _uiState.value.dynamicEq.forType(fxType)
         val count = vals.bandCount
         if (count >= 8) return
         val freqs = parseInts(vals.freqs, 1000, 8)
@@ -1964,7 +2099,7 @@ class MainViewModel @Inject constructor(
         val updatedFilterTypes = updateInt(vals.filterTypes, count, 0, 0, 8)
         val newCount = count + 1
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(
                     bandCount = newCount,
                     freqs = updatedFreqs,
@@ -1987,7 +2122,8 @@ class MainViewModel @Inject constructor(
             repository.setStringPreference("dynamic_eq_releases", updatedReleases)
             repository.setStringPreference("dynamic_eq_filter_types", updatedFilterTypes)
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        if (fxType != activeDeviceType) return
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         val entries = mutableListOf<ParamEntry>()
         val fList = parseInts(updatedFreqs, 1000, 8)
@@ -2067,7 +2203,8 @@ class MainViewModel @Inject constructor(
     }
 
     fun removeDynamicEqBand(index: Int) {
-        val vals = _uiState.value.dynamicEq.forType(activeDeviceType)
+        val fxType = editingFxType
+        val vals = _uiState.value.dynamicEq.forType(fxType)
         val count = vals.bandCount
         if (count <= 0 || index !in 0 until count) return
         val updatedFreqs = removeFromString(vals.freqs, index, 1000, count)
@@ -2079,7 +2216,7 @@ class MainViewModel @Inject constructor(
         val updatedFilterTypes = removeFromString(vals.filterTypes, index, 0, count)
         val newCount = count - 1
         _uiState.update {
-            it.copy(dynamicEq = it.dynamicEq.updateType(activeDeviceType) {
+            it.copy(dynamicEq = it.dynamicEq.updateType(fxType) {
                 copy(
                     bandCount = newCount,
                     freqs = updatedFreqs,
@@ -2102,7 +2239,8 @@ class MainViewModel @Inject constructor(
             repository.setStringPreference("dynamic_eq_releases", updatedReleases)
             repository.setStringPreference("dynamic_eq_filter_types", updatedFilterTypes)
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        if (fxType != activeDeviceType) return
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         val entries = mutableListOf<ParamEntry>()
         val fList = parseInts(updatedFreqs, 1000, 8)
@@ -2182,78 +2320,88 @@ class MainViewModel @Inject constructor(
     }
 
     fun setConvolverEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Convolver ($mode): ${if (enabled) "ON" else "OFF"}")
         _uiState.update {
-            it.copy(convolver = it.convolver.updateType(activeDeviceType) {
+            it.copy(convolver = it.convolver.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_CONVOLVER_ENABLE}" else "${ViperParams.PARAM_HP_CONVOLVER_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.convolver.forType(activeDeviceType)
-        val enableParam =
-            if (isSpk) ViperParams.PARAM_SPK_CONVOLVER_ENABLE else ViperParams.PARAM_HP_CONVOLVER_ENABLE
-        val effectiveEnabled = enabled && vals.kernel.isNotEmpty()
-        if (effectiveEnabled) {
-            loadKernelByName(vals.kernel, enableParam)
-        } else {
-            dispatchInt(enableParam, 0)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.convolver.forType(fxType)
+            val enableParam =
+                if (isSpk) ViperParams.PARAM_SPK_CONVOLVER_ENABLE else ViperParams.PARAM_HP_CONVOLVER_ENABLE
+            val effectiveEnabled = enabled && vals.kernel.isNotEmpty()
+            if (effectiveEnabled) {
+                loadKernelByName(vals.kernel, enableParam)
+            } else {
+                dispatchInt(enableParam, 0)
+            }
         }
     }
 
     fun setConvolverKernel(kernel: String) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Convolver ($mode) kernel selected: $kernel")
         _uiState.update {
-            it.copy(convolver = it.convolver.updateType(activeDeviceType) {
+            it.copy(convolver = it.convolver.updateType(fxType) {
                 copy(kernel = kernel)
             })
         }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_HP_CONVOLVER_SET_KERNEL}" else "${ViperParams.PARAM_HP_CONVOLVER_SET_KERNEL}"
         viewModelScope.launch { repository.setStringPreference(prefKey, kernel) }
-        val enableParam =
-            if (isSpk) ViperParams.PARAM_SPK_CONVOLVER_ENABLE else ViperParams.PARAM_HP_CONVOLVER_ENABLE
-        if (kernel.isEmpty()) {
-            dispatchInt(enableParam, 0)
-        } else {
-            val vals = _uiState.value.convolver.forType(activeDeviceType)
-            val ep = if (vals.enabled) enableParam else null
-            loadKernelByName(kernel, ep)
+        if (fxType == activeDeviceType) {
+            val enableParam =
+                if (isSpk) ViperParams.PARAM_SPK_CONVOLVER_ENABLE else ViperParams.PARAM_HP_CONVOLVER_ENABLE
+            if (kernel.isEmpty()) {
+                dispatchInt(enableParam, 0)
+            } else {
+                val vals = _uiState.value.convolver.forType(fxType)
+                val ep = if (vals.enabled) enableParam else null
+                loadKernelByName(kernel, ep)
+            }
         }
     }
 
     fun setConvolverCrossChannel(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(convolver = it.convolver.updateType(activeDeviceType) {
+            it.copy(convolver = it.convolver.updateType(fxType) {
                 copy(crossChannel = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_CONVOLVER_CROSS_CHANNEL}" else "${ViperParams.PARAM_HP_CONVOLVER_CROSS_CHANNEL}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_CONVOLVER_CROSS_CHANNEL else ViperParams.PARAM_HP_CONVOLVER_CROSS_CHANNEL
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setFieldSurroundEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Field Surround ($mode): ${if (enabled) "ON" else "OFF"}")
         _uiState.update {
-            it.copy(fieldSurround = it.fieldSurround.updateType(activeDeviceType) {
+            it.copy(fieldSurround = it.fieldSurround.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_FIELD_SURROUND_ENABLE}" else "${ViperParams.PARAM_HP_FIELD_SURROUND_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.fieldSurround.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.fieldSurround.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -2286,63 +2434,74 @@ class MainViewModel @Inject constructor(
     }
 
     fun setFieldSurroundWidening(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(fieldSurround = it.fieldSurround.updateType(activeDeviceType) {
+            it.copy(fieldSurround = it.fieldSurround.updateType(fxType) {
                 copy(widening = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_FIELD_SURROUND_WIDENING}" else "${ViperParams.PARAM_HP_FIELD_SURROUND_WIDENING}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_WIDENING else ViperParams.PARAM_HP_FIELD_SURROUND_WIDENING
-        dispatchInt(param, EffectDispatcher.fieldSurroundWideningToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_WIDENING else ViperParams.PARAM_HP_FIELD_SURROUND_WIDENING
+            dispatchInt(param, EffectDispatcher.fieldSurroundWideningToRaw(value))
+        }
     }
 
     fun setFieldSurroundMidImage(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(fieldSurround = it.fieldSurround.updateType(activeDeviceType) {
+            it.copy(fieldSurround = it.fieldSurround.updateType(fxType) {
                 copy(midImage = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_FIELD_SURROUND_MID_IMAGE}" else "${ViperParams.PARAM_HP_FIELD_SURROUND_MID_IMAGE}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_MID_IMAGE else ViperParams.PARAM_HP_FIELD_SURROUND_MID_IMAGE
-        dispatchInt(param, EffectDispatcher.fieldSurroundMidImageToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_MID_IMAGE else ViperParams.PARAM_HP_FIELD_SURROUND_MID_IMAGE
+            dispatchInt(param, EffectDispatcher.fieldSurroundMidImageToRaw(value))
+        }
     }
 
     fun setFieldSurroundDepth(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(fieldSurround = it.fieldSurround.updateType(activeDeviceType) {
+            it.copy(fieldSurround = it.fieldSurround.updateType(fxType) {
                 copy(depth = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_FIELD_SURROUND_DEPTH}" else "${ViperParams.PARAM_HP_FIELD_SURROUND_DEPTH}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_DEPTH else ViperParams.PARAM_HP_FIELD_SURROUND_DEPTH
-        dispatchInt(param, EffectDispatcher.fieldSurroundDepthToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_FIELD_SURROUND_DEPTH else ViperParams.PARAM_HP_FIELD_SURROUND_DEPTH
+            dispatchInt(param, EffectDispatcher.fieldSurroundDepthToRaw(value))
+        }
     }
 
     fun setDiffSurroundEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Diff Surround ($mode): ${if (enabled) "ON" else "OFF"}")
         _uiState.update {
-            it.copy(diffSurround = it.diffSurround.updateType(activeDeviceType) {
+            it.copy(diffSurround = it.diffSurround.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DIFF_SURROUND_ENABLE}" else "${ViperParams.PARAM_HP_DIFF_SURROUND_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.diffSurround.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.diffSurround.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -2381,74 +2540,86 @@ class MainViewModel @Inject constructor(
     }
 
     fun setDiffSurroundDelay(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(diffSurround = it.diffSurround.updateType(activeDeviceType) {
+            it.copy(diffSurround = it.diffSurround.updateType(fxType) {
                 copy(delay = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DIFF_SURROUND_DELAY}" else "${ViperParams.PARAM_HP_DIFF_SURROUND_DELAY}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_DELAY else ViperParams.PARAM_HP_DIFF_SURROUND_DELAY
-        dispatchInt(param, EffectDispatcher.diffSurroundDelayToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_DELAY else ViperParams.PARAM_HP_DIFF_SURROUND_DELAY
+            dispatchInt(param, EffectDispatcher.diffSurroundDelayToRaw(value))
+        }
     }
 
     fun setDiffSurroundReverse(reverse: Boolean) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(diffSurround = it.diffSurround.updateType(activeDeviceType) {
+            it.copy(diffSurround = it.diffSurround.updateType(fxType) {
                 copy(reverse = reverse)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DIFF_SURROUND_REVERSE}" else "${ViperParams.PARAM_HP_DIFF_SURROUND_REVERSE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, reverse) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_REVERSE else ViperParams.PARAM_HP_DIFF_SURROUND_REVERSE
-        dispatchInt(param, if (reverse) 1 else 0)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_REVERSE else ViperParams.PARAM_HP_DIFF_SURROUND_REVERSE
+            dispatchInt(param, if (reverse) 1 else 0)
+        }
     }
 
     fun setDiffSurroundWetDryMix(v: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(diffSurround = it.diffSurround.updateType(activeDeviceType) {
+            it.copy(diffSurround = it.diffSurround.updateType(fxType) {
                 copy(wetDryMix = v)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_DIFF_SURROUND_WET_DRY_MIX}" else "${ViperParams.PARAM_HP_DIFF_SURROUND_WET_DRY_MIX}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_WET_DRY_MIX else ViperParams.PARAM_HP_DIFF_SURROUND_WET_DRY_MIX
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setDiffSurroundLpCutoff(v: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(diffSurround = it.diffSurround.updateType(activeDeviceType) {
+            it.copy(diffSurround = it.diffSurround.updateType(fxType) {
                 copy(lpCutoff = v)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_DIFF_SURROUND_LP_CUTOFF}" else "${ViperParams.PARAM_HP_DIFF_SURROUND_LP_CUTOFF}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_DIFF_SURROUND_LP_CUTOFF else ViperParams.PARAM_HP_DIFF_SURROUND_LP_CUTOFF
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setStereoImgEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) {
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_ENABLE}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.stereoImg.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.stereoImg.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -2493,112 +2664,129 @@ class MainViewModel @Inject constructor(
     }
 
     fun setStereoImgLowWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowWidth = v) })
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) { copy(lowWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_WIDTH
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setStereoImgMidWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(midWidth = v) })
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) { copy(midWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_MID_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_MID_WIDTH
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setStereoImgHighWidth(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highWidth = v) })
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) { copy(highWidth = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_WIDTH else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_WIDTH
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setStereoImgLowCrossover(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(lowCrossover = v) })
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) { copy(lowCrossover = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_LOW_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_LOW_CROSSOVER
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setStereoImgHighCrossover(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(stereoImg = it.stereoImg.updateType(activeDeviceType) { copy(highCrossover = v) })
+            it.copy(stereoImg = it.stereoImg.updateType(fxType) { copy(highCrossover = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER}" else "${ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_STEREO_IMAGER_HIGH_CROSSOVER else ViperParams.PARAM_HP_STEREO_IMAGER_HIGH_CROSSOVER
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setVheEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "VHE ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(vhe = it.vhe.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(vhe = it.vhe.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_HEADPHONE_SURROUND_ENABLE}" else "${ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.vhe.forType(activeDeviceType)
-        val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE,
-                        ViperParams.PARAM_SPK_HEADPHONE_SURROUND_ENABLE
-                    ), intArrayOf(if (enabled) 1 else 0)
-                ),
-                ParamEntry(
-                    p(
-                        ViperParams.PARAM_HP_HEADPHONE_SURROUND_STRENGTH,
-                        ViperParams.PARAM_SPK_HEADPHONE_SURROUND_STRENGTH
-                    ), intArrayOf(vals.quality)
+        if (fxType == activeDeviceType) {
+            val vals = _uiState.value.vhe.forType(fxType)
+            val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_HEADPHONE_SURROUND_ENABLE,
+                            ViperParams.PARAM_SPK_HEADPHONE_SURROUND_ENABLE
+                        ), intArrayOf(if (enabled) 1 else 0)
+                    ),
+                    ParamEntry(
+                        p(
+                            ViperParams.PARAM_HP_HEADPHONE_SURROUND_STRENGTH,
+                            ViperParams.PARAM_SPK_HEADPHONE_SURROUND_STRENGTH
+                        ), intArrayOf(vals.quality)
+                    )
                 )
             )
-        )
+        }
     }
 
     fun setVheQuality(value: Int) {
-        _uiState.update { it.copy(vhe = it.vhe.updateType(activeDeviceType) { copy(quality = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(vhe = it.vhe.updateType(fxType) { copy(quality = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_HEADPHONE_SURROUND_STRENGTH}" else "${ViperParams.PARAM_HP_HEADPHONE_SURROUND_STRENGTH}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_HEADPHONE_SURROUND_STRENGTH else ViperParams.PARAM_HP_HEADPHONE_SURROUND_STRENGTH
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setReverbEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Reverb ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ENABLE}" else "${ViperParams.PARAM_HP_REVERB_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.reverb.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.reverb.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -2643,85 +2831,101 @@ class MainViewModel @Inject constructor(
     }
 
     fun setReverbRoomSize(value: Int) {
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(roomSize = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(roomSize = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ROOM_SIZE}" else "${ViperParams.PARAM_HP_REVERB_ROOM_SIZE}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_SIZE else ViperParams.PARAM_HP_REVERB_ROOM_SIZE
-        dispatchInt(param, value * 10)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_SIZE else ViperParams.PARAM_HP_REVERB_ROOM_SIZE
+            dispatchInt(param, value * 10)
+        }
     }
 
     fun setReverbWidth(value: Int) {
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(width = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(width = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ROOM_WIDTH}" else "${ViperParams.PARAM_HP_REVERB_ROOM_WIDTH}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_WIDTH else ViperParams.PARAM_HP_REVERB_ROOM_WIDTH
-        dispatchInt(param, value * 10)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_WIDTH else ViperParams.PARAM_HP_REVERB_ROOM_WIDTH
+            dispatchInt(param, value * 10)
+        }
     }
 
     fun setReverbDampening(value: Int) {
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(dampening = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(dampening = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ROOM_DAMPENING}" else "${ViperParams.PARAM_HP_REVERB_ROOM_DAMPENING}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_DAMPENING else ViperParams.PARAM_HP_REVERB_ROOM_DAMPENING
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_DAMPENING else ViperParams.PARAM_HP_REVERB_ROOM_DAMPENING
+            dispatchInt(param, value)
+        }
     }
 
     fun setReverbWet(value: Int) {
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(wet = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(wet = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ROOM_WET_SIGNAL}" else "${ViperParams.PARAM_HP_REVERB_ROOM_WET_SIGNAL}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_WET_SIGNAL else ViperParams.PARAM_HP_REVERB_ROOM_WET_SIGNAL
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_WET_SIGNAL else ViperParams.PARAM_HP_REVERB_ROOM_WET_SIGNAL
+            dispatchInt(param, value)
+        }
     }
 
     fun setReverbDry(value: Int) {
-        _uiState.update { it.copy(reverb = it.reverb.updateType(activeDeviceType) { copy(dry = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(reverb = it.reverb.updateType(fxType) { copy(dry = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_REVERB_ROOM_DRY_SIGNAL}" else "${ViperParams.PARAM_HP_REVERB_ROOM_DRY_SIGNAL}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_REVERB_ROOM_DRY_SIGNAL else ViperParams.PARAM_HP_REVERB_ROOM_DRY_SIGNAL
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setDynamicSystemEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Dynamic System ($mode): ${if (enabled) "ON" else "OFF"}")
         _uiState.update {
-            it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+            it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                 copy(enabled = enabled)
             })
         }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DYNAMIC_SYSTEM_ENABLE}" else "${ViperParams.PARAM_HP_DYNAMIC_SYSTEM_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        dispatchDynamicSystem()
+        if (fxType == activeDeviceType) dispatchDynamicSystem()
     }
 
     fun setDynamicSystemStrength(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+            it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                 copy(strength = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_DYNAMIC_SYSTEM_STRENGTH}" else "${ViperParams.PARAM_HP_DYNAMIC_SYSTEM_STRENGTH}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        dispatchDynamicSystem()
+        if (fxType == activeDeviceType) dispatchDynamicSystem()
     }
 
     private fun dispatchDynamicSystem() {
@@ -2765,13 +2969,14 @@ class MainViewModel @Inject constructor(
     }
 
     private fun dsPrefPrefix(): String =
-        if (activeDeviceType == ViperParams.FX_TYPE_SPEAKER) "spk_" else ""
+        if (editingFxType == ViperParams.FX_TYPE_SPEAKER) "spk_" else ""
 
     fun setDynamicSystemPreset(presetId: Long) {
-        val vals = _uiState.value.dynamicSystem.forType(activeDeviceType)
+        val fxType = editingFxType
+        val vals = _uiState.value.dynamicSystem.forType(fxType)
         val preset = vals.presets.find { it.id == presetId } ?: return
         _uiState.update {
-            it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+            it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                 copy(
                     presetId = presetId, xLow = preset.xLow, xHigh = preset.xHigh,
                     yLow = preset.yLow, yHigh = preset.yHigh,
@@ -2810,7 +3015,7 @@ class MainViewModel @Inject constructor(
                 preset.sideGainHigh
             )
         }
-        dispatchDynamicSystem()
+        if (fxType == activeDeviceType) dispatchDynamicSystem()
     }
 
     private fun setDynamicSystemCoefficient(
@@ -2818,8 +3023,9 @@ class MainViewModel @Inject constructor(
         prefKeySuffix: String,
         value: Int
     ) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+            it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                 transform().copy(presetId = null)
             })
         }
@@ -2828,7 +3034,7 @@ class MainViewModel @Inject constructor(
             repository.setIntPreference("${pfx}${prefKeySuffix}", value)
             repository.setIntPreference("${pfx}${ViperRepository.PERF_DYNAMIC_SYS_PRESET_ID}", -1)
         }
-        dispatchDynamicSystem()
+        if (fxType == activeDeviceType) dispatchDynamicSystem()
     }
 
     fun setDynamicSystemXLow(value: Int) = setDynamicSystemCoefficient(
@@ -2858,7 +3064,8 @@ class MainViewModel @Inject constructor(
     )
 
     fun addDynamicSystemPreset(name: String) {
-        val vals = _uiState.value.dynamicSystem.forType(activeDeviceType)
+        val fxType = editingFxType
+        val vals = _uiState.value.dynamicSystem.forType(fxType)
         val preset = DsPreset(
             name = name,
             xLow = vals.xLow, xHigh = vals.xHigh,
@@ -2869,7 +3076,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val id = repository.saveDsPreset(preset)
             _uiState.update {
-                it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+                it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                     copy(presetId = id)
                 })
             }
@@ -2881,13 +3088,14 @@ class MainViewModel @Inject constructor(
     }
 
     fun deleteDynamicSystemPreset(presetId: Long) {
+        val fxType = editingFxType
         val pfx = dsPrefPrefix()
         viewModelScope.launch {
             repository.deleteDsPresetById(presetId)
-            val curPresetId = _uiState.value.dynamicSystem.forType(activeDeviceType).presetId
+            val curPresetId = _uiState.value.dynamicSystem.forType(fxType).presetId
             if (curPresetId == presetId) {
                 _uiState.update {
-                    it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+                    it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                         copy(presetId = null)
                     })
                 }
@@ -2900,8 +3108,9 @@ class MainViewModel @Inject constructor(
     }
 
     fun resetDynamicSystemCoefficients() {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(dynamicSystem = it.dynamicSystem.updateType(activeDeviceType) {
+            it.copy(dynamicSystem = it.dynamicSystem.updateType(fxType) {
                 copy(
                     xLow = 100, xHigh = 5600, yLow = 40, yHigh = 80,
                     sideGainLow = 50, sideGainHigh = 50, presetId = null
@@ -2915,35 +3124,40 @@ class MainViewModel @Inject constructor(
                 -1
             )
         }
-        dispatchDynamicSystem()
+        if (fxType == activeDeviceType) dispatchDynamicSystem()
     }
 
     fun setTubeSimulatorEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Tube Simulator ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(tube = it.tube.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(tube = it.tube.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_TUBE_SIMULATOR_ENABLE}" else "${ViperParams.PARAM_HP_TUBE_SIMULATOR_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_TUBE_SIMULATOR_ENABLE else ViperParams.PARAM_HP_TUBE_SIMULATOR_ENABLE
-        viperService?.dispatchParamsBatch(
-            listOf(
-                ParamEntry(param, intArrayOf(if (enabled) 1 else 0))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_TUBE_SIMULATOR_ENABLE else ViperParams.PARAM_HP_TUBE_SIMULATOR_ENABLE
+            viperService?.dispatchParamsBatch(
+                listOf(
+                    ParamEntry(param, intArrayOf(if (enabled) 1 else 0))
+                )
             )
-        )
+        }
     }
 
     fun setPsychoBassEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(psychoBass = it.psychoBass.updateType(activeDeviceType) { copy(enabled = enabled) })
+            it.copy(psychoBass = it.psychoBass.updateType(fxType) { copy(enabled = enabled) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_PSYCHO_BASS_ENABLE}" else "${ViperParams.PARAM_HP_PSYCHO_BASS_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.psychoBass.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.psychoBass.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -2982,62 +3196,72 @@ class MainViewModel @Inject constructor(
     }
 
     fun setPsychoBassCutoff(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(psychoBass = it.psychoBass.updateType(activeDeviceType) { copy(cutoff = v) })
+            it.copy(psychoBass = it.psychoBass.updateType(fxType) { copy(cutoff = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_PSYCHO_BASS_CUTOFF}" else "${ViperParams.PARAM_HP_PSYCHO_BASS_CUTOFF}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_PSYCHO_BASS_CUTOFF else ViperParams.PARAM_HP_PSYCHO_BASS_CUTOFF
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setPsychoBassIntensity(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(psychoBass = it.psychoBass.updateType(activeDeviceType) { copy(intensity = v) })
+            it.copy(psychoBass = it.psychoBass.updateType(fxType) { copy(intensity = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_PSYCHO_BASS_INTENSITY}" else "${ViperParams.PARAM_HP_PSYCHO_BASS_INTENSITY}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_PSYCHO_BASS_INTENSITY else ViperParams.PARAM_HP_PSYCHO_BASS_INTENSITY
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setPsychoBassHarmonicOrder(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(psychoBass = it.psychoBass.updateType(activeDeviceType) { copy(harmonicOrder = v) })
+            it.copy(psychoBass = it.psychoBass.updateType(fxType) { copy(harmonicOrder = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_PSYCHO_BASS_HARMONIC_ORDER}" else "${ViperParams.PARAM_HP_PSYCHO_BASS_HARMONIC_ORDER}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_PSYCHO_BASS_HARMONIC_ORDER else ViperParams.PARAM_HP_PSYCHO_BASS_HARMONIC_ORDER
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setPsychoBassOriginalLevel(v: Int) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         _uiState.update {
-            it.copy(psychoBass = it.psychoBass.updateType(activeDeviceType) { copy(originalLevel = v) })
+            it.copy(psychoBass = it.psychoBass.updateType(fxType) { copy(originalLevel = v) })
         }
         val prefKey =
             if (isSpk) "${ViperParams.PARAM_SPK_PSYCHO_BASS_ORIGINAL_LEVEL}" else "${ViperParams.PARAM_HP_PSYCHO_BASS_ORIGINAL_LEVEL}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_PSYCHO_BASS_ORIGINAL_LEVEL else ViperParams.PARAM_HP_PSYCHO_BASS_ORIGINAL_LEVEL
-        saveAndDispatchInt(prefKey, param, v)
+        viewModelScope.launch { repository.setIntPreference(prefKey, v) }
+        if (fxType == activeDeviceType) dispatchInt(param, v)
     }
 
     fun setBassEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Bass ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(bass = it.bass.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(bass = it.bass.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_ENABLE}" else "${ViperParams.PARAM_HP_BASS_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.bass.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.bass.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -3070,55 +3294,69 @@ class MainViewModel @Inject constructor(
     }
 
     fun setBassMode(mode: Int) {
-        _uiState.update { it.copy(bass = it.bass.updateType(activeDeviceType) { copy(mode = mode) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bass = it.bass.updateType(fxType) { copy(mode = mode) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MODE}" else "${ViperParams.PARAM_HP_BASS_MODE}"
         val param = if (isSpk) ViperParams.PARAM_SPK_BASS_MODE else ViperParams.PARAM_HP_BASS_MODE
-        saveAndDispatchInt(prefKey, param, mode)
+        viewModelScope.launch { repository.setIntPreference(prefKey, mode) }
+        if (fxType == activeDeviceType) dispatchInt(param, mode)
     }
 
     fun setBassFrequency(value: Int) {
-        _uiState.update { it.copy(bass = it.bass.updateType(activeDeviceType) { copy(frequency = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bass = it.bass.updateType(fxType) { copy(frequency = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_FREQUENCY}" else "${ViperParams.PARAM_HP_BASS_FREQUENCY}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_BASS_FREQUENCY else ViperParams.PARAM_HP_BASS_FREQUENCY
-        dispatchInt(param, EffectDispatcher.bassFrequencyToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_FREQUENCY else ViperParams.PARAM_HP_BASS_FREQUENCY
+            dispatchInt(param, EffectDispatcher.bassFrequencyToRaw(value))
+        }
     }
 
     fun setBassGain(value: Int) {
-        _uiState.update { it.copy(bass = it.bass.updateType(activeDeviceType) { copy(gain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bass = it.bass.updateType(fxType) { copy(gain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_GAIN}" else "${ViperParams.PARAM_HP_BASS_GAIN}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param = if (isSpk) ViperParams.PARAM_SPK_BASS_GAIN else ViperParams.PARAM_HP_BASS_GAIN
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_GAIN else ViperParams.PARAM_HP_BASS_GAIN
+            dispatchInt(param, value)
+        }
     }
 
     fun setBassAntiPop(enabled: Boolean) {
-        _uiState.update { it.copy(bass = it.bass.updateType(activeDeviceType) { copy(antiPop = enabled) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bass = it.bass.updateType(fxType) { copy(antiPop = enabled) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_ANTI_POP}" else "${ViperParams.PARAM_HP_BASS_ANTI_POP}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_BASS_ANTI_POP else ViperParams.PARAM_HP_BASS_ANTI_POP
-        dispatchInt(param, if (enabled) 1 else 0)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_ANTI_POP else ViperParams.PARAM_HP_BASS_ANTI_POP
+            dispatchInt(param, if (enabled) 1 else 0)
+        }
     }
 
     fun setBassMonoEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Bass Mono ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(bassMono = it.bassMono.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(bassMono = it.bassMono.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MONO_ENABLE}" else "${ViperParams.PARAM_HP_BASS_MONO_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.bassMono.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.bassMono.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -3157,61 +3395,74 @@ class MainViewModel @Inject constructor(
     }
 
     fun setBassMonoMode(mode: Int) {
-        _uiState.update { it.copy(bassMono = it.bassMono.updateType(activeDeviceType) { copy(mode = mode) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bassMono = it.bassMono.updateType(fxType) { copy(mode = mode) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MONO_MODE}" else "${ViperParams.PARAM_HP_BASS_MONO_MODE}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_MODE else ViperParams.PARAM_HP_BASS_MONO_MODE
-        saveAndDispatchInt(prefKey, param, mode)
+        viewModelScope.launch { repository.setIntPreference(prefKey, mode) }
+        if (fxType == activeDeviceType) dispatchInt(param, mode)
     }
 
     fun setBassMonoFrequency(value: Int) {
+        val fxType = editingFxType
         _uiState.update {
-            it.copy(bassMono = it.bassMono.updateType(activeDeviceType) {
+            it.copy(bassMono = it.bassMono.updateType(fxType) {
                 copy(frequency = value)
             })
         }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MONO_FREQUENCY}" else "${ViperParams.PARAM_HP_BASS_MONO_FREQUENCY}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_FREQUENCY else ViperParams.PARAM_HP_BASS_MONO_FREQUENCY
-        dispatchInt(param, EffectDispatcher.bassFrequencyToRaw(value))
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_FREQUENCY else ViperParams.PARAM_HP_BASS_MONO_FREQUENCY
+            dispatchInt(param, EffectDispatcher.bassFrequencyToRaw(value))
+        }
     }
 
     fun setBassMonoGain(value: Int) {
-        _uiState.update { it.copy(bassMono = it.bassMono.updateType(activeDeviceType) { copy(gain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bassMono = it.bassMono.updateType(fxType) { copy(gain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MONO_GAIN}" else "${ViperParams.PARAM_HP_BASS_MONO_GAIN}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_GAIN else ViperParams.PARAM_HP_BASS_MONO_GAIN
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_GAIN else ViperParams.PARAM_HP_BASS_MONO_GAIN
+            dispatchInt(param, value)
+        }
     }
 
     fun setBassMonoAntiPop(enabled: Boolean) {
-        _uiState.update { it.copy(bassMono = it.bassMono.updateType(activeDeviceType) { copy(antiPop = enabled) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(bassMono = it.bassMono.updateType(fxType) { copy(antiPop = enabled) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_BASS_MONO_ANTI_POP}" else "${ViperParams.PARAM_HP_BASS_MONO_ANTI_POP}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_ANTI_POP else ViperParams.PARAM_HP_BASS_MONO_ANTI_POP
-        dispatchInt(param, if (enabled) 1 else 0)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_BASS_MONO_ANTI_POP else ViperParams.PARAM_HP_BASS_MONO_ANTI_POP
+            dispatchInt(param, if (enabled) 1 else 0)
+        }
     }
 
     fun setClarityEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Clarity ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(clarity = it.clarity.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(clarity = it.clarity.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CLARITY_ENABLE}" else "${ViperParams.PARAM_HP_CLARITY_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.clarity.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.clarity.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -3234,35 +3485,42 @@ class MainViewModel @Inject constructor(
     }
 
     fun setClarityMode(mode: Int) {
-        _uiState.update { it.copy(clarity = it.clarity.updateType(activeDeviceType) { copy(mode = mode) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(clarity = it.clarity.updateType(fxType) { copy(mode = mode) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CLARITY_MODE}" else "${ViperParams.PARAM_HP_CLARITY_MODE}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_CLARITY_MODE else ViperParams.PARAM_HP_CLARITY_MODE
-        saveAndDispatchInt(prefKey, param, mode)
+        viewModelScope.launch { repository.setIntPreference(prefKey, mode) }
+        if (fxType == activeDeviceType) dispatchInt(param, mode)
     }
 
     fun setClarityGain(value: Int) {
-        _uiState.update { it.copy(clarity = it.clarity.updateType(activeDeviceType) { copy(gain = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(clarity = it.clarity.updateType(fxType) { copy(gain = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CLARITY_GAIN}" else "${ViperParams.PARAM_HP_CLARITY_GAIN}"
         viewModelScope.launch { repository.setIntPreference(prefKey, value) }
-        val param =
-            if (isSpk) ViperParams.PARAM_SPK_CLARITY_GAIN else ViperParams.PARAM_HP_CLARITY_GAIN
-        dispatchInt(param, value)
+        if (fxType == activeDeviceType) {
+            val param =
+                if (isSpk) ViperParams.PARAM_SPK_CLARITY_GAIN else ViperParams.PARAM_HP_CLARITY_GAIN
+            dispatchInt(param, value)
+        }
     }
 
     fun setCureEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "Cure ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(cure = it.cure.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(cure = it.cure.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CURE_ENABLE}" else "${ViperParams.PARAM_HP_CURE_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.cure.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.cure.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -3281,24 +3539,28 @@ class MainViewModel @Inject constructor(
     }
 
     fun setCureStrength(value: Int) {
-        _uiState.update { it.copy(cure = it.cure.updateType(activeDeviceType) { copy(strength = value) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(cure = it.cure.updateType(fxType) { copy(strength = value) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_CURE_STRENGTH}" else "${ViperParams.PARAM_HP_CURE_STRENGTH}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_CURE_STRENGTH else ViperParams.PARAM_HP_CURE_STRENGTH
-        saveAndDispatchInt(prefKey, param, value)
+        viewModelScope.launch { repository.setIntPreference(prefKey, value) }
+        if (fxType == activeDeviceType) dispatchInt(param, value)
     }
 
     fun setAnalogXEnabled(enabled: Boolean) {
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val mode = if (isSpk) "Speaker" else "Headphone"
         FileLogger.i("ViewModel", "AnalogX ($mode): ${if (enabled) "ON" else "OFF"}")
-        _uiState.update { it.copy(analog = it.analog.updateType(activeDeviceType) { copy(enabled = enabled) }) }
+        _uiState.update { it.copy(analog = it.analog.updateType(fxType) { copy(enabled = enabled) }) }
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_ANALOGX_ENABLE}" else "${ViperParams.PARAM_HP_ANALOGX_ENABLE}"
         viewModelScope.launch { repository.setBooleanPreference(prefKey, enabled) }
-        val vals = _uiState.value.analog.forType(activeDeviceType)
+        if (fxType != activeDeviceType) return
+        val vals = _uiState.value.analog.forType(fxType)
         val p = { hp: Int, spk: Int -> if (isSpk) spk else hp }
         viperService?.dispatchParamsBatch(
             listOf(
@@ -3317,13 +3579,15 @@ class MainViewModel @Inject constructor(
     }
 
     fun setAnalogXMode(mode: Int) {
-        _uiState.update { it.copy(analog = it.analog.updateType(activeDeviceType) { copy(mode = mode) }) }
-        val isSpk = activeDeviceType == ViperParams.FX_TYPE_SPEAKER
+        val fxType = editingFxType
+        _uiState.update { it.copy(analog = it.analog.updateType(fxType) { copy(mode = mode) }) }
+        val isSpk = fxType == ViperParams.FX_TYPE_SPEAKER
         val prefKey =
             if (isSpk) "spk_${ViperParams.PARAM_SPK_ANALOGX_MODE}" else "${ViperParams.PARAM_HP_ANALOGX_MODE}"
         val param =
             if (isSpk) ViperParams.PARAM_SPK_ANALOGX_MODE else ViperParams.PARAM_HP_ANALOGX_MODE
-        saveAndDispatchInt(prefKey, param, mode)
+        viewModelScope.launch { repository.setIntPreference(prefKey, mode) }
+        if (fxType == activeDeviceType) dispatchInt(param, mode)
     }
 
     fun setSpeakerOptEnabled(enabled: Boolean) {
