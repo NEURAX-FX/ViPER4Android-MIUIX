@@ -2,7 +2,6 @@ package com.llsl.viper4android.ui.components.viper
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
@@ -30,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -41,7 +38,6 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun ViperBottomBar(
-    deviceName: String,
     firstLabel: String,
     firstIcon: ImageVector,
     firstSelected: Boolean,
@@ -61,28 +57,6 @@ fun ViperBottomBar(
             .padding(bottom = outerBottomPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (deviceName.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Canvas(modifier = Modifier.size(6.dp)) {
-                    drawCircle(Color(0xFF4CAF50))
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = deviceName,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                    style = MiuixTheme.textStyles.body2,
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
         ViperFloatingCapsule(
             modifier = Modifier
                 .fillMaxWidth()

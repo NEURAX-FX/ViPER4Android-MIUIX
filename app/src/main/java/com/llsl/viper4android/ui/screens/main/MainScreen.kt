@@ -3,15 +3,27 @@ package com.llsl.viper4android.ui.screens.main
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Headphones
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.Speaker
@@ -22,9 +34,14 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -37,17 +54,15 @@ import com.llsl.viper4android.ui.screens.device.DeviceDialog
 import com.llsl.viper4android.ui.screens.preset.PresetDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
-import kotlinx.coroutines.delay
 import com.llsl.viper4android.ui.components.viper.ViperBottomBar
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
-import top.yukonga.miuix.kmp.basic.DropdownImpl
 import top.yukonga.miuix.kmp.basic.Icon
-import top.yukonga.miuix.kmp.basic.ListPopupColumn
-import top.yukonga.miuix.kmp.basic.ListPopupDefaults
-import top.yukonga.miuix.kmp.basic.PopupPositionProvider
-import top.yukonga.miuix.kmp.window.WindowListPopup
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
@@ -69,8 +84,6 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
-    var showTopBarMenu by remember { mutableStateOf(false) }
-    var pendingTopBarMenuAction by remember { mutableStateOf<TopBarMenuAction?>(null) }
     var debugLogClearTime by remember { mutableLongStateOf(0L) }
 
     val context = LocalContext.current
@@ -82,19 +95,6 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 ""
             }
         }
-
-    LaunchedEffect(showTopBarMenu, pendingTopBarMenuAction) {
-        val action = pendingTopBarMenuAction
-        if (!showTopBarMenu && action != null) {
-            pendingTopBarMenuAction = null
-            when (action) {
-                TopBarMenuAction.Devices -> showDeviceDialog = true
-                TopBarMenuAction.DriverStatus -> showDriverStatusDialog = true
-                TopBarMenuAction.Settings -> showSettingsDialog = true
-                TopBarMenuAction.DebugLog -> showDebugLog = true
-            }
-        }
-    }
 
     val importSuccessStr = stringResource(R.string.import_success)
     val importFailedStr = stringResource(R.string.import_failed)
@@ -137,60 +137,50 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
 
     val selectedTab = if (state.fxType == ViperParams.FX_TYPE_SPEAKER) 1 else 0
     val isSpkMode = selectedTab == 1
+    val scrollBehavior = MiuixScrollBehavior()
 
     ViperScaffold(
         topBar = {
-            val topBarMenuItems =
-                buildList {
-                    add(stringResource(R.string.menu_devices) to TopBarMenuAction.Devices)
-                    add(stringResource(R.string.menu_driver_status) to TopBarMenuAction.DriverStatus)
-                    add(stringResource(R.string.menu_settings) to TopBarMenuAction.Settings)
-                    if (debugMode) {
-                        add(stringResource(R.string.debug_log_title) to TopBarMenuAction.DebugLog)
-                    }
-                }
             ViperTopBar(
                 title = stringResource(R.string.app_name),
-                actions = {
-                    ViperIconButton(onClick = { showPresetDialog = true }) {
-                        Icon(
-                            Icons.Default.LibraryMusic,
-                            contentDescription = stringResource(R.string.menu_presets),
-                        )
-                    }
-                    ViperIconButton(onClick = { showTopBarMenu = true }) {
-                        Icon(
-                            Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.action_more),
-                        )
-                        WindowListPopup(
-                            show = showTopBarMenu,
-                            popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
-                            alignment = PopupPositionProvider.Align.TopEnd,
-                            onDismissRequest = { showTopBarMenu = false },
-                        ) {
-                            ListPopupColumn {
-                                topBarMenuItems.forEachIndexed { index, item ->
-                                    DropdownImpl(
-                                        text = item.first,
-                                        optionSize = topBarMenuItems.size,
-                                        isSelected = false,
-                                        index = index,
-                                        onSelectedIndexChange = {
-                                            pendingTopBarMenuAction = item.second
-                                            showTopBarMenu = false
-                                        },
-                                    )
-                                }
-                            }
+                deviceName = state.activeDeviceName,
+                scrollBehavior = scrollBehavior,
+                collapsedActions = {
+                    if (debugMode) {
+                        ViperIconButton(onClick = { showDebugLog = true }) {
+                            Icon(
+                                Icons.Default.BugReport,
+                                contentDescription = stringResource(R.string.debug_log_title),
+                            )
                         }
                     }
                 }
             )
         },
-        bottomBar = {
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            EffectList(
+                headerContent = {
+                    MainActionRow(
+                        onPresetClick = { showPresetDialog = true },
+                        onDevicesClick = { showDeviceDialog = true },
+                        onDriverStatusClick = { showDriverStatusDialog = true },
+                        onSettingsClick = { showSettingsDialog = true },
+                    )
+                },
+                bottomContentPadding = 104.dp,
+                state = state,
+                viewModel = viewModel,
+                isSpkMode = isSpkMode,
+                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            )
+
             ViperBottomBar(
-                deviceName = state.activeDeviceName,
                 firstLabel = stringResource(R.string.tab_headphone),
                 firstIcon = if (selectedTab == 0) Icons.Filled.Headphones else Icons.Outlined.Headphones,
                 firstSelected = selectedTab == 0,
@@ -200,14 +190,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 secondSelected = selectedTab == 1,
                 onSecondClick = { viewModel.setFxType(ViperParams.FX_TYPE_SPEAKER) },
             )
-        },
-    ) { paddingValues ->
-        EffectList(
-            state = state,
-            viewModel = viewModel,
-            isSpkMode = isSpkMode,
-            modifier = Modifier.padding(paddingValues),
-        )
+        }
 
         if (showPresetDialog) {
             PresetDialog(
@@ -288,15 +271,89 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     }
 }
 
-private enum class TopBarMenuAction {
-    Devices,
-    DriverStatus,
-    Settings,
-    DebugLog,
+@Composable
+private fun MainActionRow(
+    onPresetClick: () -> Unit,
+    onDevicesClick: () -> Unit,
+    onDriverStatusClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        MainActionButton(
+            icon = Icons.Default.LibraryMusic,
+            label = stringResource(R.string.menu_presets),
+            contentDescription = stringResource(R.string.menu_presets),
+            onClick = onPresetClick,
+            modifier = Modifier.weight(1f),
+        )
+        MainActionButton(
+            icon = Icons.Default.Devices,
+            label = stringResource(R.string.menu_devices),
+            contentDescription = stringResource(R.string.menu_devices),
+            onClick = onDevicesClick,
+            modifier = Modifier.weight(1f),
+        )
+        MainActionButton(
+            icon = Icons.Default.Info,
+            label = stringResource(R.string.menu_driver_status),
+            contentDescription = stringResource(R.string.menu_driver_status),
+            onClick = onDriverStatusClick,
+            modifier = Modifier.weight(1f),
+        )
+        MainActionButton(
+            icon = Icons.Default.Settings,
+            label = stringResource(R.string.menu_settings),
+            contentDescription = stringResource(R.string.menu_settings),
+            onClick = onSettingsClick,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun MainActionButton(
+    icon: ImageVector,
+    label: String,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .height(62.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 8.dp),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MiuixTheme.textStyles.body2,
+        )
+    }
 }
 
 @Composable
 private fun EffectList(
+    headerContent: @Composable () -> Unit,
+    bottomContentPadding: androidx.compose.ui.unit.Dp,
     state: MainUiState,
     viewModel: MainViewModel,
     isSpkMode: Boolean,
@@ -306,6 +363,7 @@ private fun EffectList(
         modifier = modifier.fillMaxSize(),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { headerContent() }
         item { MasterLimiterSection(state, viewModel, isSpkMode) }
         item { PlaybackGainSection(state, viewModel, isSpkMode) }
         item { LUFSTargetingSection(state, viewModel, isSpkMode) }
@@ -332,6 +390,6 @@ private fun EffectList(
         if (isSpkMode) {
             item { SpeakerOptSection(state, viewModel) }
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { Spacer(modifier = Modifier.height(bottomContentPadding)) }
     }
 }

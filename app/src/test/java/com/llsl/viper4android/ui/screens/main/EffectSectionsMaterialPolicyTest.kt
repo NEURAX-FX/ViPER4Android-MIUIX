@@ -9,7 +9,7 @@ import java.nio.file.Paths
 class EffectSectionsMaterialPolicyTest {
     @Test
     fun effectSectionsDoesNotImportMaterial3UiComponents() {
-        val source = Files.readString(projectRoot().resolve("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt"))
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 
         val forbiddenImports =
             listOf(
@@ -31,4 +31,7 @@ class EffectSectionsMaterialPolicyTest {
         return generateSequence(start) { it.parent }
             .first { Files.exists(it.resolve("settings.gradle.kts")) }
     }
+
+    private fun readSource(relativePath: String): String =
+        String(Files.readAllBytes(projectRoot().resolve(relativePath)), Charsets.UTF_8)
 }
