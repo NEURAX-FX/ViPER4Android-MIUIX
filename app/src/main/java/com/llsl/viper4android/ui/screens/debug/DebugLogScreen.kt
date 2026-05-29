@@ -1,6 +1,9 @@
 package com.llsl.viper4android.ui.screens.debug
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,17 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -40,8 +35,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.R
+import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.utils.FileLogger
 import com.llsl.viper4android.utils.RootShell
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -229,19 +230,23 @@ fun DebugLogDialog(
         }
     }
 
-    AlertDialog(
+    ViperDialog(
+        show = true,
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.debug_log_title)) },
-        text = {
+        title = stringResource(R.string.debug_log_title),
+        confirmText = stringResource(R.string.action_close),
+        onConfirm = onDismiss,
+        content = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
+                TextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp),
-                    placeholder = { Text(stringResource(R.string.debug_search_hint)) },
+                    label = stringResource(R.string.debug_search_hint),
+                    useLabelAsPlaceholder = true,
                     leadingIcon = {
                         Icon(
                             Icons.Default.Search,
@@ -250,12 +255,7 @@ fun DebugLogDialog(
                         )
                     },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.bodySmall,
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        ),
+                    textStyle = MiuixTheme.textStyles.body2,
                 )
 
                 Row(
@@ -267,21 +267,11 @@ fun DebugLogDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     LogSource.entries.forEach { source ->
-                        FilterChip(
+                        DebugFilterChip(
                             selected = selectedSource == source,
                             onClick = { selectedSource = source },
-                            label = {
-                                Text(
-                                    stringResource(source.labelRes),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = colorForSource(source).copy(alpha = 0.2f),
-                                    selectedLabelColor = colorForSource(source),
-                                ),
-                            modifier = Modifier.height(28.dp),
+                            label = stringResource(source.labelRes),
+                            accentColor = colorForSource(source),
                         )
                     }
                 }
@@ -295,21 +285,11 @@ fun DebugLogDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     LogLevel.entries.forEach { level ->
-                        FilterChip(
+                        DebugFilterChip(
                             selected = selectedLevel == level,
                             onClick = { selectedLevel = level },
-                            label = {
-                                Text(
-                                    stringResource(level.labelRes),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = colorForLevel(level).copy(alpha = 0.2f),
-                                    selectedLabelColor = colorForLevel(level),
-                                ),
-                            modifier = Modifier.height(28.dp),
+                            label = stringResource(level.labelRes),
+                            accentColor = colorForLevel(level),
                         )
                     }
                 }
@@ -323,24 +303,18 @@ fun DebugLogDialog(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     LogCategory.entries.forEach { category ->
-                        FilterChip(
+                        DebugFilterChip(
                             selected = selectedCategory == category,
                             onClick = { selectedCategory = category },
-                            label = {
-                                Text(
-                                    stringResource(category.labelRes),
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            },
-                            modifier = Modifier.height(28.dp),
+                            label = stringResource(category.labelRes),
                         )
                     }
                 }
 
                 Text(
                     text = "${filteredLines.size} / ${allLines.size}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                     modifier = Modifier.padding(bottom = 4.dp),
                 )
 
@@ -361,28 +335,63 @@ fun DebugLogDialog(
                         )
                     }
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
-            }
-        },
-        dismissButton = {
-            Row {
-                TextButton(onClick = onDisableDebug) {
-                    Text(stringResource(R.string.debug_disable_debug))
+
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    TextButton(
+                        text = stringResource(R.string.debug_disable_debug),
+                        onClick = onDisableDebug,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = stringResource(R.string.action_clear),
+                        onClick = {
+                            scope.launch {
+                                withContext(Dispatchers.IO) { FileLogger.clearLogs() }
+                            }
+                            onClear()
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
-                TextButton(onClick = {
-                    scope.launch {
-                        withContext(Dispatchers.IO) { FileLogger.clearLogs() }
-                    }
-                    onClear()
-                }) {
-                    Text(stringResource(R.string.action_clear))
-                }
             }
         },
+    )
+}
+
+@Composable
+private fun DebugFilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String,
+    accentColor: Color = Color.Unspecified,
+) {
+    val selectedColor = if (accentColor == Color.Unspecified) MiuixTheme.colorScheme.primary else accentColor
+    val shape = RoundedCornerShape(14.dp)
+    Text(
+        text = label,
+        style = MiuixTheme.textStyles.body2,
+        fontSize = 12.sp,
+        color = if (selected) selectedColor else MiuixTheme.colorScheme.onSurfaceVariantActions,
+        modifier =
+            Modifier
+                .height(28.dp)
+                .background(
+                    color = if (selected) selectedColor.copy(alpha = 0.16f) else Color.Transparent,
+                    shape = shape,
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (selected) selectedColor.copy(alpha = 0.28f) else MiuixTheme.colorScheme.dividerLine,
+                    shape = shape,
+                )
+                .clickable(onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }
 

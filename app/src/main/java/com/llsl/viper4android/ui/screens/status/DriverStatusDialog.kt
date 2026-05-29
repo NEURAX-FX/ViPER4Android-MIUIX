@@ -1,36 +1,40 @@
 package com.llsl.viper4android.ui.screens.status
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
+import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.screens.main.DriverStatus
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun DriverStatusDialog(
     driverStatus: DriverStatus,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    ViperDialog(
+        show = true,
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.menu_driver_status)) },
-        text = {
+        title = stringResource(R.string.menu_driver_status),
+        confirmText = stringResource(R.string.action_close),
+        onConfirm = onDismiss,
+        content = {
             if (!driverStatus.installed) {
                 Text(
                     text = stringResource(R.string.driver_not_found),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
+                    style = MiuixTheme.textStyles.body1,
+                    color = MiuixTheme.colorScheme.error,
                 )
             } else {
                 Column {
@@ -38,17 +42,17 @@ fun DriverStatusDialog(
                         label = stringResource(R.string.driver_version_code),
                         value = driverStatus.versionCode.toString(),
                     )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
                     StatusRow(
                         label = stringResource(R.string.driver_version_name),
                         value = driverStatus.versionName,
                     )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
                     StatusRow(
                         label = stringResource(R.string.driver_architecture),
                         value = driverStatus.architecture,
                     )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
                     StatusRow(
                         label = stringResource(R.string.driver_streaming),
                         value =
@@ -58,7 +62,7 @@ fun DriverStatusDialog(
                                 stringResource(R.string.status_inactive)
                             },
                     )
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
                     StatusRow(
                         label = stringResource(R.string.driver_sampling_rate),
                         value =
@@ -69,11 +73,6 @@ fun DriverStatusDialog(
                             },
                     )
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
             }
         },
     )
@@ -93,12 +92,23 @@ private fun StatusRow(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MiuixTheme.textStyles.body2,
         )
     }
+}
+
+@Composable
+private fun ViperDivider(modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MiuixTheme.colorScheme.dividerLine),
+    )
 }

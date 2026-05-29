@@ -3,40 +3,18 @@ package com.llsl.viper4android.ui.screens.main
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Speaker
-import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material.icons.outlined.Speaker
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarDefaults
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,9 +22,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -62,8 +38,17 @@ import com.llsl.viper4android.ui.screens.preset.PresetDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
 import kotlinx.coroutines.delay
+import com.llsl.viper4android.ui.components.viper.ViperBottomBar
+import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperScaffold
+import com.llsl.viper4android.ui.components.viper.ViperTopBar
+import top.yukonga.miuix.kmp.basic.DropdownImpl
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.ListPopupColumn
+import top.yukonga.miuix.kmp.basic.ListPopupDefaults
+import top.yukonga.miuix.kmp.basic.PopupPositionProvider
+import top.yukonga.miuix.kmp.window.WindowListPopup
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
@@ -84,6 +69,8 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
+    var showTopBarMenu by remember { mutableStateOf(false) }
+    var pendingTopBarMenuAction by remember { mutableStateOf<TopBarMenuAction?>(null) }
     var debugLogClearTime by remember { mutableLongStateOf(0L) }
 
     val context = LocalContext.current
@@ -96,55 +83,17 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             }
         }
 
-    if (showPresetDialog) {
-        PresetDialog(
-            presets = presets,
-            onSave = viewModel::savePreset,
-            onLoad = { id ->
-                viewModel.loadPreset(id)
-                showPresetDialog = false
-            },
-            onDelete = viewModel::deletePreset,
-            onRename = viewModel::renamePreset,
-            onDismiss = { showPresetDialog = false },
-        )
-    }
-
-    if (showDriverStatusDialog) {
-        LaunchedEffect(Unit) {
-            while (true) {
-                viewModel.queryDriverStatus()
-                delay(500)
+    LaunchedEffect(showTopBarMenu, pendingTopBarMenuAction) {
+        val action = pendingTopBarMenuAction
+        if (!showTopBarMenu && action != null) {
+            pendingTopBarMenuAction = null
+            when (action) {
+                TopBarMenuAction.Devices -> showDeviceDialog = true
+                TopBarMenuAction.DriverStatus -> showDriverStatusDialog = true
+                TopBarMenuAction.Settings -> showSettingsDialog = true
+                TopBarMenuAction.DebugLog -> showDebugLog = true
             }
         }
-        DriverStatusDialog(
-            driverStatus = driverStatus,
-            onDismiss = { showDriverStatusDialog = false },
-        )
-    }
-
-    if (showDebugLog) {
-        DebugLogDialog(
-            clearTimestamp = debugLogClearTime,
-            onClear = { debugLogClearTime = System.currentTimeMillis() },
-            onDisableDebug = {
-                viewModel.disableDebugMode()
-                showDebugLog = false
-            },
-            onDismiss = { showDebugLog = false },
-        )
-    }
-
-    if (showDeviceDialog) {
-        DeviceDialog(
-            devices = deviceSettings,
-            activeDeviceId = state.activeDeviceId,
-            onRename = viewModel::renameDevice,
-            onLoad = viewModel::loadDevicePreset,
-            onSave = viewModel::saveDevicePreset,
-            onDelete = viewModel::deleteDeviceSettings,
-            onDismiss = { showDeviceDialog = false },
-        )
     }
 
     val importSuccessStr = stringResource(R.string.import_success)
@@ -186,129 +135,71 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             }
         }
 
-    if (showSettingsDialog) {
-        LaunchedEffect(Unit) { viewModel.queryDriverStatus() }
-        SettingsDialog(
-            autoStartEnabled = autoStart,
-            globalModeEnabled = globalMode,
-            aidlModeActive = aidlMode,
-            onGlobalModeChanged = viewModel::toggleGlobalMode,
-            driverStatus = driverStatus,
-            appVersionName = appVersionName,
-            onAutoStartChanged = viewModel::toggleAutoStart,
-            onImportPreset = { importPresetLauncher.launch(arrayOf("application/json", "*/*")) },
-            onImportKernel = {
-                importKernelLauncher.launch(
-                    arrayOf(
-                        "audio/*",
-                        "application/octet-stream",
-                        "*/*",
-                    ),
-                )
-            },
-            onDebugUnlocked = viewModel::enableDebugMode,
-            onImportVdc = { importVdcLauncher.launch(arrayOf("*/*")) },
-            onDismiss = { showSettingsDialog = false },
-        )
-    }
-
     val selectedTab = if (state.fxType == ViperParams.FX_TYPE_SPEAKER) 1 else 0
     val isSpkMode = selectedTab == 1
 
-    Scaffold(
+    ViperScaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
-                actions = {
+            val topBarMenuItems =
+                buildList {
+                    add(stringResource(R.string.menu_devices) to TopBarMenuAction.Devices)
+                    add(stringResource(R.string.menu_driver_status) to TopBarMenuAction.DriverStatus)
+                    add(stringResource(R.string.menu_settings) to TopBarMenuAction.Settings)
                     if (debugMode) {
-                        IconButton(onClick = { showDebugLog = true }) {
-                            Icon(
-                                Icons.Default.BugReport,
-                                contentDescription = stringResource(R.string.debug_log_title),
-                            )
-                        }
+                        add(stringResource(R.string.debug_log_title) to TopBarMenuAction.DebugLog)
                     }
-                    IconButton(onClick = { showDeviceDialog = true }) {
-                        Icon(
-                            Icons.Filled.SpeakerGroup,
-                            contentDescription = stringResource(R.string.menu_devices),
-                        )
-                    }
-                    IconButton(onClick = { showDriverStatusDialog = true }) {
-                        Icon(
-                            Icons.Default.Info,
-                            contentDescription = stringResource(R.string.menu_driver_status),
-                        )
-                    }
-                    IconButton(onClick = { showPresetDialog = true }) {
+                }
+            ViperTopBar(
+                title = stringResource(R.string.app_name),
+                actions = {
+                    ViperIconButton(onClick = { showPresetDialog = true }) {
                         Icon(
                             Icons.Default.LibraryMusic,
                             contentDescription = stringResource(R.string.menu_presets),
                         )
                     }
-                    IconButton(onClick = { showSettingsDialog = true }) {
+                    ViperIconButton(onClick = { showTopBarMenu = true }) {
                         Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.menu_settings),
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.action_more),
                         )
+                        WindowListPopup(
+                            show = showTopBarMenu,
+                            popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
+                            alignment = PopupPositionProvider.Align.TopEnd,
+                            onDismissRequest = { showTopBarMenu = false },
+                        ) {
+                            ListPopupColumn {
+                                topBarMenuItems.forEachIndexed { index, item ->
+                                    DropdownImpl(
+                                        text = item.first,
+                                        optionSize = topBarMenuItems.size,
+                                        isSelected = false,
+                                        index = index,
+                                        onSelectedIndexChange = {
+                                            pendingTopBarMenuAction = item.second
+                                            showTopBarMenu = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
                     }
-                },
+                }
             )
         },
         bottomBar = {
-            Column {
-                val deviceName = state.activeDeviceName
-                if (deviceName.isNotEmpty()) {
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .background(NavigationBarDefaults.containerColor)
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Canvas(modifier = Modifier.size(6.dp)) {
-                            drawCircle(Color(0xFF4CAF50))
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = deviceName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == 0,
-                        onClick = { viewModel.setFxType(ViperParams.FX_TYPE_HEADPHONE) },
-                        icon = {
-                            Icon(
-                                imageVector = if (selectedTab == 0) Icons.Filled.Headphones else Icons.Outlined.Headphones,
-                                contentDescription = null,
-                            )
-                        },
-                        label = { Text(stringResource(R.string.tab_headphone)) },
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == 1,
-                        onClick = { viewModel.setFxType(ViperParams.FX_TYPE_SPEAKER) },
-                        icon = {
-                            Icon(
-                                imageVector = if (selectedTab == 1) Icons.Filled.Speaker else Icons.Outlined.Speaker,
-                                contentDescription = null,
-                            )
-                        },
-                        label = { Text(stringResource(R.string.tab_speaker)) },
-                    )
-                }
-            }
+            ViperBottomBar(
+                deviceName = state.activeDeviceName,
+                firstLabel = stringResource(R.string.tab_headphone),
+                firstIcon = if (selectedTab == 0) Icons.Filled.Headphones else Icons.Outlined.Headphones,
+                firstSelected = selectedTab == 0,
+                onFirstClick = { viewModel.setFxType(ViperParams.FX_TYPE_HEADPHONE) },
+                secondLabel = stringResource(R.string.tab_speaker),
+                secondIcon = if (selectedTab == 1) Icons.Filled.Speaker else Icons.Outlined.Speaker,
+                secondSelected = selectedTab == 1,
+                onSecondClick = { viewModel.setFxType(ViperParams.FX_TYPE_SPEAKER) },
+            )
         },
     ) { paddingValues ->
         EffectList(
@@ -317,7 +208,91 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             isSpkMode = isSpkMode,
             modifier = Modifier.padding(paddingValues),
         )
+
+        if (showPresetDialog) {
+            PresetDialog(
+                presets = presets,
+                onSave = viewModel::savePreset,
+                onLoad = { id ->
+                    viewModel.loadPreset(id)
+                    showPresetDialog = false
+                },
+                onDelete = viewModel::deletePreset,
+                onRename = viewModel::renamePreset,
+                onDismiss = { showPresetDialog = false },
+            )
+        }
+
+        if (showDeviceDialog) {
+            DeviceDialog(
+                devices = deviceSettings,
+                activeDeviceId = state.activeDeviceId,
+                onRename = viewModel::renameDevice,
+                onLoad = viewModel::loadDevicePreset,
+                onSave = viewModel::saveDevicePreset,
+                onDelete = viewModel::deleteDeviceSettings,
+                onDismiss = { showDeviceDialog = false },
+            )
+        }
+
+        if (showDebugLog) {
+            DebugLogDialog(
+                clearTimestamp = debugLogClearTime,
+                onClear = { debugLogClearTime = System.currentTimeMillis() },
+                onDisableDebug = {
+                    viewModel.disableDebugMode()
+                    showDebugLog = false
+                },
+                onDismiss = { showDebugLog = false },
+            )
+        }
+
+        if (showDriverStatusDialog) {
+            LaunchedEffect(Unit) {
+                while (true) {
+                    viewModel.queryDriverStatus()
+                    delay(500)
+                }
+            }
+            DriverStatusDialog(
+                driverStatus = driverStatus,
+                onDismiss = { showDriverStatusDialog = false },
+            )
+        }
+
+        if (showSettingsDialog) {
+            LaunchedEffect(Unit) { viewModel.queryDriverStatus() }
+            SettingsDialog(
+                autoStartEnabled = autoStart,
+                globalModeEnabled = globalMode,
+                aidlModeActive = aidlMode,
+                onGlobalModeChanged = viewModel::toggleGlobalMode,
+                driverStatus = driverStatus,
+                appVersionName = appVersionName,
+                onAutoStartChanged = viewModel::toggleAutoStart,
+                onImportPreset = { importPresetLauncher.launch(arrayOf("application/json", "*/*")) },
+                onImportKernel = {
+                    importKernelLauncher.launch(
+                        arrayOf(
+                            "audio/*",
+                            "application/octet-stream",
+                            "*/*",
+                        ),
+                    )
+                },
+                onDebugUnlocked = viewModel::enableDebugMode,
+                onImportVdc = { importVdcLauncher.launch(arrayOf("*/*")) },
+                onDismiss = { showSettingsDialog = false },
+            )
+        }
     }
+}
+
+private enum class TopBarMenuAction {
+    Devices,
+    DriverStatus,
+    Settings,
+    DebugLog,
 }
 
 @Composable

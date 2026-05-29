@@ -1,26 +1,18 @@
 package com.llsl.viper4android.ui.screens.main
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurCircular
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.CandlestickChart
 import androidx.compose.material.icons.filled.Compress
 import androidx.compose.material.icons.filled.CrisisAlert
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Headphones
@@ -30,31 +22,21 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.material.icons.filled.SpeakerPhone
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.Waves
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
@@ -66,9 +48,15 @@ import com.llsl.viper4android.ui.components.LabeledDropdown
 import com.llsl.viper4android.ui.components.LabeledSlider
 import com.llsl.viper4android.ui.components.LabeledSwitch
 import com.llsl.viper4android.ui.components.resolvePresetName
+import com.llsl.viper4android.ui.components.viper.ViperDialog
+import com.llsl.viper4android.ui.components.viper.ViperTabs
+import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.roundToInt
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun MasterLimiterSection(
@@ -479,15 +467,11 @@ fun MultibandCompressorSection(
         onEnabledChange = onEnabledChange,
         icon = Icons.Default.Compress,
     ) {
-        PrimaryTabRow(selectedTabIndex = selectedTab) {
-            tabNames.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(title) },
-                )
-            }
-        }
+        ViperTabs(
+            tabs = tabNames,
+            selectedTabIndex = selectedTab,
+            onTabSelected = { selectedTab = it },
+        )
 
         val lowFreq =
             if (b == 0) 20 else crossovers.getOrElse(b - 1) { crossoverDefaults.getOrElse(b - 1) { 20 } }
@@ -495,8 +479,8 @@ fun MultibandCompressorSection(
             if (b < 4) crossovers.getOrElse(b) { crossoverDefaults.getOrElse(b) { 20000 } } else 20000
         Text(
             text = "$lowFreq - ${if (b < 4) "$highFreq" else "20000+"} Hz",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
         )
 
@@ -827,24 +811,63 @@ fun DynamicEqSection(
         }
 
     if (deleteBandIndex >= 0) {
-        AlertDialog(
+        ViperDialog(
+            show = true,
             onDismissRequest = { deleteBandIndex = -1 },
-            title = { Text(stringResource(R.string.dialog_delete_band)) },
-            text = { Text("Remove ${formatFreq(freqs.getOrElse(deleteBandIndex) { 1000 })} band?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    val i = deleteBandIndex
-                    deleteBandIndex = -1
-                    viewModel.removeDynamicEqBand(i)
-                    if (selectedTab >= bandCount - 1) selectedTab = maxOf(0, bandCount - 2)
-                }) { Text(stringResource(R.string.action_delete)) }
+            title = stringResource(R.string.dialog_delete_band),
+            content = {
+                Text(
+                    text = stringResource(
+                        R.string.dynamic_eq_delete_band_message,
+                        formatFreq(freqs.getOrElse(deleteBandIndex) { 1000 }),
+                    ),
+                    style = MiuixTheme.textStyles.body2,
+                )
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    deleteBandIndex = -1
-                }) { Text(stringResource(R.string.action_cancel)) }
+            confirmText = stringResource(R.string.action_delete),
+            onConfirm = {
+                val i = deleteBandIndex
+                deleteBandIndex = -1
+                viewModel.removeDynamicEqBand(i)
+                if (selectedTab >= bandCount - 1) selectedTab = maxOf(0, bandCount - 2)
             },
+            dismissText = stringResource(R.string.action_cancel),
+            onDismiss = { deleteBandIndex = -1 },
         )
+    }
+
+    val dynamicEqTabNames = List(bandCount) { i -> formatFreq(freqs.getOrElse(i) { 1000 }) }
+    val lastFreq = if (bandCount > 0) freqs.getOrElse(bandCount - 1) { 0 } else 0
+    val canAddBand = bandCount < 8 && lastFreq < 20000
+    val canDeleteBand = bandCount > 1
+
+    val addBandLabel = stringResource(R.string.action_add)
+    val deleteBandLabel = stringResource(R.string.action_delete)
+
+    fun addBand() {
+        viewModel.addDynamicEqBand()
+        selectedTab = bandCount
+    }
+
+    fun requestDeleteBand() {
+        if (canDeleteBand) deleteBandIndex = safeTab
+    }
+
+    val tabLabels =
+        buildList {
+            addAll(dynamicEqTabNames)
+            if (canAddBand) add(addBandLabel)
+            if (canDeleteBand) add(deleteBandLabel)
+        }
+    val selectedTabIndex =
+        if (safeTab in tabLabels.indices) safeTab else 0
+
+    fun handleTabSelected(index: Int) {
+        when {
+            index < dynamicEqTabNames.size -> selectedTab = index
+            canAddBand && index == dynamicEqTabNames.size -> addBand()
+            canDeleteBand -> requestDeleteBand()
+        }
     }
 
     EffectSection(
@@ -853,51 +876,20 @@ fun DynamicEqSection(
         onEnabledChange = onEnabledChange,
         icon = Icons.Default.Insights,
     ) {
-        PrimaryScrollableTabRow(
-            selectedTabIndex = safeTab,
-            edgePadding = 0.dp,
-        ) {
-            for (i in 0 until bandCount) {
-                val isSelected = safeTab == i
-                val color =
-                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .combinedClickable(
-                                onClick = { selectedTab = i },
-                                onLongClick = { if (bandCount > 1) deleteBandIndex = i },
-                            ).padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    Text(
-                        text = formatFreq(freqs.getOrElse(i) { 1000 }),
-                        color = color,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-            val lastFreq = if (bandCount > 0) freqs.getOrElse(bandCount - 1) { 0 } else 0
-            if (bandCount < 8 && lastFreq < 20000) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .clickable {
-                                viewModel.addDynamicEqBand()
-                                selectedTab = bandCount
-                            }.padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
+        ViperTabs(
+            tabs = tabLabels,
+            selectedTabIndex = selectedTabIndex,
+            onTabSelected = ::handleTabSelected,
+        )
 
         if (bandCount > 0) {
+            if (canDeleteBand) {
+                TextButton(
+                    text = stringResource(R.string.action_delete),
+                    onClick = ::requestDeleteBand,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
             val freq = freqs.getOrElse(safeTab) { 1000 }
             val q = qs.getOrElse(safeTab) { 150 }
             val gain = gains.getOrElse(safeTab) { 0 }
@@ -1314,7 +1306,7 @@ fun DynamicSystemSection(
     val sideGainHigh = vals.sideGainHigh
 
     var showSaveDialog by remember { mutableStateOf(false) }
-    var presetNameInput by remember { mutableStateOf("") }
+    var presetNameInput by remember { mutableStateOf(TextFieldValue("")) }
 
     val onEnabledChange = viewModel::setDynamicSystemEnabled
     val onStrengthChange = viewModel::setDynamicSystemStrength
@@ -1349,32 +1341,22 @@ fun DynamicSystemSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TextButton(onClick = { showSaveDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_save))
-            }
             TextButton(
+                text = stringResource(R.string.action_save),
+                onClick = { showSaveDialog = true },
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = stringResource(R.string.action_delete),
                 onClick = { dsPresetId?.let { onPresetDelete(it) } },
                 enabled = dsPresetId != null,
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_delete))
-            }
-            TextButton(onClick = onReset) {
-                Icon(
-                    Icons.Default.RestartAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_reset))
-            }
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = stringResource(R.string.action_reset),
+                onClick = onReset,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         LabeledSlider(
@@ -1439,36 +1421,25 @@ fun DynamicSystemSection(
     }
 
     if (showSaveDialog) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { showSaveDialog = false },
-            title = { Text(stringResource(R.string.preset_save_title)) },
-            text = {
-                OutlinedTextField(
-                    value = presetNameInput,
-                    onValueChange = { presetNameInput = it },
-                    label = { Text(stringResource(R.string.preset_name_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (presetNameInput.isNotBlank()) {
-                            onPresetAdd(presetNameInput.trim())
-                            presetNameInput = ""
-                            showSaveDialog = false
-                        }
-                    },
-                ) {
-                    Text(stringResource(android.R.string.ok))
+            title = stringResource(R.string.preset_save_title),
+            value = presetNameInput,
+            onValueChange = { presetNameInput = it },
+            label = stringResource(R.string.preset_name_hint),
+            confirmText = stringResource(android.R.string.ok),
+            onConfirm = {
+                val name = presetNameInput.text.trim()
+                if (name.isNotBlank()) {
+                    onPresetAdd(name)
+                    presetNameInput = TextFieldValue("")
+                    showSaveDialog = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
+            confirmEnabled = presetNameInput.text.isNotBlank(),
+            dismissText = stringResource(android.R.string.cancel),
+            onDismiss = { showSaveDialog = false },
         )
     }
 }

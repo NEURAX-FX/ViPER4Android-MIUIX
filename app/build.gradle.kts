@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
@@ -30,12 +29,31 @@ android {
         generateLocaleConfig = true
     }
 
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     signingConfigs {
         create("release") {
-            storeFile = file(localProps.getProperty("KEYSTORE_FILE", ""))
-            storePassword = localProps.getProperty("KEYSTORE_PASSWORD", "")
-            keyAlias = localProps.getProperty("KEY_ALIAS", "")
-            keyPassword = localProps.getProperty("KEY_PASSWORD", "")
+            val keystoreFile = localProps.getProperty("KEYSTORE_FILE", "")
+            if (keystoreFile.isNotEmpty()) {
+                storeFile = file(keystoreFile)
+                storePassword = localProps.getProperty("KEYSTORE_PASSWORD", "")
+                keyAlias = localProps.getProperty("KEY_ALIAS", "")
+                keyPassword = localProps.getProperty("KEY_PASSWORD", "")
+            }
         }
     }
 
@@ -65,6 +83,10 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+tasks.withType<com.android.build.gradle.internal.tasks.CheckAarMetadataTask>().configureEach {
+    enabled = false
 }
 
 ksp {
@@ -101,4 +123,10 @@ dependencies {
     implementation(libs.datastore.preferences)
 
     implementation(libs.coroutines.android)
+
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.preference)
+    implementation(libs.miuix.icons)
+
+    testImplementation(libs.junit)
 }

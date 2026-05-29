@@ -4,12 +4,13 @@ import android.graphics.Color.argb
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,20 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,18 +39,37 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.audio.EffectDispatcher
 import com.llsl.viper4android.data.model.EqPreset
+import com.llsl.viper4android.ui.components.viper.ViperDialog
+import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Slider
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val DB_MIN = -12f
 private const val DB_MAX = 12f
 private val DB_GRID_LINES = listOf(-12f, -6f, 0f, 6f, 12f)
+
+@Composable
+private fun enabledIconTint(enabled: Boolean): Color =
+    if (enabled) {
+        MiuixTheme.colorScheme.primary
+    } else {
+        MiuixTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    }
 
 @Composable
 fun EqCurveGraph(
@@ -72,9 +79,8 @@ fun EqCurveGraph(
     bandCount: Int = 10,
 ) {
     val freqLabels = EffectDispatcher.eqGraphLabelsForCount(bandCount)
-    val primary = MaterialTheme.colorScheme.primary
-    val surfaceDark = MaterialTheme.colorScheme.surfaceContainerHighest
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val primary = MiuixTheme.colorScheme.primary
+    val onSurfaceVariant = MiuixTheme.colorScheme.onSurfaceVariantActions
     val density = LocalDensity.current
 
     val graphModifier =
@@ -86,15 +92,16 @@ fun EqCurveGraph(
             modifier.fillMaxWidth()
         }
 
-    Surface(
+    Card(
         modifier =
             graphModifier
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { onClick() },
-        color = surfaceDark,
-        shape = RoundedCornerShape(12.dp),
+                .clip(RoundedCornerShape(12.dp)),
+        cornerRadius = 12.dp,
+        insideMargin = PaddingValues(0.dp),
+        colors = CardDefaults.defaultColors(color = MiuixTheme.colorScheme.surfaceContainer),
+        onClick = onClick,
     ) {
-        Canvas(modifier = Modifier.fillMaxWidth()) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
             val paddingLeft = 28.dp.toPx()
             val paddingRight = 16.dp.toPx()
             val paddingTop = 24.dp.toPx()
@@ -309,17 +316,15 @@ fun EqEditDialog(
     }
 
     var showSaveDialog by remember { mutableStateOf(false) }
-    var presetNameInput by remember { mutableStateOf("") }
+    var presetNameInput by remember { mutableStateOf(TextFieldValue("")) }
 
-    AlertDialog(
+    ViperDialog(
+        show = true,
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.section_equalizer),
-                style = MaterialTheme.typography.titleMedium,
-            )
-        },
-        text = {
+        title = stringResource(R.string.section_equalizer),
+        confirmText = stringResource(android.R.string.ok),
+        onConfirm = onDismiss,
+        content = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
             ) {
@@ -350,41 +355,27 @@ fun EqEditDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    TextButton(onClick = { showSaveDialog = true }) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_save))
-                    }
                     TextButton(
+                        text = stringResource(R.string.action_save),
+                        onClick = { showSaveDialog = true },
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = stringResource(R.string.action_delete),
                         onClick = { presetId?.let { onPresetDelete(it) } },
                         enabled = presetId != null,
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_delete))
-                    }
-                    TextButton(onClick = {
-                        for (i in localBands.indices) {
-                            localBands[i] = 0f
-                        }
-                        onReset()
-                    }) {
-                        Icon(
-                            Icons.Default.RestartAlt,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.action_reset))
-                    }
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = stringResource(R.string.action_reset),
+                        onClick = {
+                            for (i in localBands.indices) {
+                                localBands[i] = 0f
+                            }
+                            onReset()
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -418,29 +409,22 @@ fun EqEditDialog(
                         ) {
                             Text(
                                 text = label,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MiuixTheme.textStyles.body2,
                                 modifier = Modifier.width(48.dp),
                             )
-                            IconButton(
+                            ViperIconButton(
                                 onClick = {
                                     val stepped = ((localBands[index] * 10).roundToInt() - 1) / 10f
                                     applyBandChange(stepped)
                                 },
                                 enabled = !atMin,
                                 modifier = Modifier.size(32.dp),
-                                colors =
-                                    IconButtonDefaults.iconButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
-                                        disabledContentColor =
-                                            MaterialTheme.colorScheme.onSurface.copy(
-                                                alpha = 0.38f,
-                                            ),
-                                    ),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Remove,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
+                                    tint = enabledIconTint(!atMin),
                                 )
                             }
                             Slider(
@@ -448,37 +432,25 @@ fun EqEditDialog(
                                 onValueChange = { applyBandChange(it) },
                                 valueRange = DB_MIN..DB_MAX,
                                 modifier = Modifier.weight(1f),
-                                colors =
-                                    SliderDefaults.colors(
-                                        activeTickColor = Color.Transparent,
-                                        inactiveTickColor = Color.Transparent,
-                                    ),
                             )
-                            IconButton(
+                            ViperIconButton(
                                 onClick = {
                                     val stepped = ((localBands[index] * 10).roundToInt() + 1) / 10f
                                     applyBandChange(stepped)
                                 },
                                 enabled = !atMax,
                                 modifier = Modifier.size(32.dp),
-                                colors =
-                                    IconButtonDefaults.iconButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.primary,
-                                        disabledContentColor =
-                                            MaterialTheme.colorScheme.onSurface.copy(
-                                                alpha = 0.38f,
-                                            ),
-                                    ),
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
+                                    tint = enabledIconTint(!atMax),
                                 )
                             }
                             Text(
                                 text = "${"%.1f".format(localBands[index])}dB",
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MiuixTheme.textStyles.body2,
                                 modifier = Modifier.width(52.dp),
                                 maxLines = 1,
                             )
@@ -487,44 +459,28 @@ fun EqEditDialog(
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
     )
 
     if (showSaveDialog) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { showSaveDialog = false },
-            title = { Text(stringResource(R.string.preset_save_title)) },
-            text = {
-                OutlinedTextField(
-                    value = presetNameInput,
-                    onValueChange = { presetNameInput = it },
-                    label = { Text(stringResource(R.string.preset_name_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (presetNameInput.isNotBlank()) {
-                            onPresetAdd(presetNameInput.trim())
-                            presetNameInput = ""
-                            showSaveDialog = false
-                        }
-                    },
-                ) {
-                    Text(stringResource(android.R.string.ok))
+            title = stringResource(R.string.preset_save_title),
+            value = presetNameInput,
+            onValueChange = { presetNameInput = it },
+            label = stringResource(R.string.preset_name_hint),
+            confirmText = stringResource(android.R.string.ok),
+            onConfirm = {
+                val name = presetNameInput.text.trim()
+                if (name.isNotBlank()) {
+                    onPresetAdd(name)
+                    presetNameInput = TextFieldValue("")
+                    showSaveDialog = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
+            confirmEnabled = presetNameInput.text.isNotBlank(),
+            dismissText = stringResource(android.R.string.cancel),
+            onDismiss = { showSaveDialog = false },
         )
     }
 }

@@ -95,6 +95,7 @@
     <string name="label_dynamic_eq_target_gain">Target Gain</string>
     <string name="label_dynamic_eq_filter_type">Filter Type</string>
     <string name="dialog_delete_band">Delete Band</string>
+    <string name="dynamic_eq_delete_band_message">Remove %1$s band?</string>
 
     <!-- Convolver -->
     <string name="section_convolver">Convolver</string>
@@ -241,6 +242,7 @@
 
     <!-- Actions -->
     <string name="action_save">Save</string>
+    <string name="action_add">Add</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_close">Close</string>
     <string name="action_rename">Rename</string>
@@ -249,6 +251,7 @@
     <string name="action_update">Update</string>
     <string name="action_delete">Delete</string>
     <string name="action_clear">Clear</string>
+    <string name="action_more">More</string>
 
     <!-- Debug -->
     <string name="debug_log_title">Debug Log</string>

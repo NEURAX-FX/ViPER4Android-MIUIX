@@ -13,14 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restore
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -30,10 +22,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.data.model.Preset
+import com.llsl.viper4android.ui.components.viper.ViperDialog
+import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun PresetDialog(
@@ -45,9 +45,9 @@ fun PresetDialog(
     onDismiss: () -> Unit,
 ) {
     var showSaveInput by remember { mutableStateOf(false) }
-    var saveInputName by remember { mutableStateOf("") }
+    var saveInputName by remember { mutableStateOf(TextFieldValue("")) }
     var renamingId by remember { mutableLongStateOf(-1L) }
-    var renameInputName by remember { mutableStateOf("") }
+    var renameInputName by remember { mutableStateOf(TextFieldValue("")) }
     var pendingDeletePreset by remember { mutableStateOf<Preset?>(null) }
 
     fun commitPendingDelete() {
@@ -65,89 +65,76 @@ fun PresetDialog(
         }
 
     if (showSaveInput) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { showSaveInput = false },
-            title = { Text(stringResource(R.string.preset_save_title)) },
-            text = {
-                OutlinedTextField(
-                    value = saveInputName,
-                    onValueChange = { saveInputName = it },
-                    label = { Text(stringResource(R.string.preset_name_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (saveInputName.isNotBlank()) {
-                            onSave(saveInputName.trim())
-                            saveInputName = ""
-                            showSaveInput = false
-                        }
-                    },
-                    enabled = saveInputName.isNotBlank(),
-                ) {
-                    Text(stringResource(R.string.action_save))
+            title = stringResource(R.string.preset_save_title),
+            value = saveInputName,
+            onValueChange = { saveInputName = it },
+            label = stringResource(R.string.preset_name_hint),
+            confirmText = stringResource(R.string.action_save),
+            onConfirm = {
+                val name = saveInputName.text.trim()
+                if (name.isNotBlank()) {
+                    onSave(name)
+                    saveInputName = TextFieldValue("")
+                    showSaveInput = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showSaveInput = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
+            confirmEnabled = saveInputName.text.isNotBlank(),
+            dismissText = stringResource(R.string.action_cancel),
+            onDismiss = { showSaveInput = false },
         )
         return
     }
 
     if (renamingId >= 0) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { renamingId = -1L },
-            title = { Text(stringResource(R.string.preset_rename_title)) },
-            text = {
-                OutlinedTextField(
-                    value = renameInputName,
-                    onValueChange = { renameInputName = it },
-                    label = { Text(stringResource(R.string.preset_name_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (renameInputName.isNotBlank()) {
-                            onRename(renamingId, renameInputName.trim())
-                            renamingId = -1L
-                        }
-                    },
-                    enabled = renameInputName.isNotBlank(),
-                ) {
-                    Text(stringResource(R.string.action_rename))
+            title = stringResource(R.string.preset_rename_title),
+            value = renameInputName,
+            onValueChange = { renameInputName = it },
+            label = stringResource(R.string.preset_name_hint),
+            confirmText = stringResource(R.string.action_rename),
+            onConfirm = {
+                val name = renameInputName.text.trim()
+                if (name.isNotBlank()) {
+                    onRename(renamingId, name)
+                    renamingId = -1L
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { renamingId = -1L }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
+            confirmEnabled = renameInputName.text.isNotBlank(),
+            dismissText = stringResource(R.string.action_cancel),
+            onDismiss = { renamingId = -1L },
         )
         return
     }
 
-    AlertDialog(
+    ViperDialog(
+        show = true,
         onDismissRequest = {
             commitPendingDelete()
             onDismiss()
         },
-        title = { Text(stringResource(R.string.menu_presets)) },
-        text = {
+        title = stringResource(R.string.menu_presets),
+        confirmText = stringResource(R.string.preset_save_current),
+        onConfirm = {
+            showSaveInput = true
+            saveInputName = TextFieldValue("")
+        },
+        dismissText = stringResource(R.string.action_close),
+        onDismiss = {
+            commitPendingDelete()
+            onDismiss()
+        },
+        content = {
             Column {
                 if (visiblePresets.isEmpty() && pendingDeletePreset == null) {
                     Text(
                         text = stringResource(R.string.preset_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                     )
                 } else {
                     LazyColumn(
@@ -165,7 +152,7 @@ fun PresetDialog(
                                     pendingDeletePreset = preset
                                 },
                                 onRename = {
-                                    renameInputName = preset.name
+                                    renameInputName = TextFieldValue(preset.name)
                                     renamingId = preset.id
                                 },
                             )
@@ -184,22 +171,6 @@ fun PresetDialog(
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                showSaveInput = true
-                saveInputName = ""
-            }) {
-                Text(stringResource(R.string.preset_save_current))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = {
-                commitPendingDelete()
-                onDismiss()
-            }) {
-                Text(stringResource(R.string.action_close))
             }
         },
     )
@@ -224,29 +195,29 @@ private fun PresetItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = preset.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MiuixTheme.textStyles.body1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = stringResource(if (preset.fxType == 1) R.string.tab_headphone else R.string.tab_speaker),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             )
         }
         Row {
-            IconButton(onClick = onRename) {
+            ViperIconButton(onClick = onRename) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
                 )
             }
-            IconButton(onClick = onDelete) {
+            ViperIconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = MiuixTheme.colorScheme.error,
                 )
             }
         }
@@ -269,22 +240,22 @@ private fun DeletedPresetItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = preset.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MiuixTheme.textStyles.body1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.5f),
             )
             Text(
                 text = stringResource(R.string.label_deleted),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.error.copy(alpha = 0.7f),
             )
         }
-        IconButton(onClick = onRestore) {
+        ViperIconButton(onClick = onRestore) {
             Icon(
                 Icons.Default.Restore,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MiuixTheme.colorScheme.primary,
             )
         }
     }

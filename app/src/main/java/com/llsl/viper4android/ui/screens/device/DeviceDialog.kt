@@ -24,14 +24,6 @@ import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,13 +34,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.data.model.DeviceSettings
+import com.llsl.viper4android.ui.components.viper.ViperDialog
+import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun DeviceDialog(
@@ -62,65 +62,58 @@ fun DeviceDialog(
 ) {
     var selectedDeviceId by remember { mutableStateOf<String?>(null) }
     var renamingDeviceId by remember { mutableStateOf<String?>(null) }
-    var renameInput by remember { mutableStateOf("") }
+    var renameInput by remember { mutableStateOf(TextFieldValue("")) }
 
     val selectedDevice = selectedDeviceId?.let { id -> devices.find { it.deviceId == id } }
 
     if (renamingDeviceId != null) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { renamingDeviceId = null },
-            title = { Text(stringResource(R.string.device_rename_title)) },
-            text = {
-                OutlinedTextField(
-                    value = renameInput,
-                    onValueChange = { renameInput = it },
-                    label = { Text(stringResource(R.string.device_rename_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (renameInput.isNotBlank()) {
-                            onRename(renamingDeviceId!!, renameInput.trim())
-                            renamingDeviceId = null
-                        }
-                    },
-                    enabled = renameInput.isNotBlank(),
-                ) {
-                    Text(stringResource(R.string.action_rename))
+            title = stringResource(R.string.device_rename_title),
+            value = renameInput,
+            onValueChange = { renameInput = it },
+            label = stringResource(R.string.device_rename_hint),
+            confirmText = stringResource(R.string.action_rename),
+            onConfirm = {
+                val name = renameInput.text.trim()
+                val deviceId = renamingDeviceId
+                if (name.isNotBlank() && deviceId != null) {
+                    onRename(deviceId, name)
+                    renamingDeviceId = null
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { renamingDeviceId = null }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
+            confirmEnabled = renameInput.text.isNotBlank(),
+            dismissText = stringResource(R.string.action_cancel),
+            onDismiss = { renamingDeviceId = null },
         )
         return
     }
 
-    AlertDialog(
+    ViperDialog(
+        show = true,
         onDismissRequest = onDismiss,
-        title = {
+        title = if (selectedDevice != null) "" else stringResource(R.string.device_dialog_title),
+        confirmText = stringResource(R.string.action_close),
+        onConfirm = onDismiss,
+        content = {
             if (selectedDevice != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    IconButton(onClick = { selectedDeviceId = null }) {
+                    ViperIconButton(onClick = { selectedDeviceId = null }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
                     }
                     Text(
                         text = selectedDevice.deviceName,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MiuixTheme.textStyles.title3,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    IconButton(onClick = {
-                        renameInput = selectedDevice.deviceName
+                    ViperIconButton(onClick = {
+                        renameInput = TextFieldValue(selectedDevice.deviceName)
                         renamingDeviceId = selectedDevice.deviceId
                     }) {
                         Icon(
@@ -129,12 +122,7 @@ fun DeviceDialog(
                         )
                     }
                 }
-            } else {
-                Text(stringResource(R.string.device_dialog_title))
-            }
-        },
-        text = {
-            if (selectedDevice != null) {
+                Spacer(modifier = Modifier.height(12.dp))
                 DeviceDetailView(
                     device = selectedDevice,
                     isActive = selectedDevice.deviceId == activeDeviceId,
@@ -151,13 +139,6 @@ fun DeviceDialog(
                     activeDeviceId = activeDeviceId,
                     onSelect = { selectedDeviceId = it.deviceId },
                 )
-            }
-        },
-        confirmButton = {
-            if (selectedDevice == null) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_close))
-                }
             }
         },
     )
@@ -179,8 +160,8 @@ private fun DeviceListView(
         ) {
             Text(
                 text = stringResource(R.string.device_no_devices),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             )
         }
         return
@@ -209,7 +190,7 @@ private fun DeviceListView(
                     imageVector = deviceIcon(device),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -222,7 +203,7 @@ private fun DeviceListView(
                         }
                         Text(
                             text = device.deviceName,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MiuixTheme.textStyles.body2,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -236,12 +217,12 @@ private fun DeviceListView(
                                         System.currentTimeMillis(),
                                         DateUtils.MINUTE_IN_MILLIS,
                                     ).toString(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                         )
                     }
                 }
-                IconButton(onClick = { onSelect(device) }) {
+                ViperIconButton(onClick = { onSelect(device) }) {
                     Icon(Icons.Default.ChevronRight, contentDescription = null)
                 }
             }
@@ -315,9 +296,9 @@ private fun DeviceDetailView(
                 enabled = canDelete,
                 tint =
                     if (!canDelete) {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        MiuixTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     } else {
-                        MaterialTheme.colorScheme.error
+                        MiuixTheme.colorScheme.error
                     },
             )
         }
@@ -338,12 +319,12 @@ private fun StatusRow(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MiuixTheme.textStyles.body2,
         )
     }
 }
@@ -354,7 +335,7 @@ private fun ActionItem(
     label: String,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    tint: Color = MaterialTheme.colorScheme.onSurface,
+    tint: Color = MiuixTheme.colorScheme.onSurface,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -365,7 +346,7 @@ private fun ActionItem(
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = tint)
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = tint)
+        Text(label, style = MiuixTheme.textStyles.body2, color = tint)
     }
 }
 
