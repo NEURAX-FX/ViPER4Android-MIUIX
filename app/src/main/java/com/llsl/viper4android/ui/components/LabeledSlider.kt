@@ -133,6 +133,12 @@ fun LabeledSlider(
             keyboardActions = KeyboardActions(
                 onDone = { confirmPrecisionInput() },
             ),
+            textStyle = MiuixTheme.textStyles.body2.copy(
+                color = MiuixTheme.colorScheme.onBackground,
+            ),
+            backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
+            labelColor = MiuixTheme.colorScheme.onBackground,
+            borderColor = MiuixTheme.colorScheme.outline,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.height(16.dp))

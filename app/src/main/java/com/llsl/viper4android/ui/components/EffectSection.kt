@@ -106,7 +106,12 @@ fun EffectSection(
                 if (hasEnableSwitch) {
                     Switch(
                         checked = enabled,
-                        onCheckedChange = onEnabledChange,
+                        onCheckedChange = { checked ->
+                            onEnabledChange(checked)
+                            if (!toggleOnly) {
+                                expanded = checked
+                            }
+                        },
                     )
                 }
             }

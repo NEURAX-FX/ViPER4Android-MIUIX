@@ -100,7 +100,7 @@
     <!-- Convolver -->
     <string name="section_convolver">脉冲卷积器</string>
     <string name="label_convolver_kernel">样本文件</string>
-    <string name="label_convolver_cross_channel">通道交叉</string>
+    <string name="label_convolver_cross_channel">通道路由</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">场环绕</string>

@@ -25,6 +25,25 @@ class LabeledSliderPrecisionInputPolicyTest {
     }
 
     @Test
+    fun precisionInputTextFieldUsesExplicitReadableTextColor() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/LabeledSlider.kt")
+
+        assertTrue("Precision TextField should set textStyle explicitly", "textStyle =" in source)
+        assertTrue("Precision TextField should not inherit WindowDialog content color", "color = MiuixTheme.colorScheme.onBackground" in source)
+    }
+
+    @Test
+    fun precisionInputTextFieldUsesNeutralContainerColors() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/LabeledSlider.kt")
+
+        assertTrue("Precision TextField should provide InstallerX-style background color", "backgroundColor = MiuixTheme.colorScheme.surfaceContainer" in source)
+        assertTrue("Precision TextField should provide InstallerX-style label color", "labelColor = MiuixTheme.colorScheme.onBackground" in source)
+        assertTrue("Precision TextField should provide explicit border color", "borderColor = MiuixTheme.colorScheme.outline" in source)
+        assertTrue("Precision TextField should use neutral background instead of default secondary container", "backgroundColor = MiuixTheme.colorScheme.surfaceContainer" in source)
+        assertTrue("Precision TextField should use neutral focused border instead of primary purple", "borderColor = MiuixTheme.colorScheme.outline" in source)
+    }
+
+    @Test
     fun precisionInputShowsRawNumberWithoutUnitButParsesPastedUnits() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/LabeledSlider.kt")
 
