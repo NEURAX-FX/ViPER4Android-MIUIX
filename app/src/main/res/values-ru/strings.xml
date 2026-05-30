@@ -253,6 +253,10 @@
     <string name="action_clear">Очистить</string>
     <string name="action_more">Ещё</string>
 
+    <!-- Sliders -->
+    <string name="slider_precision_hint">Значение</string>
+    <string name="slider_precision_summary">Введите число от %1$s до %2$s. При вставке единицы можно оставить.</string>
+
     <!-- Debug -->
     <string name="debug_log_title">Лог отладки</string>
     <string name="debug_mode_enabled">Режим отладки включен</string>

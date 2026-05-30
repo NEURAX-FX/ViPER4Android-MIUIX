@@ -253,6 +253,10 @@
     <string name="action_clear">Clear</string>
     <string name="action_more">More</string>
 
+    <!-- Sliders -->
+    <string name="slider_precision_hint">Value</string>
+    <string name="slider_precision_summary">Enter a number from %1$s to %2$s. Units are optional when pasting.</string>
+
     <!-- Debug -->
     <string name="debug_log_title">Debug Log</string>
     <string name="debug_mode_enabled">Debug mode enabled</string>

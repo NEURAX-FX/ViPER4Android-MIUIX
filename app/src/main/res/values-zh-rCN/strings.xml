@@ -253,6 +253,10 @@
     <string name="action_clear">清除</string>
     <string name="action_more">更多</string>
 
+    <!-- Sliders -->
+    <string name="slider_precision_hint">数值</string>
+    <string name="slider_precision_summary">输入 %1$s 到 %2$s 之间的数字。粘贴时可带单位。</string>
+
     <!-- Debug -->
     <string name="debug_log_title">调试日志</string>
     <string name="debug_mode_enabled">调试模式已启用</string>
