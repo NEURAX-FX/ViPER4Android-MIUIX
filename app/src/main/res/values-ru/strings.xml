@@ -261,6 +261,9 @@
 
     <!-- Debug filters -->
     <string name="debug_filter_all">Все</string>
+    <string name="debug_filter_source">Источник</string>
+    <string name="debug_filter_level">Уровень</string>
+    <string name="debug_filter_category">Категория</string>
     <string name="debug_filter_info">Информация</string>
     <string name="debug_filter_debug">Отладка</string>
     <string name="debug_filter_error">Ошибка</string>
@@ -270,6 +273,7 @@
     <string name="debug_filter_dispatch">Диспетчеризация</string>
     <string name="debug_filter_config">Конфигурация</string>
     <string name="debug_filter_command">Команда</string>
+    <string name="debug_log_empty">Нет строк лога для текущих фильтров</string>
     <string name="delete_file_title">Удалить Фаил</string>
     <string name="delete_file_message">Удалить %1$s?</string>
 

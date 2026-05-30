@@ -261,6 +261,9 @@
 
     <!-- Debug filters -->
     <string name="debug_filter_all">All</string>
+    <string name="debug_filter_source">Source</string>
+    <string name="debug_filter_level">Level</string>
+    <string name="debug_filter_category">Category</string>
     <string name="debug_filter_info">Info</string>
     <string name="debug_filter_debug">Debug</string>
     <string name="debug_filter_error">Error</string>
@@ -270,6 +273,7 @@
     <string name="debug_filter_dispatch">Dispatch</string>
     <string name="debug_filter_config">Config</string>
     <string name="debug_filter_command">Command</string>
+    <string name="debug_log_empty">No log lines match the current filters</string>
     <string name="delete_file_title">Delete File</string>
     <string name="delete_file_message">Delete "%1$s"?</string>
 

@@ -6,19 +6,21 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -28,20 +30,24 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.utils.FileLogger
 import com.llsl.viper4android.utils.RootShell
-import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.InputField
+import top.yukonga.miuix.kmp.basic.SearchBar
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -238,33 +244,13 @@ fun DebugLogDialog(
         onConfirm = onDismiss,
         content = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                TextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                    label = stringResource(R.string.debug_search_hint),
-                    useLabelAsPlaceholder = true,
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    },
-                    singleLine = true,
-                    textStyle = MiuixTheme.textStyles.body2,
+                DebugLogSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
                 )
 
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                DebugFilterGroup(
+                    title = stringResource(R.string.debug_filter_source),
                 ) {
                     LogSource.entries.forEach { source ->
                         DebugFilterChip(
@@ -276,13 +262,8 @@ fun DebugLogDialog(
                     }
                 }
 
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(bottom = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                DebugFilterGroup(
+                    title = stringResource(R.string.debug_filter_level),
                 ) {
                     LogLevel.entries.forEach { level ->
                         DebugFilterChip(
@@ -294,13 +275,8 @@ fun DebugLogDialog(
                     }
                 }
 
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                DebugFilterGroup(
+                    title = stringResource(R.string.debug_filter_category),
                 ) {
                     LogCategory.entries.forEach { category ->
                         DebugFilterChip(
@@ -315,26 +291,13 @@ fun DebugLogDialog(
                     text = "${filteredLines.size} / ${allLines.size}",
                     style = MiuixTheme.textStyles.body2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantActions,
-                    modifier = Modifier.padding(bottom = 4.dp),
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
                 )
 
-                LazyColumn(
-                    state = listState,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(320.dp),
-                ) {
-                    items(filteredLines) { line ->
-                        Text(
-                            text = line,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 10.sp,
-                            color = colorForLogLine(line),
-                            modifier = Modifier.padding(vertical = 1.dp),
-                        )
-                    }
-                }
+                DebugLogList(
+                    lines = filteredLines,
+                    listState = listState,
+                )
 
                 Row(
                     modifier =
@@ -365,6 +328,65 @@ fun DebugLogDialog(
 }
 
 @Composable
+private fun DebugLogSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+
+    SearchBar(
+        inputField = {
+            InputField(
+                query = query,
+                onQueryChange = onQueryChange,
+                onSearch = { focusManager.clearFocus() },
+                expanded = false,
+                onExpandedChange = {},
+                label = stringResource(R.string.debug_search_hint),
+                textStyle = MiuixTheme.textStyles.body2,
+            )
+        },
+        onExpandedChange = {},
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        expanded = false,
+        content = {},
+    )
+}
+
+@Composable
+private fun DebugFilterGroup(
+    title: String,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MiuixTheme.textStyles.body2,
+            fontSize = 11.sp,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.72f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(0.22f),
+        )
+        Row(
+            modifier = Modifier
+                .weight(0.78f)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
+    }
+}
+
+@Composable
 private fun DebugFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
@@ -372,7 +394,6 @@ private fun DebugFilterChip(
     accentColor: Color = Color.Unspecified,
 ) {
     val selectedColor = if (accentColor == Color.Unspecified) MiuixTheme.colorScheme.primary else accentColor
-    val shape = RoundedCornerShape(14.dp)
     Text(
         text = label,
         style = MiuixTheme.textStyles.body2,
@@ -380,19 +401,60 @@ private fun DebugFilterChip(
         color = if (selected) selectedColor else MiuixTheme.colorScheme.onSurfaceVariantActions,
         modifier =
             Modifier
-                .height(28.dp)
+                .padding(horizontal = 3.dp)
+                .height(30.dp)
+                .clip(CircleShape)
                 .background(
                     color = if (selected) selectedColor.copy(alpha = 0.16f) else Color.Transparent,
-                    shape = shape,
                 )
                 .border(
                     width = 1.dp,
                     color = if (selected) selectedColor.copy(alpha = 0.28f) else MiuixTheme.colorScheme.dividerLine,
-                    shape = shape,
+                    shape = CircleShape,
                 )
                 .clickable(onClick = onClick)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
+                .padding(horizontal = 12.dp, vertical = 5.dp),
     )
+}
+
+@Composable
+private fun DebugLogList(
+    lines: List<String>,
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(300.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(MiuixTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        if (lines.isEmpty()) {
+            Text(
+                text = stringResource(R.string.debug_log_empty),
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.66f),
+                modifier = Modifier.align(Alignment.Center),
+            )
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(lines) { line ->
+                    Text(
+                        text = line,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 10.sp,
+                        color = colorForLogLine(line),
+                        modifier = Modifier.padding(vertical = 1.dp),
+                    )
+                }
+            }
+        }
+    }
 }
 
 private fun colorForSource(source: LogSource): Color =
