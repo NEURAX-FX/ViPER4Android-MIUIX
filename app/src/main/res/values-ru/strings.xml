@@ -216,7 +216,7 @@
     <string name="settings_auto_start">Автозапуск при загрузке</string>
     <string name="settings_aidl_mode">Режим AIDL</string>
     <string name="settings_global_mode">Глобальный режим</string>
-    <string name="settings_driver_version">Версия драйверв</string>
+    <string name="settings_driver_version">Версия драйвера</string>
     <string name="settings_driver_arch">Архитектура драйвера</string>
     <string name="settings_app_version">Версия приложения</string>
     <string name="settings_files_section">Файлы</string>
