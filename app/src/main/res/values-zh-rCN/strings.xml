@@ -213,16 +213,26 @@
     <string name="status_unknown">未知</string>
 
     <!-- Settings -->
+    <string name="settings_playback_section">播放</string>
+    <string name="settings_display_section">显示</string>
+    <string name="settings_about_section">关于</string>
     <string name="settings_auto_start">开机自启</string>
+    <string name="settings_auto_start_summary">设备启动后自动启动 ViPER4Android。</string>
     <string name="settings_aidl_mode">AIDL 模式</string>
     <string name="settings_global_mode">全局模式</string>
+    <string name="settings_global_mode_summary">在支持的输出设备间套用当前配置。</string>
+    <string name="settings_show_curve_previews">显示曲线预览</string>
+    <string name="settings_show_curve_previews_summary">在主音效页面显示均衡器曲线图。</string>
     <string name="settings_driver_version">驱动版本</string>
     <string name="settings_driver_arch">驱动架构</string>
     <string name="settings_app_version">应用版本</string>
     <string name="settings_files_section">文件</string>
     <string name="settings_import_preset">导入预设</string>
+    <string name="settings_import_preset_summary">添加已保存的 ViPER 预设文件。</string>
     <string name="settings_import_kernel">导入内核</string>
+    <string name="settings_import_kernel_summary">添加卷积内核文件。</string>
     <string name="settings_import_vdc">导入 VDC</string>
+    <string name="settings_import_vdc_summary">添加耳机校正配置。</string>
     <string name="import_success">导入成功</string>
     <string name="import_failed">导入失败</string>
 
@@ -252,6 +262,7 @@
     <string name="action_delete">删除</string>
     <string name="action_clear">清除</string>
     <string name="action_more">更多</string>
+    <string name="action_edit_curve">编辑曲线</string>
 
     <!-- Sliders -->
     <string name="slider_precision_hint">数值</string>

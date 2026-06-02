@@ -213,16 +213,26 @@
     <string name="status_unknown">Unknown</string>
 
     <!-- Settings -->
+    <string name="settings_playback_section">Playback</string>
+    <string name="settings_display_section">Display</string>
+    <string name="settings_about_section">About</string>
     <string name="settings_auto_start">Auto-start on boot</string>
+    <string name="settings_auto_start_summary">Start ViPER4Android after the device boots.</string>
     <string name="settings_aidl_mode">AIDL mode</string>
     <string name="settings_global_mode">Global mode</string>
+    <string name="settings_global_mode_summary">Apply the current profile across supported output devices.</string>
+    <string name="settings_show_curve_previews">Show curve previews</string>
+    <string name="settings_show_curve_previews_summary">Show EQ curve graphs on the main effects screen.</string>
     <string name="settings_driver_version">Driver version</string>
     <string name="settings_driver_arch">Driver architecture</string>
     <string name="settings_app_version">App version</string>
     <string name="settings_files_section">Files</string>
     <string name="settings_import_preset">Import Preset</string>
+    <string name="settings_import_preset_summary">Add a saved ViPER preset file.</string>
     <string name="settings_import_kernel">Import Kernel</string>
+    <string name="settings_import_kernel_summary">Add a convolution kernel file.</string>
     <string name="settings_import_vdc">Import VDC</string>
+    <string name="settings_import_vdc_summary">Add a headphone correction profile.</string>
     <string name="import_success">Imported successfully</string>
     <string name="import_failed">Import failed</string>
 
@@ -252,6 +262,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_clear">Clear</string>
     <string name="action_more">More</string>
+    <string name="action_edit_curve">Edit Curve</string>
 
     <!-- Sliders -->
     <string name="slider_precision_hint">Value</string>

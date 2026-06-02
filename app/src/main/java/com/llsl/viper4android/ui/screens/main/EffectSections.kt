@@ -704,6 +704,7 @@ fun EqualizerSection(
     state: MainUiState,
     viewModel: MainViewModel,
     isSpkMode: Boolean = false,
+    showCurvePreview: Boolean = true,
 ) {
     val fxType = if (isSpkMode) ViperParams.FX_TYPE_SPEAKER else ViperParams.FX_TYPE_HEADPHONE
     val eqVals = state.eq.forType(fxType)
@@ -750,11 +751,17 @@ fun EqualizerSection(
             onOptionSelected = { index, _ -> onBandCountChange(bandCounts[index]) },
         )
 
-        if (bands.size >= bandCount) {
+        if (showCurvePreview && bands.size >= bandCount) {
             EqCurveGraph(
                 bands = bands,
                 onClick = { showEqDialog = true },
                 bandCount = bandCount,
+            )
+        } else if (bands.size >= bandCount) {
+            TextButton(
+                text = stringResource(R.string.action_edit_curve),
+                onClick = { showEqDialog = true },
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
 

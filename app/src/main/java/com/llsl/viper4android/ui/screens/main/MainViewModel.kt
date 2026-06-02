@@ -100,6 +100,7 @@ class MainViewModel
             const val PREF_AUTO_START = "auto_start"
             const val PREF_GLOBAL_MODE = "global_mode"
             const val PREF_DEBUG_MODE = "debug_mode"
+            const val PREF_SHOW_CURVE_PREVIEWS = "show_curve_previews"
             private const val IMPORT_NOTIFICATION_ID = 2
             private const val IMPORT_CHANNEL_ID = "viper4android_service"
         }
@@ -134,6 +135,9 @@ class MainViewModel
 
         private val _globalModeEnabled = MutableStateFlow(false)
         val globalModeEnabled: StateFlow<Boolean> = _globalModeEnabled.asStateFlow()
+
+        private val _showCurvePreviews = MutableStateFlow(true)
+        val showCurvePreviews: StateFlow<Boolean> = _showCurvePreviews.asStateFlow()
 
         private val _debugModeEnabled = MutableStateFlow(false)
         val debugModeEnabled: StateFlow<Boolean> = _debugModeEnabled.asStateFlow()
@@ -4794,6 +4798,11 @@ class MainViewModel
                 }
             }
             viewModelScope.launch {
+                repository.getBooleanPreference(PREF_SHOW_CURVE_PREVIEWS, true).collect { v ->
+                    _showCurvePreviews.value = v
+                }
+            }
+            viewModelScope.launch {
                 repository.getBooleanPreference(PREF_DEBUG_MODE).collect { v ->
                     _debugModeEnabled.value = v
                 }
@@ -4960,6 +4969,13 @@ class MainViewModel
                 repository.setBooleanPreference(PREF_GLOBAL_MODE, enabled)
             }
             viperService?.setGlobalMode(enabled)
+        }
+
+        fun setShowCurvePreviews(enabled: Boolean) {
+            _showCurvePreviews.value = enabled
+            viewModelScope.launch {
+                repository.setBooleanPreference(PREF_SHOW_CURVE_PREVIEWS, enabled)
+            }
         }
 
         private fun serializeStateForMode(

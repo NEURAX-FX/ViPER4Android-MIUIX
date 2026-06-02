@@ -78,6 +78,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     val globalMode by viewModel.globalModeEnabled.collectAsStateWithLifecycle()
     val aidlMode by viewModel.aidlModeEnabled.collectAsStateWithLifecycle()
     val debugMode by viewModel.debugModeEnabled.collectAsStateWithLifecycle()
+    val showCurvePreviews by viewModel.showCurvePreviews.collectAsStateWithLifecycle()
 
     var showPresetDialog by remember { mutableStateOf(false) }
     var showDriverStatusDialog by remember { mutableStateOf(false) }
@@ -177,6 +178,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 state = state,
                 viewModel = viewModel,
                 isSpkMode = isSpkMode,
+                showCurvePreviews = showCurvePreviews,
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             )
 
@@ -248,8 +250,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             SettingsDialog(
                 autoStartEnabled = autoStart,
                 globalModeEnabled = globalMode,
+                showCurvePreviews = showCurvePreviews,
                 aidlModeActive = aidlMode,
                 onGlobalModeChanged = viewModel::toggleGlobalMode,
+                onShowCurvePreviewsChanged = viewModel::setShowCurvePreviews,
                 driverStatus = driverStatus,
                 appVersionName = appVersionName,
                 onAutoStartChanged = viewModel::toggleAutoStart,
@@ -357,6 +361,7 @@ private fun EffectList(
     state: MainUiState,
     viewModel: MainViewModel,
     isSpkMode: Boolean,
+    showCurvePreviews: Boolean,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -371,7 +376,7 @@ private fun EffectList(
         item { FetCompressorSection(state, viewModel, isSpkMode) }
         item { DdcSection(state, viewModel, isSpkMode) }
         item { SpectrumExtensionSection(state, viewModel, isSpkMode) }
-        item { EqualizerSection(state, viewModel, isSpkMode) }
+        item { EqualizerSection(state, viewModel, isSpkMode, showCurvePreview = showCurvePreviews) }
         item { DynamicEqSection(state, viewModel, isSpkMode) }
         item { ConvolverSection(state, viewModel, isSpkMode) }
         item { FieldSurroundSection(state, viewModel, isSpkMode) }

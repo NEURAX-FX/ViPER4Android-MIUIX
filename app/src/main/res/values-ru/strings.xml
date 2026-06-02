@@ -213,16 +213,26 @@
     <string name="status_unknown">Неизвестно</string>
 
     <!-- Settings -->
+    <string name="settings_playback_section">Воспроизведение</string>
+    <string name="settings_display_section">Отображение</string>
+    <string name="settings_about_section">О приложении</string>
     <string name="settings_auto_start">Автозапуск при загрузке</string>
+    <string name="settings_auto_start_summary">Запускать ViPER4Android после загрузки устройства.</string>
     <string name="settings_aidl_mode">Режим AIDL</string>
     <string name="settings_global_mode">Глобальный режим</string>
+    <string name="settings_global_mode_summary">Применять текущий профиль ко всем поддерживаемым устройствам вывода.</string>
+    <string name="settings_show_curve_previews">Показывать кривые</string>
+    <string name="settings_show_curve_previews_summary">Показывать графики эквалайзера на главном экране эффектов.</string>
     <string name="settings_driver_version">Версия драйвера</string>
     <string name="settings_driver_arch">Архитектура драйвера</string>
     <string name="settings_app_version">Версия приложения</string>
     <string name="settings_files_section">Файлы</string>
     <string name="settings_import_preset">Импорт профиля</string>
+    <string name="settings_import_preset_summary">Добавить сохранённый файл профиля ViPER.</string>
     <string name="settings_import_kernel">Импорт ядра</string>
+    <string name="settings_import_kernel_summary">Добавить файл импульсной характеристики.</string>
     <string name="settings_import_vdc">Импорт VDC</string>
+    <string name="settings_import_vdc_summary">Добавить профиль коррекции наушников.</string>
     <string name="import_success">Импорт выполнен</string>
     <string name="import_failed">Импорт неудачен</string>
 
@@ -252,6 +262,7 @@
     <string name="action_delete">Удалить</string>
     <string name="action_clear">Очистить</string>
     <string name="action_more">Ещё</string>
+    <string name="action_edit_curve">Изменить кривую</string>
 
     <!-- Sliders -->
     <string name="slider_precision_hint">Значение</string>
