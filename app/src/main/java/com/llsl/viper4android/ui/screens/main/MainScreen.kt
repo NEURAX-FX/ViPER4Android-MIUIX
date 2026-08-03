@@ -3,11 +3,13 @@ package com.llsl.viper4android.ui.screens.main
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,28 +17,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speaker
-import androidx.compose.material.icons.outlined.Headphones
-import androidx.compose.material.icons.outlined.Speaker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -48,21 +48,20 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
-import com.llsl.viper4android.audio.ViperParams
+import com.llsl.viper4android.effect.EffectState
+import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperScaffold
+import com.llsl.viper4android.ui.components.viper.ViperTopBar
 import com.llsl.viper4android.ui.screens.debug.DebugLogDialog
 import com.llsl.viper4android.ui.screens.device.DeviceDialog
 import com.llsl.viper4android.ui.screens.preset.PresetDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
-import com.llsl.viper4android.ui.components.viper.ViperBottomBar
-import com.llsl.viper4android.ui.components.viper.ViperIconButton
-import com.llsl.viper4android.ui.components.viper.ViperScaffold
-import com.llsl.viper4android.ui.components.viper.ViperTopBar
+import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import kotlinx.coroutines.delay
 
 @Composable
 fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
@@ -85,7 +84,6 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
-    var debugLogClearTime by remember { mutableLongStateOf(0L) }
 
     val context = LocalContext.current
     val appVersionName =
@@ -96,50 +94,42 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 ""
             }
         }
-
+    val clearAllProgressStr = stringResource(R.string.preset_clear_all_progress)
+    val clearedStr = stringResource(R.string.preset_cleared)
     val importSuccessStr = stringResource(R.string.import_success)
     val importFailedStr = stringResource(R.string.import_failed)
+
+    val importPresetStr = stringResource(R.string.settings_import_preset)
     val importPresetLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenDocument(),
-        ) { uri ->
-            if (uri != null) {
-                val success = viewModel.importPresetFile(uri)
-                val msg = if (success) importSuccessStr else importFailedStr
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+            if (uris.isNotEmpty()) {
+                viewModel.importPresetFiles(uris, importPresetStr, importSuccessStr) { success ->
+                    Toast.makeText(context, if (success) importSuccessStr else importFailedStr, Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
     val importKernelStr = stringResource(R.string.settings_import_kernel)
     val importKernelLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenMultipleDocuments(),
-        ) { uris ->
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
             if (uris.isNotEmpty()) {
-                viewModel.importKernels(uris, notificationTitle = importKernelStr, successStr = importSuccessStr) { success ->
-                    val msg = if (success) importSuccessStr else importFailedStr
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                viewModel.importKernels(uris, importKernelStr, importSuccessStr) { success ->
+                    Toast.makeText(context, if (success) importSuccessStr else importFailedStr, Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
     val importVdcStr = stringResource(R.string.settings_import_vdc)
     val importVdcLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenMultipleDocuments(),
-        ) { uris ->
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
             if (uris.isNotEmpty()) {
-                viewModel.importVdcs(uris, notificationTitle = importVdcStr, successStr = importSuccessStr) { success ->
-                    val msg = if (success) importSuccessStr else importFailedStr
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                viewModel.importVdcs(uris, importVdcStr, importSuccessStr) { success ->
+                    Toast.makeText(context, if (success) importSuccessStr else importFailedStr, Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-    val selectedTab = if (state.fxType == ViperParams.FX_TYPE_SPEAKER) 1 else 0
-    val isSpkMode = selectedTab == 1
     val scrollBehavior = MiuixScrollBehavior()
-
     ViperScaffold(
         topBar = {
             ViperTopBar(
@@ -147,52 +137,42 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 deviceName = state.activeDeviceName,
                 scrollBehavior = scrollBehavior,
                 collapsedActions = {
+                    ViperIconButton(onClick = { viewModel.setMasterEnabled(!state.masterEnable) }) {
+                        Icon(
+                            imageVector = Icons.Default.PowerSettingsNew,
+                            contentDescription = stringResource(R.string.master_enable),
+                            tint = if (state.masterEnable) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error,
+                        )
+                    }
                     if (debugMode) {
                         ViperIconButton(onClick = { showDebugLog = true }) {
                             Icon(
-                                Icons.Default.BugReport,
+                                imageVector = Icons.Default.BugReport,
                                 contentDescription = stringResource(R.string.debug_log_title),
                             )
                         }
                     }
-                }
+                },
             )
         },
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            EffectList(
-                headerContent = {
-                    MainActionRow(
-                        onPresetClick = { showPresetDialog = true },
-                        onDevicesClick = { showDeviceDialog = true },
-                        onDriverStatusClick = { showDriverStatusDialog = true },
-                        onSettingsClick = { showSettingsDialog = true },
-                    )
-                },
-                bottomContentPadding = 104.dp,
-                state = state,
-                viewModel = viewModel,
-                isSpkMode = isSpkMode,
-                showCurvePreviews = showCurvePreviews,
-                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            )
-
-            ViperBottomBar(
-                firstLabel = stringResource(R.string.tab_headphone),
-                firstIcon = if (selectedTab == 0) Icons.Filled.Headphones else Icons.Outlined.Headphones,
-                firstSelected = selectedTab == 0,
-                onFirstClick = { viewModel.setFxType(ViperParams.FX_TYPE_HEADPHONE) },
-                secondLabel = stringResource(R.string.tab_speaker),
-                secondIcon = if (selectedTab == 1) Icons.Filled.Speaker else Icons.Outlined.Speaker,
-                secondSelected = selectedTab == 1,
-                onSecondClick = { viewModel.setFxType(ViperParams.FX_TYPE_SPEAKER) },
-            )
-        }
+        EffectList(
+            headerContent = {
+                MainActionRow(
+                    onPresetClick = { showPresetDialog = true },
+                    onDevicesClick = { showDeviceDialog = true },
+                    onDriverStatusClick = { showDriverStatusDialog = true },
+                    onSettingsClick = { showSettingsDialog = true },
+                )
+            },
+            state = state,
+            viewModel = viewModel,
+            showCurvePreviews = showCurvePreviews,
+            modifier =
+                Modifier
+                    .padding(paddingValues)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+        )
 
         if (showPresetDialog) {
             PresetDialog(
@@ -204,31 +184,13 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 },
                 onDelete = viewModel::deletePreset,
                 onRename = viewModel::renamePreset,
-                onDismiss = { showPresetDialog = false },
-            )
-        }
-
-        if (showDeviceDialog) {
-            DeviceDialog(
-                devices = deviceSettings,
-                activeDeviceId = state.activeDeviceId,
-                onRename = viewModel::renameDevice,
-                onLoad = viewModel::loadDevicePreset,
-                onSave = viewModel::saveDevicePreset,
-                onDelete = viewModel::deleteDeviceSettings,
-                onDismiss = { showDeviceDialog = false },
-            )
-        }
-
-        if (showDebugLog) {
-            DebugLogDialog(
-                clearTimestamp = debugLogClearTime,
-                onClear = { debugLogClearTime = System.currentTimeMillis() },
-                onDisableDebug = {
-                    viewModel.disableDebugMode()
-                    showDebugLog = false
+                onUpdate = viewModel::updatePreset,
+                onClearAll = {
+                    viewModel.clearAllPresets(clearAllProgressStr, clearedStr) { count ->
+                        Toast.makeText(context, "$clearedStr: $count", Toast.LENGTH_SHORT).show()
+                    }
                 },
-                onDismiss = { showDebugLog = false },
+                onDismiss = { showPresetDialog = false },
             )
         }
 
@@ -245,6 +207,28 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             )
         }
 
+        if (showDebugLog) {
+            DebugLogDialog(
+                onDisableDebug = {
+                    viewModel.disableDebugMode()
+                    showDebugLog = false
+                },
+                onDismiss = { showDebugLog = false },
+            )
+        }
+
+        if (showDeviceDialog) {
+            DeviceDialog(
+                devices = deviceSettings,
+                activeDeviceId = state.activeDeviceId,
+                onRename = viewModel::renameDevice,
+                onLoad = viewModel::loadDevicePreset,
+                onUpdate = viewModel::saveDevicePreset,
+                onDelete = viewModel::deleteDeviceSettings,
+                onDismiss = { showDeviceDialog = false },
+            )
+        }
+
         if (showSettingsDialog) {
             LaunchedEffect(Unit) { viewModel.queryDriverStatus() }
             SettingsDialog(
@@ -252,23 +236,17 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 globalModeEnabled = globalMode,
                 showCurvePreviews = showCurvePreviews,
                 aidlModeActive = aidlMode,
-                onGlobalModeChanged = viewModel::toggleGlobalMode,
-                onShowCurvePreviewsChanged = viewModel::setShowCurvePreviews,
                 driverStatus = driverStatus,
                 appVersionName = appVersionName,
                 onAutoStartChanged = viewModel::toggleAutoStart,
+                onGlobalModeChanged = viewModel::toggleGlobalMode,
+                onShowCurvePreviewsChanged = viewModel::setShowCurvePreviews,
                 onImportPreset = { importPresetLauncher.launch(arrayOf("application/json", "*/*")) },
                 onImportKernel = {
-                    importKernelLauncher.launch(
-                        arrayOf(
-                            "audio/*",
-                            "application/octet-stream",
-                            "*/*",
-                        ),
-                    )
+                    importKernelLauncher.launch(arrayOf("audio/*", "application/octet-stream", "*/*"))
                 },
-                onDebugUnlocked = viewModel::enableDebugMode,
                 onImportVdc = { importVdcLauncher.launch(arrayOf("*/*")) },
+                onDebugUnlocked = viewModel::enableDebugMode,
                 onDismiss = { showSettingsDialog = false },
             )
         }
@@ -283,39 +261,13 @@ private fun MainActionRow(
     onSettingsClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        MainActionButton(
-            icon = Icons.Default.LibraryMusic,
-            label = stringResource(R.string.menu_presets),
-            contentDescription = stringResource(R.string.menu_presets),
-            onClick = onPresetClick,
-            modifier = Modifier.weight(1f),
-        )
-        MainActionButton(
-            icon = Icons.Default.Devices,
-            label = stringResource(R.string.menu_devices),
-            contentDescription = stringResource(R.string.menu_devices),
-            onClick = onDevicesClick,
-            modifier = Modifier.weight(1f),
-        )
-        MainActionButton(
-            icon = Icons.Default.Info,
-            label = stringResource(R.string.menu_driver_status),
-            contentDescription = stringResource(R.string.menu_driver_status),
-            onClick = onDriverStatusClick,
-            modifier = Modifier.weight(1f),
-        )
-        MainActionButton(
-            icon = Icons.Default.Settings,
-            label = stringResource(R.string.menu_settings),
-            contentDescription = stringResource(R.string.menu_settings),
-            onClick = onSettingsClick,
-            modifier = Modifier.weight(1f),
-        )
+        MainActionButton(Icons.Default.LibraryMusic, stringResource(R.string.menu_presets), onPresetClick, Modifier.weight(1f))
+        MainActionButton(Icons.Default.Devices, stringResource(R.string.menu_devices), onDevicesClick, Modifier.weight(1f))
+        MainActionButton(Icons.Default.Info, stringResource(R.string.menu_driver_status), onDriverStatusClick, Modifier.weight(1f))
+        MainActionButton(Icons.Default.Settings, stringResource(R.string.menu_settings), onSettingsClick, Modifier.weight(1f))
     }
 }
 
@@ -323,23 +275,23 @@ private fun MainActionRow(
 private fun MainActionButton(
     icon: ImageVector,
     label: String,
-    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .height(62.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 8.dp),
-        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        modifier =
+            modifier
+                .height(62.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 6.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = contentDescription,
+            contentDescription = label,
             modifier = Modifier.size(20.dp),
             tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
@@ -357,44 +309,45 @@ private fun MainActionButton(
 @Composable
 private fun EffectList(
     headerContent: @Composable () -> Unit,
-    bottomContentPadding: androidx.compose.ui.unit.Dp,
-    state: MainUiState,
+    state: EffectState,
     viewModel: MainViewModel,
-    isSpkMode: Boolean,
     showCurvePreviews: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val alpha by animateFloatAsState(
+        targetValue = if (state.masterEnable) 1f else 0.38f,
+        animationSpec = tween(durationMillis = 200),
+        label = "effectListAlpha",
+    )
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
+        contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         item { headerContent() }
-        item { MasterLimiterSection(state, viewModel, isSpkMode) }
-        item { PlaybackGainSection(state, viewModel, isSpkMode) }
-        item { LUFSTargetingSection(state, viewModel, isSpkMode) }
-        item { MultibandCompressorSection(state, viewModel, isSpkMode) }
-        item { FetCompressorSection(state, viewModel, isSpkMode) }
-        item { DdcSection(state, viewModel, isSpkMode) }
-        item { SpectrumExtensionSection(state, viewModel, isSpkMode) }
-        item { EqualizerSection(state, viewModel, isSpkMode, showCurvePreview = showCurvePreviews) }
-        item { DynamicEqSection(state, viewModel, isSpkMode) }
-        item { ConvolverSection(state, viewModel, isSpkMode) }
-        item { FieldSurroundSection(state, viewModel, isSpkMode) }
-        item { DiffSurroundSection(state, viewModel, isSpkMode) }
-        item { StereoImagerSection(state, viewModel, isSpkMode) }
-        item { HeadphoneSurroundSection(state, viewModel, isSpkMode) }
-        item { ReverberationSection(state, viewModel, isSpkMode) }
-        item { DynamicSystemSection(state, viewModel, isSpkMode) }
-        item { TubeSimulatorSection(state, viewModel, isSpkMode) }
-        item { PsychoacousticBassSection(state, viewModel, isSpkMode) }
-        item { ViperBassSection(state, viewModel, isSpkMode) }
-        item { ViperBassMonoSection(state, viewModel, isSpkMode) }
-        item { ViperClaritySection(state, viewModel, isSpkMode) }
-        item { AuditoryProtectionSection(state, viewModel, isSpkMode) }
-        item { AnalogXSection(state, viewModel, isSpkMode) }
-        if (isSpkMode) {
-            item { SpeakerOptSection(state, viewModel) }
-        }
-        item { Spacer(modifier = Modifier.height(bottomContentPadding)) }
+        item { MasterLimiterRows(state, viewModel) }
+        item { PlaybackGainSection(state, viewModel) }
+        item { LUFSTargetingSection(state, viewModel) }
+        item { MultibandCompressorSection(state, viewModel) }
+        item { FetCompressorSection(state, viewModel) }
+        item { DdcSection(state, viewModel) }
+        item { SpectrumExtensionSection(state, viewModel) }
+        item { EqualizerSection(state, viewModel, showCurvePreview = showCurvePreviews) }
+        item { DynamicEqSection(state, viewModel) }
+        item { ConvolverSection(state, viewModel) }
+        item { FieldSurroundSection(state, viewModel) }
+        item { DiffSurroundSection(state, viewModel) }
+        item { StereoImagerSection(state, viewModel) }
+        item { HeadphoneSurroundSection(state, viewModel) }
+        item { ReverberationSection(state, viewModel) }
+        item { DynamicSystemSection(state, viewModel) }
+        item { TubeSimulatorSection(state, viewModel) }
+        item { PsychoacousticBassSection(state, viewModel) }
+        item { ViperBassSection(state, viewModel) }
+        item { ViperBassMonoSection(state, viewModel) }
+        item { ViperClaritySection(state, viewModel) }
+        item { AuditoryProtectionSection(state, viewModel) }
+        item { AnalogXSection(state, viewModel) }
+        item { SpeakerOptSection(state, viewModel) }
     }
 }

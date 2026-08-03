@@ -23,6 +23,13 @@ object FileLogger {
     private var logFile: File? = null
     private var outputStream: FileOutputStream? = null
 
+    @Volatile
+    private var listener: ((String) -> Unit)? = null
+
+    fun setListener(l: ((String) -> Unit)?) {
+        listener = l
+    }
+
     fun init(context: Context) {
         val dir = File(context.filesDir, "Log")
         if (!dir.exists()) dir.mkdirs()
@@ -54,6 +61,7 @@ object FileLogger {
                 outputStream?.flush()
             } catch (_: Exception) {
             }
+            listener?.invoke(line.trimEnd('\n'))
         }
     }
 

@@ -32,7 +32,16 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowDialog
+import java.util.Locale
 import kotlin.math.roundToInt
+
+data class SliderEdit(
+    val displayValue: Double,
+    val displayRange: ClosedFloatingPointRange<Double>,
+    val decimals: Int,
+    val onCommit: (Double) -> Unit,
+    val unit: String = "",
+)
 
 @Composable
 fun LabeledSlider(
@@ -44,20 +53,30 @@ fun LabeledSlider(
     steps: Int = 0,
     enabled: Boolean = true,
     valueLabel: String? = null,
+    edit: SliderEdit? = null,
 ) {
+    val precisionRange =
+        edit?.let { it.displayRange.start.toFloat()..it.displayRange.endInclusive.toFloat() } ?: valueRange
+    fun currentPrecisionInput(): String =
+        edit?.let { formatSliderEditValue(it.displayValue, it.decimals) } ?: initialPrecisionInput(value)
+
     var showPrecisionInput by remember { mutableStateOf(false) }
-    var precisionInput by remember { mutableStateOf(TextFieldValue(initialPrecisionInput(value))) }
-    val parsedInputValue = parseSliderPrecisionInput(precisionInput.text, valueRange)
+    var precisionInput by remember { mutableStateOf(TextFieldValue(currentPrecisionInput())) }
+    val parsedInputValue = parseSliderPrecisionInput(precisionInput.text, precisionRange)
     val confirmEnabled = parsedInputValue != null
 
     fun openPrecisionInput() {
-        precisionInput = TextFieldValue(initialPrecisionInput(value))
+        precisionInput = TextFieldValue(currentPrecisionInput())
         showPrecisionInput = true
     }
 
     fun confirmPrecisionInput() {
         parsedInputValue?.let {
-            onValueChange(it)
+            if (edit != null) {
+                edit.onCommit(it.toDouble())
+            } else {
+                onValueChange(it)
+            }
             showPrecisionInput = false
         }
     }
@@ -116,8 +135,10 @@ fun LabeledSlider(
         title = label,
         summary = stringResource(
             R.string.slider_precision_summary,
-            initialPrecisionInput(valueRange.start),
-            initialPrecisionInput(valueRange.endInclusive),
+            edit?.let { formatSliderEditValue(it.displayRange.start, it.decimals) }
+                ?: initialPrecisionInput(valueRange.start),
+            edit?.let { formatSliderEditValue(it.displayRange.endInclusive, it.decimals) }
+                ?: initialPrecisionInput(valueRange.endInclusive),
         ),
     ) {
         TextField(
@@ -171,3 +192,10 @@ fun initialPrecisionInput(value: Float): String {
     val rounded = value.roundToInt()
     return if (value == rounded.toFloat()) rounded.toString() else value.toString()
 }
+
+private fun formatSliderEditValue(value: Double, decimals: Int): String =
+    if (decimals <= 0) {
+        value.roundToInt().toString()
+    } else {
+        String.format(Locale.US, "%.${decimals}f", value)
+    }

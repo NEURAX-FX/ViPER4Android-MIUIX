@@ -15,10 +15,10 @@ class MainTopBarLayoutPolicyTest {
         assertTrue("MainScreen should pass active device name to ViperTopBar", "deviceName = state.activeDeviceName" in source)
         assertFalse("MainScreen should not pass expanded actions into the top bar", "expandedActions =" in source)
         assertTrue("MainScreen should put primary actions in the effect list header", "headerContent =" in source)
-        assertTrue("Header should expose preset entry", "MainActionButton(" in source && "contentDescription = stringResource(R.string.menu_presets)" in source)
-        assertTrue("Header should expose devices entry", "contentDescription = stringResource(R.string.menu_devices)" in source)
-        assertTrue("Header should expose driver status entry", "contentDescription = stringResource(R.string.menu_driver_status)" in source)
-        assertTrue("Header should expose settings entry", "contentDescription = stringResource(R.string.menu_settings)" in source)
+        assertTrue("Header should expose preset entry", "MainActionButton(Icons.Default.LibraryMusic, stringResource(R.string.menu_presets)" in source)
+        assertTrue("Header should expose devices entry", "MainActionButton(Icons.Default.Devices, stringResource(R.string.menu_devices)" in source)
+        assertTrue("Header should expose driver status entry", "MainActionButton(Icons.Default.Info, stringResource(R.string.menu_driver_status)" in source)
+        assertTrue("Header should expose settings entry", "MainActionButton(Icons.Default.Settings, stringResource(R.string.menu_settings)" in source)
         assertFalse("Header should not expose debug entry", headerContent(source).contains("debug_log_title"))
     }
 
@@ -55,15 +55,35 @@ class MainTopBarLayoutPolicyTest {
     }
 
     @Test
-    fun bottomBarFloatsAsContentOverlayInsteadOfScaffoldBottomBar() {
+    fun automaticDeviceArchitectureDoesNotRenderLegacyModeCapsule() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/MainScreen.kt")
         val scaffoldCall = sectionBetween(source, "ViperScaffold(", ") { paddingValues ->")
-        val scaffoldContent = source.substringAfter(") { paddingValues ->", missingDelimiterValue = "")
 
-        assertFalse("MainScreen should not use Scaffold bottomBar for the floating capsule", "bottomBar =" in scaffoldCall)
-        assertTrue("Main content should own the floating bottom capsule overlay", "ViperBottomBar(" in scaffoldContent)
-        assertTrue("Floating capsule should be aligned to the content bottom", "contentAlignment = Alignment.BottomCenter" in source)
-        assertTrue("Effect list should reserve space behind the floating capsule", "bottomContentPadding =" in source)
+        assertFalse("MainScreen should not use Scaffold bottomBar for a legacy mode capsule", "bottomBar =" in scaffoldCall)
+        assertFalse("Automatic device routing should not render ViperBottomBar", "ViperBottomBar(" in source)
+        assertTrue("Active device should remain visible in the top bar", "deviceName = state.activeDeviceName" in source)
+        assertFalse("MainScreen should not branch effects by the removed fxType state", "state.fxType" in source)
+    }
+
+    @Test
+    fun mainDialogsRemainInsideMiuixScaffoldPopupHostScope() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/MainScreen.kt")
+
+        listOf(
+            "showPresetDialog",
+            "showDriverStatusDialog",
+            "showDeviceDialog",
+            "showSettingsDialog",
+        ).forEach { state ->
+            assertTrue(
+                "$state should be rendered inside ViperScaffold so MiuiX can find its popup host",
+                "\n        if ($state)" in source,
+            )
+            assertFalse(
+                "$state must not be rendered outside ViperScaffold's popup host scope",
+                "\n    if ($state)" in source,
+            )
+        }
     }
 
     private fun readSource(relativePath: String): String =

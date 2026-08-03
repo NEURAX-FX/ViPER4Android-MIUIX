@@ -27,17 +27,22 @@ fun LabeledDropdown(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onDeleteOption: ((Int, String) -> Unit)? = null,
+    isOptionDeletable: (Int, String) -> Boolean = { _, _ -> onDeleteOption != null },
 ) {
     var deleteTarget by remember { mutableStateOf<Pair<Int, String>?>(null) }
     val selectedIndex = options.indexOf(selectedValue).takeIf { it >= 0 } ?: 0
-    val canDeleteSelected = onDeleteOption != null && selectedIndex > 0 && selectedValue.isNotEmpty()
+    val canDeleteSelected =
+        onDeleteOption != null &&
+            selectedValue.isNotEmpty() &&
+            options.isNotEmpty() &&
+            isOptionDeletable(selectedIndex, selectedValue)
 
     OverlayDropdownPreference(
         title = label,
         items = options,
         selectedIndex = selectedIndex,
         onSelectedIndexChange = { index ->
-            onOptionSelected(index, options[index])
+            options.getOrNull(index)?.let { onOptionSelected(index, it) }
         },
         enabled = enabled,
         modifier = modifier.fillMaxWidth().padding(vertical = 6.dp),
@@ -48,9 +53,7 @@ fun LabeledDropdown(
                         text = stringResource(R.string.action_delete),
                         onClick = { deleteTarget = selectedIndex to selectedValue },
                         enabled = enabled,
-                        colors = ButtonDefaults.textButtonColors(
-                            textColor = MiuixTheme.colorScheme.error,
-                        ),
+                        colors = ButtonDefaults.textButtonColors(textColor = MiuixTheme.colorScheme.error),
                     )
                 }
             } else {

@@ -2,9 +2,13 @@ package com.llsl.viper4android.data.model
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "eq_presets")
+@Entity(
+    tableName = "eq_presets",
+    indices = [Index(value = ["name_key", "band_count"], unique = true)],
+)
 data class EqPreset(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

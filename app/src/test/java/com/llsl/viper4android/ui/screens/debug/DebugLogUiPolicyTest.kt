@@ -10,7 +10,7 @@ import java.nio.file.Paths
 class DebugLogUiPolicyTest {
     @Test
     fun debugLogUsesMiuixSearchBarInsteadOfStandaloneTextField() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogScreen.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogDialog.kt")
 
         assertFalse("DebugLogScreen should not import the standalone MiuiX TextField", "import top.yukonga.miuix.kmp.basic.TextField" in source)
         assertTrue("DebugLogScreen should import MiuiX SearchBar", "import top.yukonga.miuix.kmp.basic.SearchBar" in source)
@@ -21,7 +21,7 @@ class DebugLogUiPolicyTest {
 
     @Test
     fun debugLogGroupsFiltersAsLeftTitleAndRightPills() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogScreen.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogDialog.kt")
         val group = source.substringAfter("private fun DebugFilterGroup(", missingDelimiterValue = "")
             .substringBefore("@Composable\nprivate fun DebugFilterChip", missingDelimiterValue = "")
 
@@ -39,7 +39,7 @@ class DebugLogUiPolicyTest {
 
     @Test
     fun debugLogListHasCardChromeAndEmptyState() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogScreen.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/debug/DebugLogDialog.kt")
 
         assertTrue("Log list should be wrapped in a card-like container", "DebugLogList(" in source)
         assertTrue("Log list should have a rounded clipped surface", ".clip(RoundedCornerShape(18.dp))" in source)

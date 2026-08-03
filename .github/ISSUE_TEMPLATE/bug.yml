@@ -1,0 +1,70 @@
+name: "Bug Report"
+description: "Report a bug with the App"
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      options:
+        - label: |
+            I have searched [existing issues](https://github.com/likelikeslike/ViPER4Android/issues?q=is%3Aissue) (both open and closed) and found no duplicate.
+          required: true
+        - label: |
+            I am using the latest release of the App and driver.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the bug you encountered.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Set effects with the following settings...
+        2. Play audio with the following app...
+        3. Observe the following behavior...
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: App logs
+      description: |
+        Upload the log file under `/data/data/com.llsl.viper4android/files/Log/viper.log`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: effects
+    attributes:
+      label: Effect settings
+      description: |
+        Upload the JSON preset file under `/sdcard/Android/data/com.llsl.viper4android/files/Preset/*.json` that you are using while reproducing this bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic steps
+      description: Try to narrow down the cause of the bug by testing with different settings, apps, devices, etc. Describe what you have tried and the results.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: |
+        Any supporting information: screenshots, logcats, device info, references, etc.
+    validations:
+      required: false

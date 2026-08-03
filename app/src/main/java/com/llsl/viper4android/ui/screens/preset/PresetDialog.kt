@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -33,6 +34,7 @@ import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -42,6 +44,8 @@ fun PresetDialog(
     onLoad: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     onRename: (Long, String) -> Unit,
+    onUpdate: (Long) -> Unit,
+    onClearAll: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var showSaveInput by remember { mutableStateOf(false) }
@@ -49,6 +53,9 @@ fun PresetDialog(
     var renamingId by remember { mutableLongStateOf(-1L) }
     var renameInputName by remember { mutableStateOf(TextFieldValue("")) }
     var pendingDeletePreset by remember { mutableStateOf<Preset?>(null) }
+    var loadTarget by remember { mutableStateOf<Preset?>(null) }
+    var updateTarget by remember { mutableStateOf<Preset?>(null) }
+    var showClearAllConfirm by remember { mutableStateOf(false) }
 
     fun commitPendingDelete() {
         pendingDeletePreset?.let { onDelete(it.id) }
@@ -84,6 +91,49 @@ fun PresetDialog(
             confirmEnabled = saveInputName.text.isNotBlank(),
             dismissText = stringResource(R.string.action_cancel),
             onDismiss = { showSaveInput = false },
+        )
+        return
+    }
+
+    loadTarget?.let { target ->
+        PresetConfirmationDialog(
+            title = stringResource(R.string.preset_load_title),
+            message = stringResource(R.string.preset_load_confirm, target.name),
+            confirmText = stringResource(R.string.action_load),
+            onConfirm = {
+                onLoad(target.id)
+                loadTarget = null
+            },
+            onDismiss = { loadTarget = null },
+        )
+        return
+    }
+
+    updateTarget?.let { target ->
+        PresetConfirmationDialog(
+            title = stringResource(R.string.preset_update_title),
+            message = stringResource(R.string.preset_update_confirm, target.name),
+            confirmText = stringResource(R.string.action_update),
+            onConfirm = {
+                onUpdate(target.id)
+                updateTarget = null
+            },
+            onDismiss = { updateTarget = null },
+        )
+        return
+    }
+
+    if (showClearAllConfirm) {
+        PresetConfirmationDialog(
+            title = stringResource(R.string.preset_clear_all_title),
+            message = stringResource(R.string.preset_clear_all_confirm, presets.size),
+            confirmText = stringResource(R.string.preset_clear_all),
+            onConfirm = {
+                pendingDeletePreset = null
+                onClearAll()
+                showClearAllConfirm = false
+            },
+            onDismiss = { showClearAllConfirm = false },
         )
         return
     }
@@ -130,6 +180,13 @@ fun PresetDialog(
         },
         content = {
             Column {
+                if (presets.isNotEmpty()) {
+                    TextButton(
+                        text = stringResource(R.string.preset_clear_all),
+                        onClick = { showClearAllConfirm = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 if (visiblePresets.isEmpty() && pendingDeletePreset == null) {
                     Text(
                         text = stringResource(R.string.preset_empty),
@@ -145,7 +202,7 @@ fun PresetDialog(
                                 preset = preset,
                                 onLoad = {
                                     commitPendingDelete()
-                                    onLoad(preset.id)
+                                    loadTarget = preset
                                 },
                                 onDelete = {
                                     commitPendingDelete()
@@ -155,6 +212,7 @@ fun PresetDialog(
                                     renameInputName = TextFieldValue(preset.name)
                                     renamingId = preset.id
                                 },
+                                onUpdate = { updateTarget = preset },
                             )
                             HorizontalDivider()
                         }
@@ -182,6 +240,7 @@ private fun PresetItem(
     onLoad: () -> Unit,
     onDelete: () -> Unit,
     onRename: () -> Unit,
+    onUpdate: () -> Unit,
 ) {
     Row(
         modifier =
@@ -192,25 +251,26 @@ private fun PresetItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = preset.name,
-                style = MiuixTheme.textStyles.body1,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = stringResource(if (preset.fxType == 1) R.string.tab_headphone else R.string.tab_speaker),
-                style = MiuixTheme.textStyles.body2,
-                color = MiuixTheme.colorScheme.onSurfaceVariantActions,
-            )
-        }
+        Text(
+            text = preset.name,
+            style = MiuixTheme.textStyles.body1,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
         Row {
             ViperIconButton(onClick = onRename) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = null,
                     tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
+                )
+            }
+            ViperIconButton(onClick = onUpdate) {
+                Icon(
+                    Icons.Default.Sync,
+                    contentDescription = null,
+                    tint = MiuixTheme.colorScheme.primary,
                 )
             }
             ViperIconButton(onClick = onDelete) {
@@ -259,4 +319,30 @@ private fun DeletedPresetItem(
             )
         }
     }
+}
+
+@Composable
+private fun PresetConfirmationDialog(
+    title: String,
+    message: String,
+    confirmText: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ViperDialog(
+        show = true,
+        onDismissRequest = onDismiss,
+        title = title,
+        content = {
+            Text(
+                text = message,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+        },
+        confirmText = confirmText,
+        onConfirm = onConfirm,
+        dismissText = stringResource(R.string.action_cancel),
+        onDismiss = onDismiss,
+    )
 }

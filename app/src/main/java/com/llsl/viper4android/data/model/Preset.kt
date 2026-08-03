@@ -9,8 +9,6 @@ data class Preset(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    @ColumnInfo(name = "fx_type")
-    val fxType: Int,
     @ColumnInfo(name = "settings_json")
     val settingsJson: String,
     @ColumnInfo(name = "created_at")

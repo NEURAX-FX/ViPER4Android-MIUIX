@@ -56,13 +56,16 @@ fun DeviceDialog(
     activeDeviceId: String,
     onRename: (String, String) -> Unit,
     onLoad: (String) -> Unit,
-    onSave: (String) -> Unit,
+    onUpdate: (String) -> Unit,
     onDelete: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var selectedDeviceId by remember { mutableStateOf<String?>(null) }
     var renamingDeviceId by remember { mutableStateOf<String?>(null) }
     var renameInput by remember { mutableStateOf(TextFieldValue("")) }
+    var updateTarget by remember { mutableStateOf<DeviceSettings?>(null) }
+    var loadTarget by remember { mutableStateOf<DeviceSettings?>(null) }
+    var deleteTarget by remember { mutableStateOf<DeviceSettings?>(null) }
 
     val selectedDevice = selectedDeviceId?.let { id -> devices.find { it.deviceId == id } }
 
@@ -89,6 +92,41 @@ fun DeviceDialog(
         )
         return
     }
+
+    DeviceConfirmationDialog(
+        target = updateTarget,
+        title = stringResource(R.string.device_update_title),
+        message = updateTarget?.let { stringResource(R.string.device_update_confirm, it.deviceName) }.orEmpty(),
+        confirmText = stringResource(R.string.action_update),
+        onConfirm = { target ->
+            onUpdate(target.deviceId)
+            updateTarget = null
+        },
+        onDismiss = { updateTarget = null },
+    )
+    DeviceConfirmationDialog(
+        target = loadTarget,
+        title = stringResource(R.string.device_load_title),
+        message = loadTarget?.let { stringResource(R.string.device_load_confirm, it.deviceName) }.orEmpty(),
+        confirmText = stringResource(R.string.action_load),
+        onConfirm = { target ->
+            onLoad(target.deviceId)
+            loadTarget = null
+        },
+        onDismiss = { loadTarget = null },
+    )
+    DeviceConfirmationDialog(
+        target = deleteTarget,
+        title = stringResource(R.string.device_delete_title),
+        message = deleteTarget?.let { stringResource(R.string.device_delete_confirm, it.deviceName) }.orEmpty(),
+        confirmText = stringResource(R.string.action_delete),
+        onConfirm = { target ->
+            onDelete(target.deviceId)
+            selectedDeviceId = null
+            deleteTarget = null
+        },
+        onDismiss = { deleteTarget = null },
+    )
 
     ViperDialog(
         show = true,
@@ -126,12 +164,9 @@ fun DeviceDialog(
                 DeviceDetailView(
                     device = selectedDevice,
                     isActive = selectedDevice.deviceId == activeDeviceId,
-                    onLoad = { onLoad(selectedDevice.deviceId) },
-                    onSave = { onSave(selectedDevice.deviceId) },
-                    onDelete = {
-                        onDelete(selectedDevice.deviceId)
-                        selectedDeviceId = null
-                    },
+                    onLoad = { loadTarget = selectedDevice },
+                    onUpdate = { updateTarget = selectedDevice },
+                    onDelete = { deleteTarget = selectedDevice },
                 )
             } else {
                 DeviceListView(
@@ -238,7 +273,7 @@ private fun DeviceDetailView(
     device: DeviceSettings,
     isActive: Boolean,
     onLoad: () -> Unit,
-    onSave: () -> Unit,
+    onUpdate: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val isBuiltIn = device.deviceId in BUILTIN_DEVICE_IDS
@@ -287,7 +322,7 @@ private fun DeviceDetailView(
             ActionItem(
                 icon = Icons.Default.Sync,
                 label = stringResource(R.string.action_update),
-                onClick = onSave,
+                onClick = onUpdate,
             )
             ActionItem(
                 icon = Icons.Default.Delete,
@@ -364,3 +399,31 @@ private fun deviceTypeName(device: DeviceSettings): String =
         device.isHeadphone -> stringResource(R.string.device_type_bluetooth)
         else -> stringResource(R.string.device_type_speaker)
     }
+
+@Composable
+private fun DeviceConfirmationDialog(
+    target: DeviceSettings?,
+    title: String,
+    message: String,
+    confirmText: String,
+    onConfirm: (DeviceSettings) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (target == null) return
+    ViperDialog(
+        show = true,
+        onDismissRequest = onDismiss,
+        title = title,
+        content = {
+            Text(
+                text = message,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+            )
+        },
+        confirmText = confirmText,
+        onConfirm = { onConfirm(target) },
+        dismissText = stringResource(R.string.action_cancel),
+        onDismiss = onDismiss,
+    )
+}

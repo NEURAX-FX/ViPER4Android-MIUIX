@@ -18,7 +18,7 @@ interface DsPresetDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(preset: DsPreset): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(presets: List<DsPreset>)
 
     @Query("UPDATE ds_presets SET name = :name WHERE id = :id")

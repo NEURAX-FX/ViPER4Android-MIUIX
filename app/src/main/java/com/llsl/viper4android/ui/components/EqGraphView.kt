@@ -42,12 +42,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
-import com.llsl.viper4android.audio.EffectDispatcher
 import com.llsl.viper4android.data.model.EqPreset
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
-import java.util.Locale
+import com.llsl.viper4android.viper.ViperDispatcher
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -78,7 +77,7 @@ fun EqCurveGraph(
     modifier: Modifier = Modifier,
     bandCount: Int = 10,
 ) {
-    val freqLabels = EffectDispatcher.eqGraphLabelsForCount(bandCount)
+    val freqLabels = ViperDispatcher.eqGraphLabelsForCount(bandCount)
     val primary = MiuixTheme.colorScheme.primary
     val onSurfaceVariant = MiuixTheme.colorScheme.onSurfaceVariantActions
     val density = LocalDensity.current
@@ -292,7 +291,7 @@ private fun buildSplinePath(points: List<Offset>): Path {
 @Composable
 fun EqEditDialog(
     bands: List<Float>,
-    onBandsChange: (String) -> Unit,
+    onBandsChange: (List<Double>) -> Unit,
     presetId: Long?,
     presets: List<EqPreset>,
     onPresetSelect: (Long) -> Unit,
@@ -380,7 +379,7 @@ fun EqEditDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                val bandLabels = EffectDispatcher.eqBandLabelsForCount(bandCount)
+                val bandLabels = ViperDispatcher.eqBandLabelsForCount(bandCount)
 
                 bandLabels.forEachIndexed { index, label ->
                     if (index < localBands.size) {
@@ -389,15 +388,7 @@ fun EqEditDialog(
 
                         val applyBandChange = { newVal: Float ->
                             localBands[index] = newVal.coerceIn(DB_MIN, DB_MAX)
-                            val str =
-                                localBands.joinToString(";") {
-                                    String.format(
-                                        Locale.US,
-                                        "%.1f",
-                                        it,
-                                    )
-                                } + ";"
-                            onBandsChange(str)
+                            onBandsChange(localBands.map { it.toDouble() })
                         }
 
                         Row(

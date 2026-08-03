@@ -1,9 +1,11 @@
 package com.llsl.viper4android.audio
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import com.llsl.viper4android.utils.FileLogger
@@ -55,6 +57,7 @@ class AudioOutputDetector(
         audioManager.unregisterAudioDeviceCallback(callback)
     }
 
+    @Suppress("NewApi")
     companion object {
         private val HEADPHONE_TYPES =
             setOf(
@@ -62,15 +65,19 @@ class AudioOutputDetector(
                 AudioDeviceInfo.TYPE_WIRED_HEADSET,
                 AudioDeviceInfo.TYPE_USB_HEADSET,
                 AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+                AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
                 AudioDeviceInfo.TYPE_BLE_HEADSET,
                 AudioDeviceInfo.TYPE_BLE_BROADCAST,
+                AudioDeviceInfo.TYPE_HEARING_AID,
             )
 
         private val BT_TYPES =
             setOf(
                 AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+                AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
                 AudioDeviceInfo.TYPE_BLE_HEADSET,
                 AudioDeviceInfo.TYPE_BLE_BROADCAST,
+                AudioDeviceInfo.TYPE_HEARING_AID,
             )
 
         private val USB_TYPES =
@@ -79,18 +86,31 @@ class AudioOutputDetector(
                 AudioDeviceInfo.TYPE_USB_DEVICE,
             )
 
-        fun isHeadphoneConnected(audioManager: AudioManager): Boolean = checkHeadphoneConnected(audioManager)
-
         private fun checkHeadphoneConnected(audioManager: AudioManager): Boolean =
             audioManager
                 .getDevices(AudioManager.GET_DEVICES_OUTPUTS)
                 .any { it.type in HEADPHONE_TYPES }
 
         private fun detectActiveDevice(audioManager: AudioManager): AudioDevice {
+            val routedOutputs =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val mediaAttrs =
+                        AudioAttributes
+                            .Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build()
+                    audioManager.getAudioDevicesForAttributes(mediaAttrs).filter { it.isSink }
+                } else {
+                    emptyList()
+                }
+
             val outputs =
-                audioManager
-                    .getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-                    .filter { it.isSink }
+                routedOutputs.ifEmpty {
+                    audioManager
+                        .getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                        .filter { it.isSink }
+                }
 
             for (dev in outputs) {
                 FileLogger.d(
@@ -137,8 +157,10 @@ class AudioOutputDetector(
         private fun getTypeName(type: Int): String =
             when (type) {
                 AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "Bluetooth A2DP"
+                AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth SCO"
                 AudioDeviceInfo.TYPE_BLE_HEADSET -> "BLE Headset"
                 AudioDeviceInfo.TYPE_BLE_BROADCAST -> "BLE Broadcast"
+                AudioDeviceInfo.TYPE_HEARING_AID -> "Hearing Aid"
                 else -> "Bluetooth"
             }
     }

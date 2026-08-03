@@ -16,7 +16,12 @@ import com.llsl.viper4android.data.model.DsPreset
 import com.llsl.viper4android.data.model.EqPreset
 import com.llsl.viper4android.data.model.Preset
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,10 +39,7 @@ class ViperRepository
 
         suspend fun getPresetById(id: Long): Preset? = presetDao.getById(id)
 
-        suspend fun getPresetByNameAndFxType(
-            name: String,
-            fxType: Int,
-        ): Preset? = presetDao.getByNameAndFxType(name, fxType)
+        suspend fun getPresetByName(name: String): Preset? = presetDao.getByName(name)
 
         suspend fun savePreset(preset: Preset): Long = presetDao.insert(preset)
 
@@ -46,6 +48,8 @@ class ViperRepository
         suspend fun deletePreset(preset: Preset) = presetDao.delete(preset)
 
         suspend fun deletePresetById(id: Long) = presetDao.deleteById(id)
+
+        suspend fun deleteAllPresets() = presetDao.deleteAll()
 
         fun getEqPresetsByBandCount(bandCount: Int): Flow<List<EqPreset>> = eqPresetDao.getByBandCount(bandCount)
 
@@ -92,7 +96,11 @@ class ViperRepository
         fun getBooleanPreference(
             key: String,
             default: Boolean = false,
-        ): Flow<Boolean> = dataStore.data.map { it[booleanPreferencesKey(key)] ?: default }
+        ): Flow<Boolean> =
+            flow {
+                ensureV2Initialized()
+                emitAll(dataStore.data.map { it[booleanPreferencesKey(key)] ?: default })
+            }
 
         // noinspection PrivateApi
         // noinspection DiscouragedPrivateApi
@@ -112,39 +120,72 @@ class ViperRepository
             key: String,
             value: Boolean,
         ) {
+            ensureV2Initialized()
             dataStore.edit { it[booleanPreferencesKey(key)] = value }
         }
 
         fun getIntPreference(
             key: String,
             default: Int = 0,
-        ): Flow<Int> = dataStore.data.map { it[intPreferencesKey(key)] ?: default }
+        ): Flow<Int> =
+            flow {
+                ensureV2Initialized()
+                emitAll(dataStore.data.map { it[intPreferencesKey(key)] ?: default })
+            }
 
         suspend fun setIntPreference(
             key: String,
             value: Int,
         ) {
+            ensureV2Initialized()
             dataStore.edit { it[intPreferencesKey(key)] = value }
         }
 
         fun getStringPreference(
             key: String,
             default: String = "",
-        ): Flow<String> = dataStore.data.map { it[stringPreferencesKey(key)] ?: default }
+        ): Flow<String> =
+            flow {
+                ensureV2Initialized()
+                emitAll(dataStore.data.map { it[stringPreferencesKey(key)] ?: default })
+            }
 
         suspend fun setStringPreference(
             key: String,
             value: String,
         ) {
+            ensureV2Initialized()
             dataStore.edit { it[stringPreferencesKey(key)] = value }
         }
 
+        @Volatile private var initDone = false
+        private val initMutex = Mutex()
+
+        suspend fun ensureV2Initialized() {
+            if (initDone) return
+            initMutex.withLock {
+                if (initDone) return
+                val flag =
+                    dataStore.data.map {
+                        it[booleanPreferencesKey(PREF_V2_INITIALIZED)] ?: false
+                    }
+                if (flag.first()) {
+                    initDone = true
+                    return
+                }
+                dataStore.edit { prefs ->
+                    prefs[booleanPreferencesKey(PREF_V2_INITIALIZED)] = true
+                }
+                initDone = true
+            }
+        }
+
         companion object {
-            const val PREF_FX_TYPE = "fx_type"
             const val PREF_MASTER_ENABLE = "master_enable"
-            const val PREF_DDC_DEVICE = "ddc_device"
-            const val PREF_EQ_PRESET_ID = "eq_preset_id"
-            const val PERF_DYNAMIC_SYS_DEVICE = "ds_device"
-            const val PERF_DYNAMIC_SYS_PRESET_ID = "ds_preset_id"
+            const val PREF_AUTO_START = "auto_start"
+            const val PREF_GLOBAL_MODE = "global_mode"
+            const val PREF_DEBUG_MODE = "debug_mode"
+            const val PREF_SHOW_CURVE_PREVIEWS = "show_curve_previews"
+            const val PREF_V2_INITIALIZED = "v2_initialized"
         }
     }

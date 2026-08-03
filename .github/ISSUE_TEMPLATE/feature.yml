@@ -1,0 +1,40 @@
+name: "Feature Request"
+description: "Request a new feature for the App"
+labels: ["feature", "enhancement"]
+body:
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      options:
+        - label: |
+            I have searched [existing issues](https://github.com/likelikeslike/ViPER4Android/issues?q=is%3Aissue) (both open and closed) and found no duplicate.
+          required: true
+        - label: |
+            I am using the latest release of the App and driver.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the feature you want.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested implementation
+      description: Describe how you think this feature can be implemented, if you have any suggestions.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: |
+        Any supporting information: screenshots, references, prototypes, etc.
+    validations:
+      required: false

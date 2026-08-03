@@ -1,6 +1,7 @@
 package com.llsl.viper4android.ui.screens.main
 
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -8,22 +9,13 @@ import java.nio.file.Paths
 
 class EffectSectionsMaterialPolicyTest {
     @Test
-    fun effectSectionsDoesNotImportMaterial3UiComponents() {
+    fun mainEffectCardsStayOnMiuixDuringUpstreamEditorMigration() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 
-        val forbiddenImports =
-            listOf(
-                "import androidx.compose.material3.AlertDialog",
-                "import androidx.compose.material3.MaterialTheme",
-                "import androidx.compose.material3.OutlinedTextField",
-                "import androidx.compose.material3.PrimaryScrollableTabRow",
-                "import androidx.compose.material3.PrimaryTabRow",
-                "import androidx.compose.material3.Tab",
-                "import androidx.compose.material3.TextButton",
-            )
-
-        val remainingImports = forbiddenImports.filter { it in source }
-        assertFalse("EffectSections.kt still imports Material3 UI components: $remainingImports", remainingImports.isNotEmpty())
+        assertTrue("EffectSection should use the MiuiX card alias", "Card as MiuixCard" in source && "MiuixCard(" in source)
+        assertTrue("EffectSection should use the MiuiX switch alias", "Switch as MiuixSwitch" in source && "MiuixSwitch(" in source)
+        assertFalse("Main effect cards should not use Material3 Card", "import androidx.compose.material3.Card" in source)
+        assertFalse("Main effect cards should not use Material3 Switch", "import androidx.compose.material3.Switch" in source)
     }
 
     private fun projectRoot(): Path {

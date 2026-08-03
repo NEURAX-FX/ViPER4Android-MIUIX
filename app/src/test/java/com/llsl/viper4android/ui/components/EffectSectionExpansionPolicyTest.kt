@@ -10,7 +10,7 @@ import java.nio.file.Paths
 class EffectSectionExpansionPolicyTest {
     @Test
     fun enableSwitchExpandsAndDisablesCollapseForNonToggleOnlySections() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/EffectSection.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 
         assertTrue("EffectSection should route switch changes through a local handler", "onCheckedChange = { checked ->" in source)
         assertTrue("Switch handler should preserve existing enable callback", "onEnabledChange(checked)" in source)
@@ -20,7 +20,7 @@ class EffectSectionExpansionPolicyTest {
 
     @Test
     fun toggleOnlySectionsStillDoNotExposeExpandableContent() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/EffectSection.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 
         assertTrue("Toggle-only sections should not make the header clickable", ".then(if (toggleOnly) Modifier else Modifier.clickable" in source)
         assertTrue("Toggle-only sections should not render AnimatedVisibility content", "if (!toggleOnly) {" in source && "AnimatedVisibility(" in source)
@@ -28,7 +28,7 @@ class EffectSectionExpansionPolicyTest {
 
     @Test
     fun switchNoLongerDirectlyDelegatesToEnableCallback() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/EffectSection.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 
         assertFalse("Switch should not directly delegate because expansion state must be updated too", "onCheckedChange = onEnabledChange" in source)
     }

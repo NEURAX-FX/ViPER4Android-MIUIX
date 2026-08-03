@@ -5,10 +5,9 @@
     <string name="notification_channel_description">当 ViPER4Android 正在处理音频时显示</string>
     <string name="notification_title">ViPER4Android</string>
     <string name="notification_text">音频处理已激活</string>
-
-    <!-- Tabs -->
-    <string name="tab_headphone">耳机</string>
-    <string name="tab_speaker">扬声器</string>
+    <string name="notification_bulk_op_channel_name">批量操作</string>
+    <string name="notification_bulk_op_channel_description">批量操作进度</string>
+    <string name="qs_tile_master_label">Master</string>
 
     <!-- Master -->
     <string name="master_enable">总开关</string>
@@ -36,10 +35,12 @@
     <string name="label_mild">弱</string>
     <string name="label_medium">中</string>
     <string name="label_strong">强</string>
-    <string name="label_deleted">已删除</string>
+
+    <!-- Numeric input dialog -->
+    <string name="dialog_value_range">范围: %1$s \u2013 %2$s</string>
+    <string name="dialog_value_range_unit">范围: %1$s \u2013 %2$s %3$s</string>
 
     <!-- Output / Master limiter -->
-    <string name="section_output">主控制器</string>
     <string name="label_output_volume">输出增益</string>
     <string name="label_output_pan">音量平衡</string>
     <string name="label_output_limiter">阈值限制</string>
@@ -134,7 +135,6 @@
 
     <!-- Dynamic System -->
     <string name="section_dynamic_system">动态系统</string>
-    <string name="label_dynamic_system_device">设备</string>
     <string name="label_dynamic_system_strength">动态低音强度</string>
     <string name="label_dynamic_system_x_low_freq">X 低频</string>
     <string name="label_dynamic_system_x_high_freq">X 高频</string>
@@ -200,6 +200,17 @@
     <string name="preset_name_hint">预设名称</string>
     <string name="preset_empty">没有已保存的预设</string>
     <string name="preset_save_current">保存当前预设</string>
+    <string name="preset_clear_all">全部清除</string>
+    <string name="preset_clear_all_title">清除全部预设</string>
+    <string name="preset_clear_all_confirm">确定删除 %1$d 个预设? 此操作无法撤销</string>
+    <string name="preset_clear_all_progress">正在清除预设</string>
+    <string name="preset_cleared">已清除</string>
+    <string name="preset_update_title">更新预设</string>
+    <string name="preset_update_confirm">确定用当前设置覆盖 "%1$s"? 此操作无法撤销</string>
+    <string name="preset_load_title">Load Preset</string>
+    <string name="preset_load_confirm">Load "%1$s"? Current settings will be replaced.</string>
+    <string name="preset_delete_title">Delete Preset</string>
+    <string name="preset_delete_confirm">Delete "%1$s"? This cannot be undone.</string>
 
     <!-- Driver Status -->
     <string name="driver_not_found">未找到驱动</string>
@@ -249,6 +260,12 @@
     <string name="device_no_devices">无已保存设备</string>
     <string name="device_rename_title">重命名设备</string>
     <string name="device_rename_hint">设备名称</string>
+    <string name="device_update_title">更新设备预设</string>
+    <string name="device_update_confirm">确定用当前设置覆盖 "%1$s"? 此操作无法撤销</string>
+    <string name="device_load_title">Load Device Preset</string>
+    <string name="device_load_confirm">Load "%1$s" preset? Current settings will be replaced.</string>
+    <string name="device_delete_title">Delete Device Preset</string>
+    <string name="device_delete_confirm">Delete the saved preset for "%1$s"? This cannot be undone.</string>
 
     <!-- Actions -->
     <string name="action_save">保存</string>
@@ -260,6 +277,7 @@
     <string name="action_load">加载</string>
     <string name="action_update">更新</string>
     <string name="action_delete">删除</string>
+    <string name="label_deleted">已删除</string>
     <string name="action_clear">清除</string>
     <string name="action_more">更多</string>
     <string name="action_edit_curve">编辑曲线</string>
@@ -281,6 +299,7 @@
     <string name="debug_filter_category">类别</string>
     <string name="debug_filter_info">信息</string>
     <string name="debug_filter_debug">调试</string>
+    <string name="debug_filter_warn">警告</string>
     <string name="debug_filter_error">错误</string>
     <string name="debug_filter_app">应用</string>
     <string name="debug_filter_driver">驱动</string>
@@ -307,13 +326,13 @@
     <string name="eq_preset_vocal_booster">人声增强</string>
 
     <!-- Dynamic System device presets -->
-    <string name="ds_device_extreme_headphone_v2">Extreme Headphone (v2)</string>
-    <string name="ds_device_high_end_headphone_v2">High-End Headphone (v2)</string>
-    <string name="ds_device_common_headphone_v2">Common Headphone (v2)</string>
-    <string name="ds_device_low_end_headphone_v2">Low-End Headphone (v2)</string>
-    <string name="ds_device_common_earphone_v2">Common Earphone (v2)</string>
-    <string name="ds_device_extreme_headphone_v1">Extreme Headphone (v1)</string>
-    <string name="ds_device_high_end_headphone_v1">High-End Headphone (v1)</string>
-    <string name="ds_device_common_headphone_v1">Common Headphone (v1)</string>
-    <string name="ds_device_common_earphone_v1">Common Earphone (v1)</string>
+    <string name="ds_device_extreme_headphone_v2">极致耳机 (v2)</string>
+    <string name="ds_device_high_end_headphone_v2">高端耳机 (v2)</string>
+    <string name="ds_device_common_headphone_v2">普通耳机 (v2)</string>
+    <string name="ds_device_low_end_headphone_v2">入门耳机 (v2)</string>
+    <string name="ds_device_common_earphone_v2">普通耳塞 (v2)</string>
+    <string name="ds_device_extreme_headphone_v1">极致耳机 (v1)</string>
+    <string name="ds_device_high_end_headphone_v1">高端耳机 (v1)</string>
+    <string name="ds_device_common_headphone_v1">普通耳机 (v1)</string>
+    <string name="ds_device_common_earphone_v1">普通耳塞 (v1)</string>
 </resources>

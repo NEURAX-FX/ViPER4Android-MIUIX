@@ -17,14 +17,8 @@ interface PresetDao {
     @Query("SELECT * FROM presets WHERE id = :id")
     suspend fun getById(id: Long): Preset?
 
-    @Query("SELECT * FROM presets WHERE fx_type = :fxType ORDER BY name ASC")
-    fun getByFxType(fxType: Int): Flow<List<Preset>>
-
-    @Query("SELECT * FROM presets WHERE name = :name AND fx_type = :fxType LIMIT 1")
-    suspend fun getByNameAndFxType(
-        name: String,
-        fxType: Int,
-    ): Preset?
+    @Query("SELECT * FROM presets WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): Preset?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(preset: Preset): Long
@@ -37,4 +31,7 @@ interface PresetDao {
 
     @Query("DELETE FROM presets WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM presets")
+    suspend fun deleteAll()
 }

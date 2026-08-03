@@ -38,7 +38,7 @@ class SettingsScreenPolicyTest {
         assertTrue("EffectList should accept showCurvePreviews", "showCurvePreviews: Boolean" in mainScreen)
         assertTrue(
             "EffectList should pass showCurvePreviews to EqualizerSection",
-            "EqualizerSection(state, viewModel, isSpkMode, showCurvePreview = showCurvePreviews)" in mainScreen,
+            "EqualizerSection(state, viewModel, showCurvePreview = showCurvePreviews)" in mainScreen,
         )
         assertTrue("EqualizerSection should accept a preview flag", "showCurvePreview: Boolean = true" in effectSections)
         assertTrue(
@@ -49,7 +49,7 @@ class SettingsScreenPolicyTest {
 
     @Test
     fun settingsDialogUsesGroupedMiuixCardsAndExplicitRows() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/settings/SettingsScreen.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/settings/SettingsDialog.kt")
 
         assertTrue("Settings dialog should use MiuiX cards for groups", "import top.yukonga.miuix.kmp.basic.Card" in source)
         assertTrue("Settings dialog should use MiuiX horizontal dividers", "import top.yukonga.miuix.kmp.basic.HorizontalDivider" in source)
@@ -79,9 +79,9 @@ class SettingsScreenPolicyTest {
         }
     }
 
-    private fun effectListCall(source: String): String = sectionBetween(source, "EffectList(", ")\n\n            ViperBottomBar(")
+    private fun effectListCall(source: String): String = sectionBetween(source, "EffectList(", "modifier =")
 
-    private fun settingsDialogCall(source: String): String = sectionBetween(source, "SettingsDialog(", ")\n        }")
+    private fun settingsDialogCall(source: String): String = sectionBetween(source, "SettingsDialog(", "\n        )")
 
     private fun sectionBetween(
         source: String,

@@ -4,302 +4,316 @@
        See details of the qualifier: https://developer.android.com/guide/topics/resources/providing-resources#AlternativeResources
     2. Copy this file as a starting template.
     3. Translate each <string> value (keep the name attribute unchanged).
-    4. Strings that should NOT be translated (e.g. brand names like "ViPER4Android")
-       can be deleted from this file, the default English value will be used.
+    4. Note that some items may use placeholders like `%1$s` or `%d`.
+       These placeholders should be kept in the translated string for formatting.
 -->
 <resources>
-    <string name="app_name">placeholder</string>
-    <string name="notification_channel_name">placeholder</string>
-    <string name="notification_channel_description">placeholder</string>
-    <string name="notification_title">placeholder</string>
-    <string name="notification_text">placeholder</string>
-
-    <!-- Tabs -->
-    <string name="tab_headphone">placeholder</string>
-    <string name="tab_speaker">placeholder</string>
+    <string name="app_name">ViPER4Android</string>
+    <string name="notification_channel_name">Audio Processing</string>
+    <string name="notification_channel_description">Shows when ViPER4Android is processing audio</string>
+    <string name="notification_title">ViPER4Android</string>
+    <string name="notification_text">Audio processing active</string>
+    <string name="notification_bulk_op_channel_name">Bulk Operations</string>
+    <string name="notification_bulk_op_channel_description">Progress for bulk operations</string>
+    <string name="qs_tile_master_label">Master</string>
 
     <!-- Master -->
-    <string name="master_enable">placeholder</string>
-    <string name="menu_driver_status">placeholder</string>
-    <string name="menu_presets">placeholder</string>
-    <string name="menu_settings">placeholder</string>
-    <string name="menu_devices">placeholder</string>
+    <string name="master_enable">Master Enable</string>
+    <string name="menu_driver_status">Driver Status</string>
+    <string name="menu_presets">Presets</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_devices">Devices</string>
 
     <!-- Common -->
-    <string name="label_max_gain">placeholder</string>
-    <string name="label_threshold">placeholder</string>
-    <string name="label_gain">placeholder</string>
-    <string name="label_attack">placeholder</string>
-    <string name="label_release">placeholder</string>
-    <string name="label_strength">placeholder</string>
-    <string name="label_frequency">placeholder</string>
-    <string name="label_width">placeholder</string>
-    <string name="label_depth">placeholder</string>
-    <string name="label_delay">placeholder</string>
-    <string name="label_mode">placeholder</string>
-    <string name="label_off">placeholder</string>
-    <string name="label_preset">placeholder</string>
-    <string name="label_custom">placeholder</string>
-    <string name="label_none">placeholder</string>
-    <string name="label_mild">placeholder</string>
-    <string name="label_medium">placeholder</string>
-    <string name="label_strong">placeholder</string>
-    <string name="label_deleted">placeholder</string>
+    <string name="label_max_gain">Max Gain</string>
+    <string name="label_threshold">Threshold</string>
+    <string name="label_gain">Gain</string>
+    <string name="label_attack">Attack</string>
+    <string name="label_release">Release</string>
+    <string name="label_strength">Strength</string>
+    <string name="label_frequency">Frequency</string>
+    <string name="label_width">Width</string>
+    <string name="label_depth">Depth</string>
+    <string name="label_delay">Delay</string>
+    <string name="label_mode">Mode</string>
+    <string name="label_off">Off</string>
+    <string name="label_preset">Preset</string>
+    <string name="label_custom">Custom</string>
+    <string name="label_none">None</string>
+    <string name="label_mild">Mild</string>
+    <string name="label_medium">Medium</string>
+    <string name="label_strong">Strong</string>
+
+    <!-- Numeric input dialog -->
+    <string name="dialog_value_range">Range: %1$s \u2013 %2$s</string>
+    <string name="dialog_value_range_unit">Range: %1$s \u2013 %2$s %3$s</string>
 
     <!-- Output / Master limiter -->
-    <string name="section_output">placeholder</string>
-    <string name="label_output_volume">placeholder</string>
-    <string name="label_output_pan">placeholder</string>
-    <string name="label_output_limiter">placeholder</string>
+    <string name="label_output_volume">Output Gain</string>
+    <string name="label_output_pan">Output Pan</string>
+    <string name="label_output_limiter">Threshold Limit</string>
 
     <!-- AGC -->
-    <string name="section_agc">placeholder</string>
-    <string name="label_agc_output_threshold">placeholder</string>
+    <string name="section_agc">Playback Gain Control</string>
+    <string name="label_agc_output_threshold">Output Threshold</string>
 
     <!-- LUFS Targeting -->
-    <string name="section_lufs_targeting">placeholder</string>
-    <string name="label_lufs_target_lufs">placeholder</string>
-    <string name="label_lufs_speed">placeholder</string>
-    <string name="label_lufs_speed_slow">placeholder</string>
-    <string name="label_lufs_speed_medium">placeholder</string>
-    <string name="label_lufs_speed_fast">placeholder</string>
+    <string name="section_lufs_targeting">LUFS Targeting</string>
+    <string name="label_lufs_target_lufs">Target LUFS</string>
+    <string name="label_lufs_speed">Speed</string>
+    <string name="label_lufs_speed_slow">Slow</string>
+    <string name="label_lufs_speed_medium">Medium</string>
+    <string name="label_lufs_speed_fast">Fast</string>
 
     <!-- FET Compressor -->
-    <string name="section_fet_compressor">placeholder</string>
-    <string name="label_fet_ratio">placeholder</string>
-    <string name="label_fet_knee">placeholder</string>
-    <string name="label_fet_auto_knee">placeholder</string>
-    <string name="label_fet_knee_multi">placeholder</string>
-    <string name="label_fet_auto_gain">placeholder</string>
-    <string name="label_fet_auto_attack">placeholder</string>
-    <string name="label_fet_max_attack">placeholder</string>
-    <string name="label_fet_auto_release">placeholder</string>
-    <string name="label_fet_max_release">placeholder</string>
-    <string name="label_fet_crest">placeholder</string>
-    <string name="label_fet_adapt">placeholder</string>
-    <string name="label_fet_no_clip">placeholder</string>
+    <string name="section_fet_compressor">FET Compressor</string>
+    <string name="label_fet_ratio">Ratio</string>
+    <string name="label_fet_knee">Knee</string>
+    <string name="label_fet_auto_knee">Auto Knee</string>
+    <string name="label_fet_knee_multi">Knee Multi</string>
+    <string name="label_fet_auto_gain">Auto Gain</string>
+    <string name="label_fet_auto_attack">Auto Attack</string>
+    <string name="label_fet_max_attack">Max Attack</string>
+    <string name="label_fet_auto_release">Auto Release</string>
+    <string name="label_fet_max_release">Max Release</string>
+    <string name="label_fet_crest">Crest</string>
+    <string name="label_fet_adapt">Adapt</string>
+    <string name="label_fet_no_clip">No Clip</string>
 
     <!-- Multiband Compressor -->
-    <string name="section_multiband_compressor">placeholder</string>
-    <string name="label_band_enabled">placeholder</string>
-    <string name="label_upper_crossover">placeholder</string>
+    <string name="section_multiband_compressor">Multiband Compressor</string>
+    <string name="label_band_enabled">Band Enabled</string>
+    <string name="label_upper_crossover">Upper Crossover</string>
 
     <!-- DDC -->
-    <string name="section_ddc">placeholder</string>
-    <string name="label_ddc_device">placeholder</string>
+    <string name="section_ddc">ViPER-DDC</string>
+    <string name="label_ddc_device">Headset Correction</string>
 
     <!-- Spectrum Extension -->
-    <string name="section_spectrum_extension">placeholder</string>
-    <string name="label_vse_exciter">placeholder</string>
+    <string name="section_spectrum_extension">Spectrum Extension</string>
+    <string name="label_vse_exciter">Exciter</string>
 
     <!-- Equalizer -->
-    <string name="section_equalizer">placeholder</string>
-    <string name="label_eq_bands">placeholder</string>
-    <string name="label_eq_n_bands">%d placeholder</string>
+    <string name="section_equalizer">FIR Equalizer</string>
+    <string name="label_eq_bands">Band Count</string>
+    <string name="label_eq_n_bands">%d Bands</string>
 
     <!-- Dynamic EQ -->
-    <string name="section_dynamic_eq">placeholder</string>
-    <string name="label_dynamic_eq_q_factor">placeholder</string>
-    <string name="label_dynamic_eq_target_gain">placeholder</string>
-    <string name="label_dynamic_eq_filter_type">placeholder</string>
-    <string name="dialog_delete_band">placeholder</string>
+    <string name="section_dynamic_eq">Dynamic EQ</string>
+    <string name="label_dynamic_eq_q_factor">Q Factor</string>
+    <string name="label_dynamic_eq_target_gain">Target Gain</string>
+    <string name="label_dynamic_eq_filter_type">Filter Type</string>
+    <string name="dialog_delete_band">Delete Band</string>
 
     <!-- Convolver -->
-    <string name="section_convolver">placeholder</string>
-    <string name="label_convolver_kernel">placeholder</string>
-    <string name="label_convolver_cross_channel">placeholder</string>
+    <string name="section_convolver">Convolver</string>
+    <string name="label_convolver_kernel">Kernel File</string>
+    <string name="label_convolver_cross_channel">Cross-Channel</string>
 
     <!-- Field Surround -->
-    <string name="section_field_surround">placeholder</string>
-    <string name="label_field_surround_widening">placeholder</string>
-    <string name="label_field_surround_mid_image">placeholder</string>
+    <string name="section_field_surround">Field Surround</string>
+    <string name="label_field_surround_widening">Surround Strength</string>
+    <string name="label_field_surround_mid_image">Mid Image Strength</string>
 
     <!-- Differential Surround -->
-    <string name="section_diff_surround">placeholder</string>
-    <string name="label_diff_surround_reverse">placeholder</string>
-    <string name="label_diff_surround_wet_dry_mix">placeholder</string>
-    <string name="label_diff_surround_lp_cutoff">placeholder</string>
+    <string name="section_diff_surround">Differential Surround</string>
+    <string name="label_diff_surround_reverse">Reverse</string>
+    <string name="label_diff_surround_wet_dry_mix">Wet/Dry Mix</string>
+    <string name="label_diff_surround_lp_cutoff">LP Cutoff</string>
 
     <!-- Stereo Imager -->
-    <string name="section_stereo_imager">placeholder</string>
-    <string name="label_stereo_imager_low_width">placeholder</string>
-    <string name="label_stereo_imager_mid_width">placeholder</string>
-    <string name="label_stereo_imager_high_width">placeholder</string>
-    <string name="label_stereo_imager_low_crossover">placeholder</string>
-    <string name="label_stereo_imager_high_crossover">placeholder</string>
+    <string name="section_stereo_imager">Stereo Imager</string>
+    <string name="label_stereo_imager_low_width">Low Width</string>
+    <string name="label_stereo_imager_mid_width">Mid Width</string>
+    <string name="label_stereo_imager_high_width">High Width</string>
+    <string name="label_stereo_imager_low_crossover">Low Crossover</string>
+    <string name="label_stereo_imager_high_crossover">High Crossover</string>
 
     <!-- Headphone Surround -->
-    <string name="section_headphone_surround">placeholder</string>
-    <string name="label_vhe_quality">placeholder</string>
+    <string name="section_headphone_surround">Headphone Surround+</string>
+    <string name="label_vhe_quality">Quality Level</string>
 
     <!-- Reverberation -->
-    <string name="section_reverb">placeholder</string>
-    <string name="label_reverb_room_size">placeholder</string>
-    <string name="label_reverb_dampening">placeholder</string>
-    <string name="label_reverb_wet">placeholder</string>
-    <string name="label_reverb_dry">placeholder</string>
+    <string name="section_reverb">Reverberation</string>
+    <string name="label_reverb_room_size">Room Size</string>
+    <string name="label_reverb_dampening">Dampening</string>
+    <string name="label_reverb_wet">Wet Signal</string>
+    <string name="label_reverb_dry">Dry Signal</string>
 
     <!-- Dynamic System -->
-    <string name="section_dynamic_system">placeholder</string>
-    <string name="label_dynamic_system_device">placeholder</string>
-    <string name="label_dynamic_system_strength">placeholder</string>
-    <string name="label_dynamic_system_x_low_freq">placeholder</string>
-    <string name="label_dynamic_system_x_high_freq">placeholder</string>
-    <string name="label_dynamic_system_y_low_freq">placeholder</string>
-    <string name="label_dynamic_system_y_high_freq">placeholder</string>
-    <string name="label_dynamic_system_side_gain_low">placeholder</string>
-    <string name="label_dynamic_system_side_gain_high">placeholder</string>
+    <string name="section_dynamic_system">Dynamic System</string>
+    <string name="label_dynamic_system_strength">Dynamic Bass Strength</string>
+    <string name="label_dynamic_system_x_low_freq">X Low Freq</string>
+    <string name="label_dynamic_system_x_high_freq">X High Freq</string>
+    <string name="label_dynamic_system_y_low_freq">Y Low Freq</string>
+    <string name="label_dynamic_system_y_high_freq">Y High Freq</string>
+    <string name="label_dynamic_system_side_gain_low">Side Gain Low</string>
+    <string name="label_dynamic_system_side_gain_high">Side Gain High</string>
 
     <!-- Tube Simulator -->
-    <string name="section_tube_simulator">placeholder</string>
+    <string name="section_tube_simulator">Tube Simulator (6N1J)</string>
 
     <!-- Psychoacoustic Bass -->
-    <string name="section_psycho_bass">placeholder</string>
-    <string name="label_psycho_bass_cutoff">placeholder</string>
-    <string name="label_psycho_bass_intensity">placeholder</string>
-    <string name="label_psycho_bass_harmonic_order">placeholder</string>
-    <string name="label_psycho_bass_ori_bass_level">placeholder</string>
+    <string name="section_psycho_bass">Psychoacoustic Bass</string>
+    <string name="label_psycho_bass_cutoff">Cutoff</string>
+    <string name="label_psycho_bass_intensity">Intensity</string>
+    <string name="label_psycho_bass_harmonic_order">Harmonic Order</string>
+    <string name="label_psycho_bass_ori_bass_level">Original Bass Level</string>
 
     <!-- ViPER Bass -->
-    <string name="section_viper_bass">placeholder</string>
-    <string name="label_bass_anti_pop">placeholder</string>
+    <string name="section_viper_bass">ViPER Bass</string>
+    <string name="label_bass_anti_pop">Fade-in</string>
 
     <!-- ViPER Bass Mono -->
-    <string name="section_viper_bass_mono">placeholder</string>
+    <string name="section_viper_bass_mono">ViPER Bass Mono</string>
 
     <!-- ViPER Clarity -->
-    <string name="section_viper_clarity">placeholder</string>
+    <string name="section_viper_clarity">ViPER Clarity</string>
 
     <!-- Cure -->
-    <string name="section_cure">placeholder</string>
-    <string name="label_cure_strength">placeholder</string>
+    <string name="section_cure">Auditory System Protection</string>
+    <string name="label_cure_strength">Binaural Level</string>
 
     <!-- AnalogX -->
-    <string name="section_analogx">placeholder</string>
+    <string name="section_analogx">AnalogX</string>
 
     <!-- Speaker Optimization -->
-    <string name="section_speaker_optimization">placeholder</string>
+    <string name="section_speaker_optimization">Speaker Optimization</string>
 
     <!-- Filter Type -->
-    <string name="filter_peak">placeholder</string>
-    <string name="filter_low_shelf">placeholder</string>
-    <string name="filter_high_shelf">placeholder</string>
+    <string name="filter_peak">Peak</string>
+    <string name="filter_low_shelf">Low Shelf</string>
+    <string name="filter_high_shelf">High Shelf</string>
 
     <!-- Harmonic Order -->
-    <string name="harmonic_2nd">placeholder</string>
-    <string name="harmonic_3rd">placeholder</string>
-    <string name="harmonic_4th">placeholder</string>
-    <string name="harmonic_5th">placeholder</string>
+    <string name="harmonic_2nd">2nd</string>
+    <string name="harmonic_3rd">3rd</string>
+    <string name="harmonic_4th">4th</string>
+    <string name="harmonic_5th">5th</string>
 
     <!-- Bass modes -->
-    <string name="bass_mode_natural">placeholder</string>
-    <string name="bass_mode_pure">placeholder</string>
-    <string name="bass_mode_subwoofer">placeholder</string>
+    <string name="bass_mode_natural">Natural Bass</string>
+    <string name="bass_mode_pure">Pure Bass+</string>
+    <string name="bass_mode_subwoofer">Subwoofer</string>
 
     <!-- Clarity modes -->
-    <string name="clarity_mode_natural">placeholder</string>
-    <string name="clarity_mode_ozone">placeholder</string>
-    <string name="clarity_mode_xhifi">placeholder</string>
+    <string name="clarity_mode_natural">Natural</string>
+    <string name="clarity_mode_ozone">OZone+</string>
+    <string name="clarity_mode_xhifi">XHiFi</string>
 
     <!-- Presets -->
-    <string name="preset_save_title">placeholder</string>
-    <string name="preset_rename_title">placeholder</string>
-    <string name="preset_name_hint">placeholder</string>
-    <string name="preset_empty">placeholder</string>
-    <string name="preset_save_current">placeholder</string>
+    <string name="preset_save_title">Save Preset</string>
+    <string name="preset_rename_title">Rename Preset</string>
+    <string name="preset_name_hint">Preset name</string>
+    <string name="preset_empty">No saved presets</string>
+    <string name="preset_save_current">Save Current</string>
+    <string name="preset_clear_all">Clear All</string>
+    <string name="preset_clear_all_title">Clear All Presets</string>
+    <string name="preset_clear_all_confirm">Delete all %1$d presets? This cannot be undone.</string>
+    <string name="preset_clear_all_progress">Clearing presets</string>
+    <string name="preset_cleared">Cleared</string>
+    <string name="preset_update_title">Update Preset</string>
+    <string name="preset_update_confirm">Overwrite "%1$s" with current settings? This cannot be undone.</string>
+    <string name="preset_load_title">Load Preset</string>
+    <string name="preset_load_confirm">Load "%1$s"? Current settings will be replaced.</string>
+    <string name="preset_delete_title">Delete Preset</string>
+    <string name="preset_delete_confirm">Delete "%1$s"? This cannot be undone.</string>
 
     <!-- Driver Status -->
-    <string name="driver_not_found">placeholder</string>
-    <string name="driver_version_code">placeholder</string>
-    <string name="driver_version_name">placeholder</string>
-    <string name="driver_architecture">placeholder</string>
-    <string name="driver_streaming">placeholder</string>
-    <string name="driver_sampling_rate">placeholder</string>
-    <string name="status_active">placeholder</string>
-    <string name="status_inactive">placeholder</string>
-    <string name="status_unknown">placeholder</string>
+    <string name="driver_not_found">Driver not found</string>
+    <string name="driver_version_code">Version Code</string>
+    <string name="driver_version_name">Version</string>
+    <string name="driver_architecture">Architecture</string>
+    <string name="driver_streaming">Streaming</string>
+    <string name="driver_sampling_rate">Sampling Rate</string>
+    <string name="status_active">Active</string>
+    <string name="status_inactive">Inactive</string>
+    <string name="status_unknown">Unknown</string>
 
     <!-- Settings -->
-    <string name="settings_auto_start">placeholder</string>
-    <string name="settings_aidl_mode">placeholder</string>
-    <string name="settings_global_mode">placeholder</string>
-    <string name="settings_driver_version">placeholder</string>
-    <string name="settings_driver_arch">placeholder</string>
-    <string name="settings_app_version">placeholder</string>
-    <string name="settings_files_section">placeholder</string>
-    <string name="settings_import_preset">placeholder</string>
-    <string name="settings_import_kernel">placeholder</string>
-    <string name="settings_import_vdc">placeholder</string>
-    <string name="import_success">placeholder</string>
-    <string name="import_failed">placeholder</string>
+    <string name="settings_auto_start">Auto-start on boot</string>
+    <string name="settings_aidl_mode">AIDL mode</string>
+    <string name="settings_global_mode">Global mode</string>
+    <string name="settings_driver_version">Driver version</string>
+    <string name="settings_driver_arch">Driver architecture</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_files_section">Files</string>
+    <string name="settings_import_preset">Import Preset</string>
+    <string name="settings_import_kernel">Import Kernel</string>
+    <string name="settings_import_vdc">Import VDC</string>
+    <string name="import_success">Imported successfully</string>
+    <string name="import_failed">Import failed</string>
 
     <!-- Devices -->
-    <string name="device_dialog_title">placeholder</string>
-    <string name="device_type_bluetooth">placeholder</string>
-    <string name="device_type_wired">placeholder</string>
-    <string name="device_type_speaker">placeholder</string>
-    <string name="device_mode_headphone">placeholder</string>
-    <string name="device_mode_speaker">placeholder</string>
-    <string name="device_label_type">placeholder</string>
-    <string name="device_label_address">placeholder</string>
-    <string name="device_label_last_conn">placeholder</string>
-    <string name="device_no_devices">placeholder</string>
-    <string name="device_rename_title">placeholder</string>
-    <string name="device_rename_hint">placeholder</string>
+    <string name="device_dialog_title">Devices</string>
+    <string name="device_type_bluetooth">Bluetooth</string>
+    <string name="device_type_wired">Wired Headphone</string>
+    <string name="device_type_speaker">Speaker</string>
+    <string name="device_mode_headphone">Headphone</string>
+    <string name="device_mode_speaker">Speaker</string>
+    <string name="device_label_type">Type</string>
+    <string name="device_label_address">Address</string>
+    <string name="device_label_last_conn">Last Connected</string>
+    <string name="device_no_devices">No saved devices</string>
+    <string name="device_rename_title">Rename Device</string>
+    <string name="device_rename_hint">Device name</string>
+    <string name="device_update_title">Update Device Preset</string>
+    <string name="device_update_confirm">Overwrite "%1$s" preset with current settings? This cannot be undone.</string>
+    <string name="device_load_title">Load Device Preset</string>
+    <string name="device_load_confirm">Load "%1$s" preset? Current settings will be replaced.</string>
+    <string name="device_delete_title">Delete Device Preset</string>
+    <string name="device_delete_confirm">Delete the saved preset for "%1$s"? This cannot be undone.</string>
 
     <!-- Actions -->
-    <string name="action_save">placeholder</string>
-    <string name="action_cancel">placeholder</string>
-    <string name="action_close">placeholder</string>
-    <string name="action_rename">placeholder</string>
-    <string name="action_reset">placeholder</string>
-    <string name="action_load">placeholder</string>
-    <string name="action_update">placeholder</string>
-    <string name="action_delete">placeholder</string>
-    <string name="action_clear">placeholder</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_rename">Rename</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_load">Load</string>
+    <string name="action_update">Update</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_clear">Clear</string>
 
     <!-- Debug -->
-    <string name="debug_log_title">placeholder</string>
-    <string name="debug_mode_enabled">placeholder</string>
-    <string name="debug_search_hint">placeholder</string>
-    <string name="debug_disable_debug">placeholder</string>
+    <string name="debug_log_title">Debug Log</string>
+    <string name="debug_mode_enabled">Debug mode enabled</string>
+    <string name="debug_search_hint">Filter logs\u2026</string>
+    <string name="debug_disable_debug">Disable Debug</string>
 
     <!-- Debug filters -->
-    <string name="debug_filter_all">placeholder</string>
-    <string name="debug_filter_info">placeholder</string>
-    <string name="debug_filter_debug">placeholder</string>
-    <string name="debug_filter_error">placeholder</string>
-    <string name="debug_filter_app">placeholder</string>
-    <string name="debug_filter_driver">placeholder</string>
-    <string name="debug_filter_effect">placeholder</string>
-    <string name="debug_filter_dispatch">placeholder</string>
-    <string name="debug_filter_config">placeholder</string>
-    <string name="debug_filter_command">placeholder</string>
-    <string name="delete_file_title">placeholder</string>
-    <string name="delete_file_message">placeholder "%1$s"?</string>
+    <string name="debug_filter_all">All</string>
+    <string name="debug_filter_info">Info</string>
+    <string name="debug_filter_debug">Debug</string>
+    <string name="debug_filter_warn">Warn</string>
+    <string name="debug_filter_error">Error</string>
+    <string name="debug_filter_app">App</string>
+    <string name="debug_filter_driver">Driver</string>
+    <string name="delete_file_title">Delete File</string>
+    <string name="delete_file_message">Delete "%1$s"?</string>
 
     <!-- EQ presets -->
-    <string name="eq_preset_acoustic">placeholder</string>
-    <string name="eq_preset_bass_booster">placeholder</string>
-    <string name="eq_preset_bass_reducer">placeholder</string>
-    <string name="eq_preset_classical">placeholder</string>
-    <string name="eq_preset_deep">placeholder</string>
-    <string name="eq_preset_flat">placeholder</string>
-    <string name="eq_preset_rnb">placeholder</string>
-    <string name="eq_preset_rock">placeholder</string>
-    <string name="eq_preset_small_speakers">placeholder</string>
-    <string name="eq_preset_treble_booster">placeholder</string>
-    <string name="eq_preset_treble_reducer">placeholder</string>
-    <string name="eq_preset_vocal_booster">placeholder</string>
+    <string name="eq_preset_acoustic">Acoustic</string>
+    <string name="eq_preset_bass_booster">Bass Booster</string>
+    <string name="eq_preset_bass_reducer">Bass Reducer</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_deep">Deep</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_small_speakers">Small Speakers</string>
+    <string name="eq_preset_treble_booster">Treble Booster</string>
+    <string name="eq_preset_treble_reducer">Treble Reducer</string>
+    <string name="eq_preset_vocal_booster">Vocal Booster</string>
 
     <!-- Dynamic System device presets -->
-    <string name="ds_device_extreme_headphone_v2">placeholder</string>
-    <string name="ds_device_high_end_headphone_v2">placeholder</string>
-    <string name="ds_device_common_headphone_v2">placeholder</string>
-    <string name="ds_device_low_end_headphone_v2">placeholder</string>
-    <string name="ds_device_common_earphone_v2">placeholder</string>
-    <string name="ds_device_extreme_headphone_v1">placeholder</string>
-    <string name="ds_device_high_end_headphone_v1">placeholder</string>
-    <string name="ds_device_common_headphone_v1">placeholder</string>
-    <string name="ds_device_common_earphone_v1">placeholder</string>
+    <string name="ds_device_extreme_headphone_v2">Extreme Headphone (v2)</string>
+    <string name="ds_device_high_end_headphone_v2">High-End Headphone (v2)</string>
+    <string name="ds_device_common_headphone_v2">Common Headphone (v2)</string>
+    <string name="ds_device_low_end_headphone_v2">Low-End Headphone (v2)</string>
+    <string name="ds_device_common_earphone_v2">Common Earphone (v2)</string>
+    <string name="ds_device_extreme_headphone_v1">Extreme Headphone (v1)</string>
+    <string name="ds_device_high_end_headphone_v1">High-End Headphone (v1)</string>
+    <string name="ds_device_common_headphone_v1">Common Headphone (v1)</string>
+    <string name="ds_device_common_earphone_v1">Common Earphone (v1)</string>
 </resources>

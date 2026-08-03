@@ -18,7 +18,7 @@ interface EqPresetDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(preset: EqPreset): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(presets: List<EqPreset>)
 
     @Query("UPDATE eq_presets SET name = :name WHERE id = :id")

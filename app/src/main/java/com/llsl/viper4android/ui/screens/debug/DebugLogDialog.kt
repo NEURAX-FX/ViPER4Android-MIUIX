@@ -22,13 +22,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,45 +41,33 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.viper.ViperDialog
-import com.llsl.viper4android.utils.FileLogger
-import com.llsl.viper4android.utils.RootShell
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.SearchBar
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-private const val MAX_LOG_LINES = 500
-private const val APP_PREFIX = "[App] "
-private const val DRIVER_PREFIX = "[Driver] "
-
-private enum class LogLevel(
+private enum class LogLevelFilter(
     @param:StringRes val labelRes: Int,
 ) {
     ALL(R.string.debug_filter_all),
     INFO(R.string.debug_filter_info),
     DEBUG(R.string.debug_filter_debug),
+    WARN(R.string.debug_filter_warn),
     ERROR(R.string.debug_filter_error),
     ;
 
-    fun matches(line: String): Boolean =
+    fun matches(entry: LogEntry): Boolean =
         when (this) {
             ALL -> true
-            INFO -> line.contains("[INFO]") || line.contains(" I/")
-            DEBUG -> line.contains("[DEBUG]") || line.contains(" D/")
-            ERROR -> line.contains("[ERROR]") || line.contains(" E/")
+            INFO -> entry.level == LogLevel.INFO
+            DEBUG -> entry.level == LogLevel.DEBUG
+            WARN -> entry.level == LogLevel.WARN
+            ERROR -> entry.level == LogLevel.ERROR
         }
 }
 
-private enum class LogSource(
+private enum class LogSourceFilter(
     @param:StringRes val labelRes: Int,
 ) {
     ALL(R.string.debug_filter_all),
@@ -88,11 +75,11 @@ private enum class LogSource(
     DRIVER(R.string.debug_filter_driver),
     ;
 
-    fun matches(line: String): Boolean =
+    fun matches(entry: LogEntry): Boolean =
         when (this) {
             ALL -> true
-            APP -> line.startsWith(APP_PREFIX)
-            DRIVER -> line.startsWith(DRIVER_PREFIX)
+            APP -> entry.source == LogSource.APP
+            DRIVER -> entry.source == LogSource.DRIVER
         }
 }
 
@@ -134,99 +121,32 @@ private enum class LogCategory(
 
 @Composable
 fun DebugLogDialog(
-    clearTimestamp: Long,
-    onClear: () -> Unit,
     onDisableDebug: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val allLines = remember { mutableStateListOf<String>() }
+    val state = remember { DebugLogState() }
     val listState = rememberLazyListState()
-    var selectedLevel by remember { mutableStateOf(LogLevel.ALL) }
-    var selectedSource by remember { mutableStateOf(LogSource.ALL) }
+    var selectedLevel by remember { mutableStateOf(LogLevelFilter.ALL) }
+    var selectedSource by remember { mutableStateOf(LogSourceFilter.ALL) }
     var selectedCategory by remember { mutableStateOf(LogCategory.ALL) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val scope = rememberCoroutineScope()
-    val filteredLines by remember {
-        derivedStateOf {
-            allLines.filter { line ->
-                val levelMatch = selectedLevel.matches(line)
-                val sourceMatch = selectedSource.matches(line)
-                val categoryMatch = selectedCategory.matches(line)
-                val searchMatch =
-                    searchQuery.isBlank() ||
-                        line.contains(searchQuery, ignoreCase = true)
-                levelMatch && sourceMatch && categoryMatch && searchMatch
-            }
-        }
+    DisposableEffect(state) {
+        state.start(includeFileHistory = true)
+        onDispose { state.shutdown() }
     }
 
-    LaunchedEffect(clearTimestamp) {
-        allLines.clear()
-
-        withContext(Dispatchers.IO) {
-            val file = FileLogger.getLogFile()
-            if (file != null && file.exists()) {
-                try {
-                    file.bufferedReader().useLines { lines ->
-                        lines.forEach { line ->
-                            if (line.isBlank()) return@forEach
-                            val tagged = APP_PREFIX + line
-                            withContext(Dispatchers.Main) {
-                                allLines.add(tagged)
-                                while (allLines.size > MAX_LOG_LINES) {
-                                    allLines.removeAt(0)
-                                }
-                            }
-                        }
-                    }
-                } catch (_: Exception) {
-                }
-            }
-        }
-
-        withContext(Dispatchers.IO) {
-            var proc: Process? = null
-            try {
-                val tsArg =
-                    if (clearTimestamp > 0L) {
-                        val fmt = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US)
-                        " -T '${fmt.format(Date(clearTimestamp))}'"
-                    } else {
-                        ""
-                    }
-                proc =
-                    ProcessBuilder(RootShell.getSuPath())
-                        .redirectErrorStream(true)
-                        .start()
-                proc.outputStream.bufferedWriter().let { writer ->
-                    writer.write("logcat -s ViPER4Android:* -v time$tsArg\n")
-                    writer.flush()
-                }
-                proc.inputStream.bufferedReader().use { reader ->
-                    while (isActive) {
-                        val line = reader.readLine() ?: break
-                        if (line.startsWith("---------")) continue
-                        if (line.startsWith("logcat ")) continue
-                        val tagged = DRIVER_PREFIX + line
-                        withContext(Dispatchers.Main) {
-                            allLines.add(tagged)
-                            while (allLines.size > MAX_LOG_LINES) {
-                                allLines.removeAt(0)
-                            }
-                        }
-                    }
-                }
-            } catch (_: IOException) {
-            } finally {
-                proc?.let {
-                    try {
-                        it.outputStream.close()
-                    } catch (_: IOException) {
-                    }
-                    it.destroy()
-                }
-            }
+    val filteredLines by remember {
+        derivedStateOf {
+            state.visibleEntries.filter { entry ->
+                val levelMatch = selectedLevel.matches(entry)
+                val sourceMatch = selectedSource.matches(entry)
+                val categoryMatch = selectedCategory.matches(entry.raw)
+                val searchMatch =
+                    searchQuery.isBlank() ||
+                        entry.raw.contains(searchQuery, ignoreCase = true)
+                levelMatch && sourceMatch && categoryMatch && searchMatch
+            }.map { it.raw }
         }
     }
 
@@ -252,7 +172,7 @@ fun DebugLogDialog(
                 DebugFilterGroup(
                     title = stringResource(R.string.debug_filter_source),
                 ) {
-                    LogSource.entries.forEach { source ->
+                    LogSourceFilter.entries.forEach { source ->
                         DebugFilterChip(
                             selected = selectedSource == source,
                             onClick = { selectedSource = source },
@@ -265,7 +185,7 @@ fun DebugLogDialog(
                 DebugFilterGroup(
                     title = stringResource(R.string.debug_filter_level),
                 ) {
-                    LogLevel.entries.forEach { level ->
+                    LogLevelFilter.entries.forEach { level ->
                         DebugFilterChip(
                             selected = selectedLevel == level,
                             onClick = { selectedLevel = level },
@@ -288,7 +208,7 @@ fun DebugLogDialog(
                 }
 
                 Text(
-                    text = "${filteredLines.size} / ${allLines.size}",
+                    text = "${filteredLines.size} / ${state.totalCount}",
                     style = MiuixTheme.textStyles.body2,
                     color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                     modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
@@ -313,12 +233,7 @@ fun DebugLogDialog(
                     )
                     TextButton(
                         text = stringResource(R.string.action_clear),
-                        onClick = {
-                            scope.launch {
-                                withContext(Dispatchers.IO) { FileLogger.clearLogs() }
-                            }
-                            onClear()
-                        },
+                        onClick = { state.clear() },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -457,19 +372,20 @@ private fun DebugLogList(
     }
 }
 
-private fun colorForSource(source: LogSource): Color =
+private fun colorForSource(source: LogSourceFilter): Color =
     when (source) {
-        LogSource.ALL -> Color.Unspecified
-        LogSource.APP -> Color(0xFF66BB6A)
-        LogSource.DRIVER -> Color(0xFFAB47BC)
+        LogSourceFilter.ALL -> Color.Unspecified
+        LogSourceFilter.APP -> Color(0xFF66BB6A)
+        LogSourceFilter.DRIVER -> Color(0xFFAB47BC)
     }
 
-private fun colorForLevel(level: LogLevel): Color =
+private fun colorForLevel(level: LogLevelFilter): Color =
     when (level) {
-        LogLevel.ALL -> Color.Unspecified
-        LogLevel.INFO -> Color(0xFF42A5F5)
-        LogLevel.DEBUG -> Color.Gray
-        LogLevel.ERROR -> Color(0xFFEF5350)
+        LogLevelFilter.ALL -> Color.Unspecified
+        LogLevelFilter.INFO -> Color(0xFF42A5F5)
+        LogLevelFilter.DEBUG -> Color.Gray
+        LogLevelFilter.WARN -> Color(0xFFFFA726)
+        LogLevelFilter.ERROR -> Color(0xFFEF5350)
     }
 
 private fun colorForLogLine(line: String): Color =
