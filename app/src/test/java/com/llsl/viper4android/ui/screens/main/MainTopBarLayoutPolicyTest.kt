@@ -13,6 +13,7 @@ class MainTopBarLayoutPolicyTest {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/MainScreen.kt")
 
         assertTrue("MainScreen should pass active device name to ViperTopBar", "deviceName = state.activeDeviceName" in source)
+        assertTrue("MainScreen should pass ViperFX as the expanded title", "largeTitle = stringResource(R.string.app_expanded_name)" in source)
         assertFalse("MainScreen should not pass expanded actions into the top bar", "expandedActions =" in source)
         assertTrue("MainScreen should put primary actions in the effect list header", "headerContent =" in source)
         assertTrue("Header should expose preset entry", "MainActionButton(Icons.Default.LibraryMusic, stringResource(R.string.menu_presets)" in source)
@@ -23,26 +24,31 @@ class MainTopBarLayoutPolicyTest {
     }
 
     @Test
-    fun collapsedTopBarOnlyShowsDebugShortcutWhenDebugModeIsEnabled() {
+    fun topBarOnlyShowsDebugShortcutWhenDebugModeIsEnabled() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/MainScreen.kt")
         val topBar = sectionBetween(source, "ViperTopBar(", ") { paddingValues ->")
 
-        assertTrue("MainScreen should define collapsed top bar actions", "collapsedActions =" in source)
+        assertTrue("MainScreen should define top bar actions", "actions =" in source)
         assertTrue("Debug icon should remain gated by debugMode", "if (debugMode)" in topBar)
-        assertTrue("Collapsed top bar should expose debug log", "contentDescription = stringResource(R.string.debug_log_title)" in topBar)
-        assertTrue("Collapsed top bar should open debug log", "showDebugLog = true" in topBar)
-        assertFalse("Collapsed top bar should not expose preset shortcut", "menu_presets" in topBar)
-        assertFalse("Collapsed top bar should not expose overflow menu", "action_more" in topBar || "MoreVert" in topBar || "WindowListPopup" in topBar)
+        assertTrue("Top bar should expose debug log", "contentDescription = stringResource(R.string.debug_log_title)" in topBar)
+        assertTrue("Top bar should open debug log", "showDebugLog = true" in topBar)
+        assertFalse("Top bar should not expose preset shortcut", "menu_presets" in topBar)
+        assertFalse("Top bar should not expose overflow menu", "action_more" in topBar || "MoreVert" in topBar || "WindowListPopup" in topBar)
         assertFalse("MainScreen should not keep overflow menu state", "showTopBarMenu" in source || "TopBarMenuAction" in source)
     }
 
     @Test
-    fun viperTopBarDoesNotToggleBottomContentFromScrollFraction() {
+    fun viperTopBarMorphsViperFxIntoCollapsedAppName() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/viper/ViperTopBar.kt")
 
-        assertFalse("ViperTopBar should not read collapsedFraction in composition", "collapsedFraction" in source)
-        assertFalse("ViperTopBar should not derive action-row visibility from scroll", "derivedStateOf" in source)
-        assertFalse("ViperTopBar should not use dynamic bottomContent for the primary action row", "bottomContent =" in source)
+        assertTrue("ViperTopBar should accept a distinct expanded title", "largeTitle: String" in source)
+        assertTrue("Custom top bar should restore scroll-driven title morphing", "collapsedFraction" in source)
+        assertTrue("Expanded ViperFX title should use 40sp", "fontSize = 40.sp" in source)
+        assertTrue("Collapsed app title should use 20sp", "fontSize = 20.sp" in source)
+        assertTrue("Top bar actions should fade out while collapsing", "actionsAlpha" in source)
+        assertFalse("ViperTopBar should not use SmallTopAppBar", "SmallTopAppBar(" in source)
+        assertFalse("ViperTopBar should not use the split large-title TopAppBar", "TopAppBar(" in source)
+        assertFalse("ViperTopBar should not use a separate visibility-switched title", "AnimatedVisibility" in source)
     }
 
     @Test

@@ -9,6 +9,7 @@
 -->
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Audio Processing</string>
     <string name="notification_channel_description">Shows when ViPER4Android is processing audio</string>
     <string name="notification_title">ViPER4Android</string>
@@ -19,6 +20,7 @@
 
     <!-- Master -->
     <string name="master_enable">Master Enable</string>
+    <string name="section_output">Output</string>
     <string name="menu_driver_status">Driver Status</string>
     <string name="menu_presets">Presets</string>
     <string name="menu_settings">Settings</string>

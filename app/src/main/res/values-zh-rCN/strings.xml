@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">音频处理</string>
     <string name="notification_channel_description">当 ViPER4Android 正在处理音频时显示</string>
     <string name="notification_title">ViPER4Android</string>
@@ -11,6 +12,7 @@
 
     <!-- Master -->
     <string name="master_enable">总开关</string>
+    <string name="section_output">输出</string>
     <string name="menu_driver_status">驱动状态</string>
     <string name="menu_presets">预设</string>
     <string name="menu_settings">设置</string>

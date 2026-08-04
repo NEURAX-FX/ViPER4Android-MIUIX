@@ -3,19 +3,23 @@ package com.llsl.viper4android.ui.screens.main
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BlurCircular
@@ -101,7 +105,9 @@ fun EffectSection(
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
 
     MiuixCard(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+        cornerRadius = 12.dp,
+        insideMargin = PaddingValues(0.dp),
     ) {
         Column {
             Row(
@@ -109,22 +115,33 @@ fun EffectSection(
                     Modifier
                         .fillMaxWidth()
                         .then(if (toggleOnly) Modifier else Modifier.clickable { expanded = !expanded })
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
-                    MiuixIcon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint =
-                            if (enabled) {
-                                MiuixTheme.colorScheme.primary
-                            } else {
-                                MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
-                            },
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = MiuixTheme.colorScheme.primary.copy(alpha = if (enabled) 0.16f else 0.08f),
+                                    shape = RoundedCornerShape(8.dp),
+                                ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        MiuixIcon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint =
+                                if (enabled) {
+                                    MiuixTheme.colorScheme.primary
+                                } else {
+                                    MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
+                                },
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                 }
                 MiuixText(
                     text = title,
@@ -154,7 +171,7 @@ fun EffectSection(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
                     ) {
                         content()
                     }
@@ -176,8 +193,12 @@ fun MasterLimiterRows(
     val limDb = if (limiter > 0) rawToDb(limiter) else -99.9
     val left = 50 - channelPan / 2
     val right = 50 + channelPan / 2
-    Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    EffectSection(
+        title = stringResource(R.string.section_output),
+        enabled = state.masterEnable,
+        onEnabledChange = viewModel::setMasterEnabled,
+        icon = Icons.AutoMirrored.Filled.VolumeUp,
+        initiallyExpanded = true,
     ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),

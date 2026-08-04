@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Обработка аудио</string>
     <string name="notification_channel_description">Показывать когда ViPER4Android обрабатывает аудио</string>
     <string name="notification_title">ViPER4Android</string>
@@ -11,6 +12,7 @@
 
     <!-- Master -->
     <string name="master_enable">Мастер включён</string>
+    <string name="section_output">Выход</string>
     <string name="menu_driver_status">Статус драйвера</string>
     <string name="menu_presets">Профили</string>
     <string name="menu_settings">Настройки</string>

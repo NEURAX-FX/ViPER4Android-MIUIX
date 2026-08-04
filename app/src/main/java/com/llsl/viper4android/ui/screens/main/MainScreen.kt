@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
 import com.llsl.viper4android.effect.EffectState
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
+import com.llsl.viper4android.ui.components.viper.ViperPowerButton
 import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
 import com.llsl.viper4android.ui.screens.debug.DebugLogDialog
@@ -134,16 +134,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
         topBar = {
             ViperTopBar(
                 title = stringResource(R.string.app_name),
+                largeTitle = stringResource(R.string.app_expanded_name),
                 deviceName = state.activeDeviceName,
                 scrollBehavior = scrollBehavior,
-                collapsedActions = {
-                    ViperIconButton(onClick = { viewModel.setMasterEnabled(!state.masterEnable) }) {
-                        Icon(
-                            imageVector = Icons.Default.PowerSettingsNew,
-                            contentDescription = stringResource(R.string.master_enable),
-                            tint = if (state.masterEnable) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.error,
-                        )
-                    }
+                actions = {
                     if (debugMode) {
                         ViperIconButton(onClick = { showDebugLog = true }) {
                             Icon(
@@ -152,6 +146,11 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                             )
                         }
                     }
+                    ViperPowerButton(
+                        checked = state.masterEnable,
+                        onCheckedChange = viewModel::setMasterEnabled,
+                        contentDescription = stringResource(R.string.master_enable),
+                    )
                 },
             )
         },
@@ -261,8 +260,8 @@ private fun MainActionRow(
     onSettingsClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         MainActionButton(Icons.Default.LibraryMusic, stringResource(R.string.menu_presets), onPresetClick, Modifier.weight(1f))
         MainActionButton(Icons.Default.Devices, stringResource(R.string.menu_devices), onDevicesClick, Modifier.weight(1f))
@@ -281,21 +280,21 @@ private fun MainActionButton(
     Column(
         modifier =
             modifier
-                .height(62.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .height(54.dp)
+                .clip(RoundedCornerShape(12.dp))
                 .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
                 .clickable(onClick = onClick)
-                .padding(horizontal = 6.dp, vertical = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(18.dp),
             tint = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(3.dp))
         Text(
             text = label,
             color = MiuixTheme.colorScheme.onSurfaceVariantActions,
@@ -323,7 +322,7 @@ private fun EffectList(
         modifier = modifier.fillMaxSize().graphicsLayer { this.alpha = alpha },
         contentPadding = PaddingValues(bottom = 32.dp),
     ) {
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item { Spacer(modifier = Modifier.height(4.dp)) }
         item { headerContent() }
         item { MasterLimiterRows(state, viewModel) }
         item { PlaybackGainSection(state, viewModel) }
