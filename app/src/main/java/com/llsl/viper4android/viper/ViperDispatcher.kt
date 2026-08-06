@@ -3,6 +3,7 @@ package com.llsl.viper4android.viper
 import com.llsl.viper4android.R
 import com.llsl.viper4android.data.repository.ViperRepository
 import com.llsl.viper4android.effect.EffectState
+import com.llsl.viper4android.effect.EqBandSpec
 import com.llsl.viper4android.effect.ParamRaw
 import com.llsl.viper4android.effect.loadEffectPrefs
 import com.llsl.viper4android.utils.FileLogger
@@ -342,107 +343,14 @@ object ViperDispatcher {
             rawBands
         }
 
-    val EQ_GRAPH_LABELS_10 =
-        listOf(
-            "31",
-            "62",
-            "125",
-            "250",
-            "500",
-            "1k",
-            "2k",
-            "4k",
-            "8k",
-            "16k",
-        )
-    val EQ_GRAPH_LABELS_15 =
-        listOf(
-            "25",
-            "40",
-            "63",
-            "100",
-            "160",
-            "250",
-            "400",
-            "630",
-            "1k",
-            "1.6k",
-            "2.5k",
-            "4k",
-            "6.3k",
-            "10k",
-            "16k",
-        )
-    val EQ_GRAPH_LABELS_25 =
-        listOf(
-            "20",
-            "31",
-            "40",
-            "50",
-            "80",
-            "100",
-            "125",
-            "160",
-            "250",
-            "315",
-            "400",
-            "500",
-            "800",
-            "1k",
-            "1.25k",
-            "1.6k",
-            "2.5k",
-            "3.15k",
-            "4k",
-            "5k",
-            "8k",
-            "10k",
-            "12.5k",
-            "16k",
-            "20k",
-        )
-    val EQ_GRAPH_LABELS_31 =
-        listOf(
-            "20",
-            "25",
-            "31",
-            "40",
-            "50",
-            "63",
-            "80",
-            "100",
-            "125",
-            "160",
-            "200",
-            "250",
-            "315",
-            "400",
-            "500",
-            "630",
-            "800",
-            "1k",
-            "1.25k",
-            "1.6k",
-            "2k",
-            "2.5k",
-            "3.15k",
-            "4k",
-            "5k",
-            "6.3k",
-            "8k",
-            "10k",
-            "12.5k",
-            "16k",
-            "20k",
-        )
+    // Labels are derived from the driver's fixed band table so a band index can never be
+    // labelled with a frequency the DSP does not use.
+    val EQ_GRAPH_LABELS_10 = EqBandSpec.labelsFor(10)
+    val EQ_GRAPH_LABELS_15 = EqBandSpec.labelsFor(15)
+    val EQ_GRAPH_LABELS_25 = EqBandSpec.labelsFor(25)
+    val EQ_GRAPH_LABELS_31 = EqBandSpec.labelsFor(31)
 
-    fun eqGraphLabelsForCount(count: Int): List<String> =
-        when (count) {
-            15 -> EQ_GRAPH_LABELS_15
-            25 -> EQ_GRAPH_LABELS_25
-            31 -> EQ_GRAPH_LABELS_31
-            else -> EQ_GRAPH_LABELS_10
-        }
+    fun eqGraphLabelsForCount(count: Int): List<String> = EqBandSpec.labelsFor(count)
 
     fun dispatchFullState(
         effect: ViperEffect,

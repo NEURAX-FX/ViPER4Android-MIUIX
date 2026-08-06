@@ -39,6 +39,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.EffectEditorActivity"
+            android:enableOnBackInvokedCallback="true"
+            android:exported="false"
+            android:theme="@style/Theme.ViPER4Android" />
+
         <service
             android:name=".service.ViperService"
             android:exported="false"

@@ -9,6 +9,16 @@
 -->
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="editor_back">Back</string>
+    <string name="editor_reset">Reset</string>
+    <string name="editor_undo">Undo</string>
+    <string name="editor_redo">Redo</string>
+    <string name="editor_reset_title">Reset effect?</string>
+    <string name="editor_reset_message">Reset the current effect parameters to their defaults?</string>
+    <string name="editor_live">DSP connected</string>
+    <string name="editor_offline">DSP offline</string>
+    <string name="editor_bypass">Effect enabled</string>
+    <string name="editor_exact_value">Exact value</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Audio Processing</string>
     <string name="notification_channel_description">Shows when ViPER4Android is processing audio</string>

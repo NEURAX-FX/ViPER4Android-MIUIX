@@ -34,6 +34,7 @@ fun ViperTopBar(
     modifier: Modifier = Modifier,
     deviceName: String = "",
     scrollBehavior: ScrollBehavior? = null,
+    navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
     val density = LocalDensity.current
@@ -60,9 +61,15 @@ fun ViperTopBar(
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .height(barHeight)
-                .padding(start = 18.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                .padding(
+                    start = if (navigationIcon != null) 4.dp else 18.dp,
+                    end = 8.dp,
+                    top = 4.dp,
+                    bottom = 4.dp,
+                ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        navigationIcon?.invoke()
         Box(
             modifier = Modifier.weight(1f).fillMaxHeight(),
             contentAlignment = Alignment.CenterStart,

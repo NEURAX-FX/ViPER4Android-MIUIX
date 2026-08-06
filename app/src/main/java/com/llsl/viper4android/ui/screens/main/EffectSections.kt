@@ -62,20 +62,29 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
+import com.llsl.viper4android.dsp.GraphHandlePoint
+import com.llsl.viper4android.dsp.dynamicEqGraphModel
+import com.llsl.viper4android.dsp.firGraphModel
+import com.llsl.viper4android.dsp.multibandGraphModel
 import com.llsl.viper4android.effect.EffectState
 import com.llsl.viper4android.effect.Effects
-import com.llsl.viper4android.ui.components.EqCurveGraph
+import com.llsl.viper4android.ui.screens.editor.mbcBandRegions
 import com.llsl.viper4android.ui.components.EqEditDialog
 import com.llsl.viper4android.ui.components.LabeledDropdown
 import com.llsl.viper4android.ui.components.LabeledSlider
 import com.llsl.viper4android.ui.components.LabeledSwitch
 import com.llsl.viper4android.ui.components.SliderEdit
 import com.llsl.viper4android.ui.components.resolvePresetName
+import com.llsl.viper4android.ui.components.viper.GraphDragAxis
+import com.llsl.viper4android.ui.components.viper.GraphHandle
+import com.llsl.viper4android.ui.components.viper.VstResponseGraph
+import com.llsl.viper4android.ui.components.EqCurveGraph
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
@@ -89,6 +98,44 @@ import kotlin.math.roundToInt
 private fun rawToDb(raw: Number): Double = 20.0 * log10(raw.toDouble() / 100.0)
 
 private fun dbToRaw(db: Double): Int = (10.0.pow(db / 20.0) * 100.0).roundToInt()
+
+private val previewColors = listOf(
+    Color(0xFF70D8E0),
+    Color(0xFFE2A65A),
+    Color(0xFFB8A4F4),
+    Color(0xFF7DC889),
+    Color(0xFFE37B93),
+)
+
+/**
+ * Converts the shared, driver-derived graph model into the Compose handles this screen
+ * draws. The preview and the dedicated editor must never derive their own curve again.
+ */
+private fun List<GraphHandlePoint>.toGraphHandles(colors: List<Color>): List<GraphHandle> =
+    mapIndexed { index, point ->
+        GraphHandle(
+            id = point.id,
+            x = point.x,
+            y = point.y,
+            color = colors[index % colors.size],
+            label = point.label,
+            valueDescription = point.valueDescription,
+        )
+    }
+
+@Composable
+private fun PreviewEditAction(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        MiuixText(
+            text = stringResource(R.string.action_edit_curve),
+            color = MiuixTheme.colorScheme.primary,
+            style = MiuixTheme.textStyles.body1,
+        )
+    }
+}
 
 @Composable
 fun EffectSection(
@@ -608,7 +655,34 @@ fun FetCompressorSection(
 fun MultibandCompressorSection(
     state: EffectState,
     viewModel: MainViewModel,
+    onOpenEditor: () -> Unit,
 ) {
+    val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
+    val model = remember(state.multibandCompressor, sampleRate) {
+        multibandGraphModel(state, sampleRate)
+    }
+    EffectSection(
+        title = stringResource(R.string.section_multiband_compressor),
+        enabled = state.multibandCompressor.enable,
+        onEnabledChange = viewModel::setMultibandCompressorEnabled,
+        icon = Icons.Default.Compress,
+        initiallyExpanded = true,
+    ) {
+        VstResponseGraph(
+            handles = model.handles.toGraphHandles(previewColors),
+            bandCurves = model.bandCurves,
+            bandRegions = mbcBandRegions(
+                crossovers = model.crossovers,
+                minFrequency = model.minFrequency,
+                maxFrequency = model.maxFrequency,
+            ),
+            interactive = false,
+            onClick = onOpenEditor,
+            onHandleDrag = { _, _, _ -> },
+        )
+    }
+    return
+
     val multibandCompressorVals = state.multibandCompressor
     val enabled = multibandCompressorVals.enable
 
@@ -1021,7 +1095,33 @@ fun EqualizerSection(
     state: EffectState,
     viewModel: MainViewModel,
     showCurvePreview: Boolean = true,
+    onOpenEditor: () -> Unit,
 ) {
+    val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
+    val model = remember(state.eq, sampleRate) { firGraphModel(state, sampleRate) }
+    val handleColors = listOf(MiuixTheme.colorScheme.primary, MiuixTheme.colorScheme.secondary)
+    EffectSection(
+        title = stringResource(R.string.section_equalizer),
+        enabled = state.eq.enable,
+        onEnabledChange = viewModel::setEqEnabled,
+        icon = Icons.Default.Equalizer,
+        initiallyExpanded = true,
+    ) {
+        if (showCurvePreview) {
+            VstResponseGraph(
+                handles = model.handles.toGraphHandles(handleColors),
+                curve = model.curve,
+                interactive = false,
+                graphHeight = 180.dp,
+                onClick = onOpenEditor,
+                onHandleDrag = { _, _, _ -> },
+            )
+        } else {
+            PreviewEditAction(onClick = onOpenEditor)
+        }
+    }
+    return
+
     val eqVals = state.eq
     val enabled = eqVals.enable
     val bandCount = eqVals.bandCount
@@ -1098,7 +1198,28 @@ fun EqualizerSection(
 fun DynamicEqSection(
     state: EffectState,
     viewModel: MainViewModel,
+    onOpenEditor: () -> Unit,
 ) {
+    val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
+    val model = remember(state.dynamicEq, sampleRate) { dynamicEqGraphModel(state, sampleRate) }
+    val handleColors = listOf(MiuixTheme.colorScheme.primary, MiuixTheme.colorScheme.secondary)
+    EffectSection(
+        title = stringResource(R.string.section_dynamic_eq),
+        enabled = state.dynamicEq.enable,
+        onEnabledChange = viewModel::setDynamicEqEnabled,
+        icon = Icons.Default.GraphicEq,
+        initiallyExpanded = true,
+    ) {
+        VstResponseGraph(
+            handles = model.handles.toGraphHandles(handleColors),
+            curve = model.curve,
+            interactive = false,
+            onClick = onOpenEditor,
+            onHandleDrag = { _, _, _ -> },
+        )
+    }
+    return
+
     val dynVals = state.dynamicEq
     val enabled = dynVals.enable
     val bandCount = dynVals.bandCount

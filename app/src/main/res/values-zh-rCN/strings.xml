@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="editor_back">返回</string>
+    <string name="editor_reset">重置</string>
+    <string name="editor_undo">撤销</string>
+    <string name="editor_redo">重做</string>
+    <string name="editor_reset_title">重置音效？</string>
+    <string name="editor_reset_message">将当前音效参数恢复为默认值？</string>
+    <string name="editor_live">DSP 已连接</string>
+    <string name="editor_offline">DSP 未连接</string>
+    <string name="editor_bypass">启用音效</string>
+    <string name="editor_exact_value">精确数值</string>
+    <string name="editor_invalid_value">请输入有效数值。</string>
+    <string name="editor_graph_fir">FIR 均衡器响应曲线图</string>
+    <string name="editor_graph_dynamic_eq">动态均衡器响应曲线图</string>
+    <string name="editor_graph_multiband">多段压缩器响应曲线图</string>
+    <string name="editor_crossovers">分频点</string>
+    <string name="editor_band_number">频段 %1$d</string>
+    <string name="editor_band_compression_enabled">启用频段 %1$d 压缩</string>
+    <string name="editor_bypassed">已旁路</string>
+    <string name="editor_graph_multiband_crossover_title">分频响应</string>
+    <string name="editor_graph_multiband_transfer_title">频段 %1$d 输入 / 输出</string>
+    <string name="editor_graph_multiband_transfer">频段 %1$d 压缩器输入输出曲线图</string>
+    <string name="editor_auto_knee_curve_unavailable">自动拐点：无法显示实时曲线</string>
+    <string name="editor_auto_gain_curve_excluded">预览不包含自动增益</string>
+    <string name="editor_auto_timing_not_shown">稳态曲线不显示自动时间响应</string>
+    <string name="editor_disabled_auto_knee">由自动拐点控制</string>
+    <string name="editor_disabled_auto_gain">由自动增益控制</string>
+    <string name="editor_disabled_auto_attack">由自动启动控制</string>
+    <string name="editor_disabled_auto_release">由自动释放控制</string>
+    <string name="editor_ratio_limit">限制</string>
+    <string name="editor_ratio_over">过压缩 %1$d%%</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">音频处理</string>
     <string name="notification_channel_description">当 ViPER4Android 正在处理音频时显示</string>

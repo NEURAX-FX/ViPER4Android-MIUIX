@@ -52,11 +52,13 @@ import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperPowerButton
 import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
+import com.llsl.viper4android.ui.EffectEditorActivity
 import com.llsl.viper4android.ui.screens.debug.DebugLogDialog
 import com.llsl.viper4android.ui.screens.device.DeviceDialog
 import com.llsl.viper4android.ui.screens.preset.PresetDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
+import com.llsl.viper4android.ui.screens.editor.EditorKind
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -167,6 +169,9 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             state = state,
             viewModel = viewModel,
             showCurvePreviews = showCurvePreviews,
+            onOpenEditor = { kind ->
+                context.startActivity(EffectEditorActivity.createIntent(context, kind))
+            },
             modifier =
                 Modifier
                     .padding(paddingValues)
@@ -311,6 +316,7 @@ private fun EffectList(
     state: EffectState,
     viewModel: MainViewModel,
     showCurvePreviews: Boolean,
+    onOpenEditor: (EditorKind) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val alpha by animateFloatAsState(
@@ -327,12 +333,31 @@ private fun EffectList(
         item { MasterLimiterRows(state, viewModel) }
         item { PlaybackGainSection(state, viewModel) }
         item { LUFSTargetingSection(state, viewModel) }
-        item { MultibandCompressorSection(state, viewModel) }
+        item {
+            MultibandCompressorSection(
+                state = state,
+                viewModel = viewModel,
+                onOpenEditor = { onOpenEditor(EditorKind.MULTIBAND_COMPRESSOR) },
+            )
+        }
         item { FetCompressorSection(state, viewModel) }
         item { DdcSection(state, viewModel) }
         item { SpectrumExtensionSection(state, viewModel) }
-        item { EqualizerSection(state, viewModel, showCurvePreview = showCurvePreviews) }
-        item { DynamicEqSection(state, viewModel) }
+        item {
+            EqualizerSection(
+                state = state,
+                viewModel = viewModel,
+                showCurvePreview = showCurvePreviews,
+                onOpenEditor = { onOpenEditor(EditorKind.FIR_EQUALIZER) },
+            )
+        }
+        item {
+            DynamicEqSection(
+                state = state,
+                viewModel = viewModel,
+                onOpenEditor = { onOpenEditor(EditorKind.DYNAMIC_EQUALIZER) },
+            )
+        }
         item { ConvolverSection(state, viewModel) }
         item { FieldSurroundSection(state, viewModel) }
         item { DiffSurroundSection(state, viewModel) }

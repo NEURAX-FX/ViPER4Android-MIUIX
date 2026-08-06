@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ViPER4Android</string>
+    <string name="editor_back">Назад</string>
+    <string name="editor_reset">Сбросить</string>
+    <string name="editor_undo">Отменить</string>
+    <string name="editor_redo">Повторить</string>
+    <string name="editor_reset_title">Сбросить эффект?</string>
+    <string name="editor_reset_message">Восстановить параметры текущего эффекта по умолчанию?</string>
+    <string name="editor_live">DSP подключён</string>
+    <string name="editor_offline">DSP недоступен</string>
+    <string name="editor_bypass">Эффект включён</string>
+    <string name="editor_exact_value">Точное значение</string>
+    <string name="editor_invalid_value">Введите корректное значение.</string>
+    <string name="editor_graph_fir">График АЧХ FIR-эквалайзера</string>
+    <string name="editor_graph_dynamic_eq">График АЧХ динамического эквалайзера</string>
+    <string name="editor_graph_multiband">График многополосного компрессора</string>
+    <string name="editor_crossovers">Точки разделения</string>
+    <string name="editor_band_number">Полоса %1$d</string>
+    <string name="editor_band_compression_enabled">Компрессия полосы %1$d включена</string>
+    <string name="editor_bypassed">Обход</string>
+    <string name="editor_graph_multiband_crossover_title">Частотный раздел</string>
+    <string name="editor_graph_multiband_transfer_title">Вход / выход полосы %1$d</string>
+    <string name="editor_graph_multiband_transfer">График входа и выхода компрессора полосы %1$d</string>
+    <string name="editor_auto_knee_curve_unavailable">Автоколено: кривая в реальном времени недоступна</string>
+    <string name="editor_auto_gain_curve_excluded">Автоусиление не включено в предпросмотр</string>
+    <string name="editor_auto_timing_not_shown">Автоматические времена не показаны на статической кривой</string>
+    <string name="editor_disabled_auto_knee">Управляется автоколеном</string>
+    <string name="editor_disabled_auto_gain">Управляется автоусилением</string>
+    <string name="editor_disabled_auto_attack">Управляется автоатакой</string>
+    <string name="editor_disabled_auto_release">Управляется автовосстановлением</string>
+    <string name="editor_ratio_limit">Лимит</string>
+    <string name="editor_ratio_over">Перекомпрессия %1$d%%</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Обработка аудио</string>
     <string name="notification_channel_description">Показывать когда ViPER4Android обрабатывает аудио</string>

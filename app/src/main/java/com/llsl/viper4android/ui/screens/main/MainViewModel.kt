@@ -15,6 +15,8 @@ import com.llsl.viper4android.BULK_OP_CHANNEL_ID
 import com.llsl.viper4android.audio.AudioDevice
 import com.llsl.viper4android.audio.AudioOutputDetector
 import com.llsl.viper4android.data.model.DeviceSettings
+import com.llsl.viper4android.dsp.DEFAULT_GRAPH_SAMPLE_RATE
+import com.llsl.viper4android.dsp.sanitizeGraphSampleRate
 import com.llsl.viper4android.data.model.DsPreset
 import com.llsl.viper4android.data.model.EqPreset
 import com.llsl.viper4android.data.model.Preset
@@ -30,6 +32,7 @@ import com.llsl.viper4android.effect.DoubleListPref
 import com.llsl.viper4android.effect.ENABLE_PREF_BY_EFFECT_KEY
 import com.llsl.viper4android.effect.EffectPref
 import com.llsl.viper4android.effect.EffectState
+import com.llsl.viper4android.effect.EffectStateStore
 import com.llsl.viper4android.effect.Effects
 import com.llsl.viper4android.effect.IntListPref
 import com.llsl.viper4android.effect.IntPref
@@ -55,6 +58,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -82,6 +86,7 @@ class MainViewModel
     constructor(
         application: Application,
         private val repository: ViperRepository,
+        private val effectStateStore: EffectStateStore,
     ) : AndroidViewModel(application) {
         companion object {
             private const val NOTIFY_ID_PRESET_IMPORT = 2
@@ -92,8 +97,8 @@ class MainViewModel
             private const val PROGRESS_DRAIN_DELAY_MS = 250L
         }
 
-        private val _uiState = MutableStateFlow(EffectState())
-        val uiState: StateFlow<EffectState> = _uiState.asStateFlow()
+        private val _uiState = effectStateStore.mutableStateFlow
+        val uiState: StateFlow<EffectState> = effectStateStore.state
 
         val presetList: StateFlow<List<Preset>> =
             repository.getAllPresets().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -103,6 +108,23 @@ class MainViewModel
 
         private val _driverStatus = MutableStateFlow(DriverStatus())
         val driverStatus: StateFlow<DriverStatus> = _driverStatus.asStateFlow()
+
+        /**
+         * Output sample rate the preview graphs must use.
+         *
+         * Every driver filter coefficient depends on the sample rate, so a preview drawn at a
+         * hardcoded 48 kHz would not match the audio on a 44.1 kHz stream. The driver reports 0
+         * before a stream is attached, which [sanitizeGraphSampleRate] turns into a documented
+         * fallback.
+         */
+        val graphSampleRate: StateFlow<Int> =
+            _driverStatus
+                .map { sanitizeGraphSampleRate(it.samplingRate) }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000),
+                    DEFAULT_GRAPH_SAMPLE_RATE,
+                )
 
         private val _vdcFileList = MutableStateFlow<List<String>>(emptyList())
         val vdcFileList: StateFlow<List<String>> = _vdcFileList.asStateFlow()
@@ -140,13 +162,14 @@ class MainViewModel
                     val localBinder = binder as? ViperService.LocalBinder ?: return
                     viperService = localBinder.service
                     serviceBound = true
-                    viperService?.setStateProvider { _uiState.value }
+                    effectStateStore.attachService(viperService)
                     queryDriverStatus()
                 }
 
                 override fun onServiceDisconnected(name: ComponentName?) {
                     viperService = null
                     serviceBound = false
+                    effectStateStore.attachService(null)
                 }
             }
 
@@ -185,6 +208,7 @@ class MainViewModel
                 serviceBound = false
             }
             viperService = null
+            effectStateStore.attachService(null)
         }
 
         private fun observeExternalMasterChanges() {
@@ -203,33 +227,7 @@ class MainViewModel
             value: T,
             last: Boolean = true,
         ) {
-            _uiState.update { pref.set(it, value) }
-            viewModelScope.launch {
-                persistPref(pref, value)
-                if (pref.paramId == -1 || !_uiState.value.masterEnable || !shouldDispatch(pref)) {
-                    return@launch
-                }
-                if (pref is DoubleListPref) {
-                    @Suppress("UNCHECKED_CAST")
-                    val bytes = pref.toRawArray(value as List<Double>)
-                    viperService?.dispatchParam(pref.paramId, bytes, republishAidl = last)
-                } else if (pref !is IntListPref && pref !is BoolListPref) {
-                    viperService?.dispatchParam(pref.paramId, pref.toRaw(value), republishAidl = last)
-                }
-            }
-        }
-
-        private fun <E> replaceAt(
-            list: List<E>,
-            index: Int,
-            value: E,
-            pad: E,
-            count: Int = 5,
-        ): List<E> {
-            val mutable = list.toMutableList()
-            while (mutable.size <= index) mutable.add(pad)
-            mutable[index] = value
-            return if (mutable.size > count) mutable.take(count) else mutable.toList()
+            effectStateStore.updatePref(pref, value, last)
         }
 
         fun <E> applyBandPref(
@@ -239,60 +237,11 @@ class MainViewModel
             count: Int = 5,
             last: Boolean = true,
         ) {
-            val updated = replaceAt(pref.get(_uiState.value), band, value, pref.padValue, count)
-            applyPref(pref, updated)
-            ifMasterOn {
-                viperService?.dispatchParam(pref.paramId, band, pref.elementToRaw(value), 0, republishAidl = last)
-            }
-        }
-
-        private fun shouldDispatch(pref: EffectPref<*>): Boolean {
-            val enablePref = ENABLE_PREF_BY_EFFECT_KEY[pref.effectKey] ?: return true
-            if (pref === enablePref) return true
-            return enablePref.get(_uiState.value)
+            effectStateStore.updateBandPref(pref, band, value, count, last)
         }
 
         private inline fun ifMasterOn(block: () -> Unit) {
             if (_uiState.value.masterEnable) block()
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        private suspend fun persistPref(
-            pref: EffectPref<*>,
-            value: Any?,
-        ) {
-            when (pref) {
-                is IntPref -> {
-                    repository.setIntPreference(pref.prefKey, value as Int)
-                }
-
-                is BoolPref -> {
-                    repository.setBooleanPreference(pref.prefKey, value as Boolean)
-                }
-
-                is StringPref -> {
-                    repository.setStringPreference(pref.prefKey, value as String)
-                }
-
-                is NullableLongPref -> {
-                    repository.setIntPreference(pref.prefKey, (value as Long?)?.toInt() ?: -1)
-                }
-
-                is IntListPref -> {
-                    val list = value as List<Int>
-                    repository.setStringPreference(pref.prefKey, list.joinToString(";"))
-                }
-
-                is BoolListPref -> {
-                    val list = value as List<Boolean>
-                    repository.setStringPreference(pref.prefKey, list.joinToString(";") { if (it) "1" else "0" })
-                }
-
-                is DoubleListPref -> {
-                    val list = value as List<Double>
-                    repository.setStringPreference(pref.prefKey, list.joinToString(";") { String.format(Locale.US, "%.1f", it) })
-                }
-            }
         }
 
         private fun bindToService() {
@@ -333,8 +282,7 @@ class MainViewModel
         }
 
         fun dispatchFullState() {
-            val service = viperService ?: return
-            service.dispatchFullState(_uiState.value)
+            effectStateStore.dispatchFullState()
         }
 
         fun setMasterEnabled(enabled: Boolean) {

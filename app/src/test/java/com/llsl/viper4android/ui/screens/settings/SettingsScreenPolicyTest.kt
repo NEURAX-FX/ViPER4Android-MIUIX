@@ -38,7 +38,7 @@ class SettingsScreenPolicyTest {
         assertTrue("EffectList should accept showCurvePreviews", "showCurvePreviews: Boolean" in mainScreen)
         assertTrue(
             "EffectList should pass showCurvePreviews to EqualizerSection",
-            "EqualizerSection(state, viewModel, showCurvePreview = showCurvePreviews)" in mainScreen,
+            "showCurvePreview = showCurvePreviews" in mainScreen,
         )
         assertTrue("EqualizerSection should accept a preview flag", "showCurvePreview: Boolean = true" in effectSections)
         assertTrue(

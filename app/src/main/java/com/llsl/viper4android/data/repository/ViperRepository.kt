@@ -158,6 +158,19 @@ class ViperRepository
             dataStore.edit { it[stringPreferencesKey(key)] = value }
         }
 
+        suspend fun setPreferences(
+            booleans: Map<String, Boolean> = emptyMap(),
+            ints: Map<String, Int> = emptyMap(),
+            strings: Map<String, String> = emptyMap(),
+        ) {
+            ensureV2Initialized()
+            dataStore.edit { preferences ->
+                booleans.forEach { (key, value) -> preferences[booleanPreferencesKey(key)] = value }
+                ints.forEach { (key, value) -> preferences[intPreferencesKey(key)] = value }
+                strings.forEach { (key, value) -> preferences[stringPreferencesKey(key)] = value }
+            }
+        }
+
         @Volatile private var initDone = false
         private val initMutex = Mutex()
 

@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId = "com.llsl.viper4android"
-        minSdk = 28
+        minSdk = 29
         targetSdk = 36
         versionCode = 1
         versionName = "2.0.3"
