@@ -1,63 +1,59 @@
 package com.llsl.viper4android.ui.components.viper
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import com.llsl.viper4android.dsp.SPECTRUM_FLOOR_DB
-import com.llsl.viper4android.dsp.interpolateSpectrum
-import com.llsl.viper4android.dsp.smoothSpectrum
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.geometry.Offset
+import com.llsl.viper4android.dsp.SPECTRUM_DISPLAY_MIN_DB
+import com.llsl.viper4android.dsp.SpectrumBallisticsState
+import com.llsl.viper4android.dsp.advanceSpectrumBallistics
 import com.llsl.viper4android.dsp.spectrumCurvePoints
 import com.llsl.viper4android.viper.DriverTelemetry
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+
+@Immutable
+data class SpectrumGraphLayer(
+    val envelope: List<Offset>,
+    val peaks: List<Offset>,
+)
+
+internal fun spectrumGraphLayer(state: SpectrumBallisticsState): SpectrumGraphLayer? {
+    if (!state.hasInput || state.sampleRate <= 0) return null
+    val hasVisibleEnergy =
+        state.envelopeDb.any { it > SPECTRUM_DISPLAY_MIN_DB } ||
+            state.peakDb.any { it > SPECTRUM_DISPLAY_MIN_DB }
+    if (!hasVisibleEnergy) return null
+    return SpectrumGraphLayer(
+        envelope = spectrumCurvePoints(state.envelopeDb, state.sampleRate),
+        peaks = spectrumCurvePoints(state.peakDb, state.sampleRate),
+    )
+}
 
 @Composable
-fun VstSpectrumGraph(
-    telemetry: DriverTelemetry,
-    verticalGridLines: List<GraphGridLine>,
-    horizontalGridLines: List<GraphGridLine>,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    graphHeight: Dp = 170.dp,
-) {
-    val emptySpectrum = remember { List(DriverTelemetry.SPECTRUM_COUNT) { SPECTRUM_FLOOR_DB } }
-    var from by remember { mutableStateOf(emptySpectrum) }
-    var target by remember { mutableStateOf(emptySpectrum) }
-    val progress = remember { Animatable(1f) }
+internal fun rememberSpectrumGraphLayer(telemetry: DriverTelemetry?): SpectrumGraphLayer? {
+    val latestTelemetry = rememberUpdatedState(telemetry)
+    var ballistics by remember { mutableStateOf(SpectrumBallisticsState()) }
 
-    LaunchedEffect(telemetry.sequence) {
-        if (!telemetry.hasSpectrum || telemetry.spectrumDb.size != DriverTelemetry.SPECTRUM_COUNT) {
-            return@LaunchedEffect
+    LaunchedEffect(Unit) {
+        while (currentCoroutineContext().isActive) {
+            withFrameNanos { frameTimeNanos ->
+                val next =
+                    advanceSpectrumBallistics(
+                        previous = ballistics,
+                        telemetry = latestTelemetry.value,
+                        frameTimeNanos = frameTimeNanos,
+                    )
+                if (next !== ballistics) ballistics = next
+            }
         }
-        val current = interpolateSpectrum(from, target, progress.value)
-        from = current
-        target = smoothSpectrum(current, telemetry.spectrumDb)
-        progress.snapTo(0f)
-        progress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 80, easing = LinearEasing),
-        )
     }
 
-    val animated = interpolateSpectrum(from, target, progress.value)
-    val curve = remember(animated) { spectrumCurvePoints(animated) }
-    VstResponseGraph(
-        handles = emptyList(),
-        curve = curve,
-        interactive = false,
-        graphHeight = graphHeight,
-        verticalGridLines = verticalGridLines,
-        horizontalGridLines = horizontalGridLines,
-        showGridLabels = true,
-        contentDescription = contentDescription,
-        onHandleDrag = { _, _, _ -> },
-        modifier = modifier,
-    )
+    return remember(ballistics) { spectrumGraphLayer(ballistics) }
 }

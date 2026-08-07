@@ -14,12 +14,12 @@
     <string name="editor_invalid_value">Enter a valid value.</string>
     <string name="editor_graph_fir">FIR equalizer response graph</string>
     <string name="editor_graph_dynamic_eq">Dynamic equalizer response graph</string>
-    <string name="editor_graph_multiband">Multiband compressor response graph</string>
+    <string name="editor_graph_multiband">Live spectrum and multiband compressor response graph</string>
     <string name="editor_crossovers">Crossovers</string>
     <string name="editor_band_number">Band %1$d</string>
     <string name="editor_band_compression_enabled">Compression enabled for Band %1$d</string>
     <string name="editor_bypassed">Bypassed</string>
-    <string name="editor_graph_multiband_crossover_title">Crossover response</string>
+    <string name="editor_graph_multiband_crossover_title">Spectrum and crossover response</string>
     <string name="editor_graph_multiband_transfer_title">Band %1$d input / output</string>
     <string name="editor_graph_multiband_transfer">Band %1$d compressor input and output graph</string>
     <string name="editor_graph_live_spectrum_title">Live output spectrum</string>

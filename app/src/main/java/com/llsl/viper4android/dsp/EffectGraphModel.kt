@@ -83,7 +83,7 @@ private const val FIR_MIN_DB = -12.0
 private const val FIR_MAX_DB = 12.0
 private const val DYNAMIC_MIN_DB = -12.0
 private const val DYNAMIC_MAX_DB = 12.0
-private const val MBC_MIN_DB = -48.0
+private const val MBC_MIN_DB = -72.0
 private const val MBC_MAX_DB = 24.0
 
 fun firGraphModel(state: EffectState, sampleRate: Int): FirGraphModel {

@@ -80,6 +80,30 @@ data class DriverStatus(
     val samplingRate: Int = 0,
 )
 
+internal data class IndexedBandPrefWrite<E>(
+    val pref: ListPref<E>,
+    val band: Int,
+    val value: E,
+    val count: Int,
+)
+
+internal fun <E> indexedBandPrefWrites(
+    state: EffectState,
+    prefs: List<ListPref<E>>,
+): List<IndexedBandPrefWrite<E>> =
+    prefs.flatMap { pref ->
+        val values = pref.get(state)
+        val count = pref.defaultValue.size
+        List(count) { band ->
+            IndexedBandPrefWrite(
+                pref = pref,
+                band = band,
+                value = values.getOrElse(band) { pref.defaultValue[band] },
+                count = count,
+            )
+        }
+    }
+
 @Suppress("StaticFieldLeak")
 @HiltViewModel
 class MainViewModel
@@ -627,22 +651,30 @@ class MainViewModel
                         mbc.releaseAutos,
                         mbc.noClips,
                     )
-                val count = 5
-                val total = (intPrefs.size + boolPrefs.size) * count
+                val state = _uiState.value
+                val intWrites = indexedBandPrefWrites(state, intPrefs)
+                val boolWrites = indexedBandPrefWrites(state, boolPrefs)
+                val total = intWrites.size + boolWrites.size
                 var i = 0
-                for (pref in intPrefs) {
-                    val values = pref.get(_uiState.value)
-                    for (band in 0 until count) {
-                        i++
-                        applyBandPref(pref, band, values.getOrElse(band) { 0 }, count, last = i == total)
-                    }
+                for (write in intWrites) {
+                    i++
+                    applyBandPref(
+                        write.pref,
+                        write.band,
+                        write.value,
+                        write.count,
+                        last = i == total,
+                    )
                 }
-                for (pref in boolPrefs) {
-                    val values = pref.get(_uiState.value)
-                    for (band in 0 until count) {
-                        i++
-                        applyBandPref(pref, band, values.getOrElse(band) { false }, count, last = i == total)
-                    }
+                for (write in boolWrites) {
+                    i++
+                    applyBandPref(
+                        write.pref,
+                        write.band,
+                        write.value,
+                        write.count,
+                        last = i == total,
+                    )
                 }
             }
         }

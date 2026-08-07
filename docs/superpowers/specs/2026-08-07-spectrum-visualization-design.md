@@ -1,58 +1,168 @@
-# Spectrum Visualization & Telemetry Redesign (LSP-Style Dual Layer VST Graph)
+# LSP-Style Spectrum Overlay Design
 
-## Overview
-Redesign ViPER4Android's spectrum graph component (`VstSpectrumGraph.kt`) and telemetry presentation engine (`SpectrumPresentation.kt`) from a basic flat single line into a professional VST/LSP-style Real-Time Analyzer (RTA) with dual-layer overlay rendering and ballistic energy decay.
+## Goal
 
-## Key Objectives
-1. **Ballistic Telemetry Processing**: Upgrade `SpectrumPresentation.kt` with fast attack (~15ms) and exponential decay (~300ms) to eliminate sudden drop-offs and flatlines during audio playback.
-2. **Log-Frequency Mapping**: Map 64 FFT driver telemetry bins to a logarithmic scale spanning 20 Hz to 20 kHz.
-3. **Dual-Layer Canvas Graphics**: Render background live RTA spectrum with translucent gradient fill and peak-hold lines underneath crisp foreground DSP transfer function curves.
-4. **Theme & Setting Integration**: Harmonize with MiuiX theme colors and respect the global `no-graph` setting toggle while preserving full spectrum view in dedicated editor screens.
+Turn the existing standalone live-spectrum line in the multiband compressor editor
+into an LSP-style analyzer layer behind the existing crossover response. The graph
+must remain truthful to driver telemetry, decay naturally when updates stop, and
+keep the foreground response curves and controls readable.
 
----
+This slice changes presentation only. It does not change the analyzer wire protocol,
+driver FFT, audio processing, or the meaning of compressor meters.
 
-## 1. Telemetry & DSP Processing Architecture (`SpectrumPresentation.kt`)
+## Verified Inputs
 
-### 1.1 Data Feed & Normalization
-* Bins: 64 floating-point magnitude values received from `DriverTelemetry`.
-* Range: -96 dB (floor) to +12 dB (ceiling).
-* Frequency distribution: Logarithmic interpolation mapping bin indices $[0 \dots 63]$ to $f(i) = 20 \times (20000 / 20)^{i / 63} \text{ Hz}$.
+The current driver and app establish the following contract:
 
-### 1.2 Ballistic Envelope Smoothing
-For each band $i$ at frame time $t$ with raw value $v_i(t)$ and smoothed value $s_i(t-1)$:
-$$\Delta = v_i(t) - s_i(t-1)$$
-$$s_i(t) = \begin{cases} s_i(t-1) + \alpha_{\text{attack}} \cdot \Delta & \text{if } \Delta > 0 \quad (\text{Attack: } \alpha_{\text{attack}} \approx 0.85) \\ s_i(t-1) + \alpha_{\text{decay}} \cdot \Delta & \text{if } \Delta \le 0 \quad (\text{Decay: } \alpha_{\text{decay}} \approx 0.12) \end{cases}$$
+- `DriverTelemetry` carries 64 post-DSP spectrum values, the output sample rate,
+  FFT size, sequence, validity flags, and effect meters.
+- The driver already aggregates FFT bins into 64 logarithmic bands from 20 Hz to
+  `min(20 kHz, Nyquist)` and clamps their magnitudes to `-96..0 dBFS`.
+- The app polls at approximately 20 Hz and discards duplicate sequence values.
+- `VstSpectrumGraph` currently applies fixed-coefficient attack/release smoothing,
+  interpolates each snapshot over 80 ms, and renders the spectrum as a separate
+  graph above the multiband crossover graph.
+- `VstResponseGraph` already owns the MiuiX surface, log-frequency grid, foreground
+  response curves, band regions, handles, labels, gestures, and accessibility.
 
-### 1.3 Peak Hold Logic
-* $p_i(t) = \max(p_i(t-1), s_i(t))$.
-* Hold timer: 500 ms before peak value starts decaying linearly at 20 dB/sec.
+The app must not reinterpret the 64 values as linear FFT bins. It reconstructs each
+band center from the same logarithmic band formula used by the driver and maps that
+frequency through the shared graph axis helpers.
 
----
+## Presentation Model
 
-## 2. Canvas Graphics & Layering (`VstSpectrumGraph.kt`)
+### Frequency Mapping
 
-### 2.1 Layer 1: Background Log Grid & Labels
-* Frequency grid lines: 100 Hz, 1 kHz, 10 kHz.
-* Gain grid lines: -24 dB, -12 dB, 0 dB, +12 dB.
-* Labels rendered with muted secondary text color from MiuiX theme palette.
+For band `i` out of `N = 64`, use the driver's analyzed maximum:
 
-### 2.2 Layer 2: Live RTA Spectrum
-* **Spline Interpolation**: Catmull-Rom or cubic Bezier curve interpolation through smoothed bin values to produce a smooth, natural wave shape instead of jagged step lines.
-* **Gradient Area Fill**: Linear gradient brush from Primary Accent (opacity 0.50) at curve top down to 0.05 opacity at canvas bottom (-96 dB baseline).
-* **Peak Hold Stroke**: Dotted accent line drawn through $p_i(t)$ points.
+```text
+analyzerMax = min(20_000, sampleRate / 2)
+low(i)      = 20 * (analyzerMax / 20)^(i / N)
+high(i)     = 20 * (analyzerMax / 20)^((i + 1) / N)
+center(i)   = sqrt(low(i) * high(i))
+```
 
-### 2.3 Layer 3: Foreground Filter Response
-* High-contrast crisp stroke line (width 2.5dp) representing target DSP curve (Parametric EQ or Multiband Compressor response).
-* Control points/handles rendered at key parametric frequencies.
+Map `center(i)` with the existing `graphFrequencyToX()` helper so the analyzer and
+response curves share one log-frequency coordinate system. Clamp the final x value
+only where the graph's existing Nyquist safety margin makes the last center slightly
+exceed its response axis.
 
----
+### Time-Based Ballistics
 
-## 3. Compatibility & Settings
-* Theme responsiveness: Colors dynamically resolve from MiuiX `MiuixTheme` palette.
-* Preference control: Honors the `no-graph` preference flag on main screens.
+Use elapsed monotonic frame time rather than fixed per-poll coefficients. For a time
+constant `tau` and elapsed time `dt`:
 
----
+```text
+alpha = 1 - exp(-dt / tau)
+next  = previous + alpha * (target - previous)
+```
 
-## 4. Verification Plan
-1. **Unit Tests**: Add tests in `SpectrumPresentationTest.kt` verifying ballistic attack/decay rate calculation and logarithmic frequency bin distribution.
-2. **Build Verification**: Run `./gradlew :app:testDebugUnitTest` and assemble debug build to confirm zero compile/type errors.
+Initial constants:
+
+- attack time constant: 15 ms;
+- release time constant: 300 ms;
+- peak hold: 500 ms;
+- peak decay after hold: 20 dB per second;
+- stale-input grace period: 150 ms after the last new telemetry sequence.
+
+When telemetry becomes stale, the live target changes to `-96 dBFS`; the normal
+release and peak rules then return the graph to silence instead of leaving a frozen
+shape. Invalid, non-finite, or incorrectly sized input also targets the floor. A new
+valid sequence resumes from the current presented state without a jump.
+
+Keep this state transition in pure Kotlin so timing, sanitization, peak hold, stale
+decay, and sequence changes can be tested without Compose.
+
+### Spatial Fitting
+
+Retain the existing bounded monotone cubic Hermite fitting. It smooths the low-point
+64-band mesh without creating peaks between adjacent telemetry bands. Do not use an
+unbounded Catmull-Rom fit.
+
+The presentation output contains two normalized curves:
+
+- current spectrum envelope;
+- per-band held/decaying peak envelope.
+
+Use a shared `-72..+24 dB` display axis for the combined graph, matching the LSP
+multiband graph. The ballistic state still retains the driver's full `-96..0 dBFS`
+range; values below `-72 dBFS` clamp to the graph floor only while producing plot
+points. This avoids assigning different meanings to the same horizontal grid while
+leaving headroom for the existing positive crossover-band gain handles.
+
+## Rendering
+
+Extend `VstResponseGraph` with an optional analyzer-layer model. Draw in this order:
+
+1. graph surface and existing band-region tint;
+2. live spectrum area with a vertical MiuiX-primary gradient, approximately 45%
+   opacity at the envelope and fading to transparent at the floor;
+3. a subtle spectrum edge stroke;
+4. a dashed peak-hold stroke;
+5. existing frequency and dB grid plus labels, kept above the fill for readability;
+6. existing cached reference, band, and main response curves;
+7. existing graph handles.
+
+The analyzer curves use normalized `Offset` points and are rendered in the Compose
+canvas. Existing static response curves remain in `ResponseRenderNode`, so adding a
+dynamic analyzer does not invalidate their cached display list each frame.
+
+The spectrum fill closes to the visible `-72 dB` graph floor at the first and last
+plotted x positions. Values beneath that display floor remain preserved in the
+ballistic state but are visually clipped. The fill does not imply measured energy
+outside the analyzer's frequency range.
+
+## Editor Integration
+
+In `MultibandCompressorEditor`, replace the standalone live-spectrum graph and the
+separate crossover graph with one combined graph:
+
+- live post-DSP spectrum and peak hold in the background;
+- existing multiband crossover curves, unity reference, regions, and draggable
+  crossover handles in the foreground;
+- existing frequency grid shared by both layers;
+- one `-72..+24 dB` y axis shared by analyzer and response layers.
+
+The compressor input/output transfer graph remains separate because its axes are
+input and output level, not frequency.
+
+The main-screen `showCurvePreviews` preference continues to control only lightweight
+main-screen response previews. Dedicated editor graphs remain available, as required
+by the project's no-graph policy. This task does not add a main-screen live analyzer.
+
+## Lifecycle And Failure Behavior
+
+- Run the display-frame animation only while the combined graph is composed.
+- A duplicate telemetry sequence does not reset stale timing or peak hold.
+- A changed sample rate remaps x coordinates and resets the temporal state to avoid
+  carrying bands across incompatible frequency ranges.
+- Missing telemetry leaves the crossover editor fully usable and simply omits the
+  analyzer layer.
+- Old drivers that do not support telemetry continue returning `null` without an
+  error UI.
+- Keep the existing content description and handle semantics; the rapidly changing
+  analyzer values are visual context and are not announced every frame.
+
+## Verification
+
+### Unit Tests
+
+Add focused tests for:
+
+- frequency-band centers at 48 kHz and a low sample rate;
+- attack and release using elapsed time rather than poll count;
+- peak hold, peak decay, and stale-input release to the floor;
+- invalid data sanitization and sample-rate reset;
+- bounded fitted curves and normalized x/y coordinates.
+
+### Build And Device Checks
+
+1. Run `:app:testDebugUnitTest`.
+2. Run the documented remote `assembleDebug` build after syncing the changed app
+   files.
+3. Install the debug APK and inspect the multiband editor at narrow and wide widths.
+4. During playback, verify that the analyzer is non-flat, the crossover curves and
+   handles remain legible and interactive, and the envelope returns to the floor
+   after playback stops.
+5. Capture device screenshots for light and dark themes and check that labels,
+   gradient, peak line, and handles do not overlap incoherently.

@@ -14,12 +14,12 @@
     <string name="editor_invalid_value">Введите корректное значение.</string>
     <string name="editor_graph_fir">График АЧХ FIR-эквалайзера</string>
     <string name="editor_graph_dynamic_eq">График АЧХ динамического эквалайзера</string>
-    <string name="editor_graph_multiband">График многополосного компрессора</string>
+    <string name="editor_graph_multiband">Спектр и график многополосного компрессора</string>
     <string name="editor_crossovers">Точки разделения</string>
     <string name="editor_band_number">Полоса %1$d</string>
     <string name="editor_band_compression_enabled">Компрессия полосы %1$d включена</string>
     <string name="editor_bypassed">Обход</string>
-    <string name="editor_graph_multiband_crossover_title">Частотный раздел</string>
+    <string name="editor_graph_multiband_crossover_title">Спектр и частотный раздел</string>
     <string name="editor_graph_multiband_transfer_title">Вход / выход полосы %1$d</string>
     <string name="editor_graph_multiband_transfer">График входа и выхода компрессора полосы %1$d</string>
     <string name="editor_auto_knee_curve_unavailable">Автоколено: кривая в реальном времени недоступна</string>

@@ -22,7 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.pointer.pointerInput
@@ -80,6 +84,9 @@ data class GraphGridLine(
 private val DefaultGraphHeight = 230.dp
 private val HandleTouchRadius = 28.dp
 private val CurveStroke = 2.dp
+private val SpectrumStroke = 1.2.dp
+private val SpectrumPeakStroke = 1.dp
+private val SpectrumPeakDash = 4.dp
 private val GridStroke = 0.5.dp
 private val GridMajorStroke = 0.8.dp
 private val SurfaceCorner = 9.dp
@@ -118,6 +125,65 @@ private fun defaultVerticalLines(): List<GraphGridLine> =
 private fun defaultHorizontalLines(): List<GraphGridLine> =
     (1..4).map { GraphGridLine(position = it / 5f) }
 
+internal fun spectrumAreaPolygon(points: List<Offset>): List<Offset> {
+    if (points.size < 2 || points.any { !it.x.isFinite() || !it.y.isFinite() }) return emptyList()
+    val normalized = points.map { Offset(it.x.coerceIn(0f, 1f), it.y.coerceIn(0f, 1f)) }
+    return buildList(normalized.size + 2) {
+        add(Offset(normalized.first().x, 1f))
+        addAll(normalized)
+        add(Offset(normalized.last().x, 1f))
+    }
+}
+
+private fun DrawScope.drawSpectrumLayer(
+    layer: SpectrumGraphLayer,
+    fillTop: Color,
+    edgeColor: Color,
+    peakColor: Color,
+    edgeStrokeWidth: Float,
+    peakStrokeWidth: Float,
+    peakPathEffect: PathEffect,
+) {
+    val areaPoints = spectrumAreaPolygon(layer.envelope)
+    if (areaPoints.isEmpty()) return
+
+    fun scaledPath(points: List<Offset>): Path =
+        Path().apply {
+            val first = points.first()
+            moveTo(first.x * size.width, first.y * size.height)
+            for (index in 1..points.lastIndex) {
+                val point = points[index]
+                lineTo(point.x * size.width, point.y * size.height)
+            }
+        }
+
+    val areaPath = scaledPath(areaPoints).apply { close() }
+    drawPath(
+        path = areaPath,
+        brush =
+            Brush.verticalGradient(
+                colors = listOf(fillTop, fillTop.copy(alpha = 0f)),
+                startY = 0f,
+                endY = size.height,
+            ),
+    )
+    drawPath(
+        path = scaledPath(layer.envelope),
+        color = edgeColor,
+        style = Stroke(width = edgeStrokeWidth),
+    )
+    if (
+        layer.peaks.size >= 2 &&
+        layer.peaks.all { it.x.isFinite() && it.y.isFinite() }
+    ) {
+        drawPath(
+            path = scaledPath(layer.peaks),
+            color = peakColor,
+            style = Stroke(width = peakStrokeWidth, pathEffect = peakPathEffect),
+        )
+    }
+}
+
 @Composable
 fun VstResponseGraph(
     handles: List<GraphHandle>,
@@ -131,6 +197,7 @@ fun VstResponseGraph(
     referenceCurves: List<List<Offset>> = emptyList(),
     bandCurveColors: List<Color> = emptyList(),
     bandRegions: List<GraphBandRegion> = emptyList(),
+    spectrumLayer: SpectrumGraphLayer? = null,
     selectedBandRegionIndex: Int? = null,
     selectedHandleId: String? = null,
     interactive: Boolean = true,
@@ -170,6 +237,9 @@ fun VstResponseGraph(
     val gridMajor = MiuixTheme.colorScheme.outline.copy(alpha = 0.32f)
     val graphSurface = MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.76f)
     val responseColor = MiuixTheme.colorScheme.primary
+    val spectrumFillTop = responseColor.copy(alpha = 0.45f)
+    val spectrumEdgeColor = responseColor.copy(alpha = 0.72f)
+    val spectrumPeakColor = MiuixTheme.colorScheme.secondary.copy(alpha = 0.78f)
     val referenceColor = MiuixTheme.colorScheme.outline.copy(alpha = 0.70f)
     val handleCenterColor = MiuixTheme.colorScheme.background
     val labelColor = MiuixTheme.colorScheme.onSurfaceVariantSummary
@@ -202,6 +272,13 @@ fun VstResponseGraph(
     val density = LocalDensity.current
     val touchRadiusPx = with(density) { HandleTouchRadius.toPx() }
     val curveStrokePx = with(density) { CurveStroke.toPx() }
+    val spectrumStrokePx = with(density) { SpectrumStroke.toPx() }
+    val spectrumPeakStrokePx = with(density) { SpectrumPeakStroke.toPx() }
+    val spectrumPeakDashPx = with(density) { SpectrumPeakDash.toPx() }
+    val spectrumPeakPathEffect =
+        remember(spectrumPeakDashPx) {
+            PathEffect.dashPathEffect(floatArrayOf(spectrumPeakDashPx, spectrumPeakDashPx))
+        }
     val gridStrokePx = with(density) { GridStroke.toPx() }
     val gridMajorStrokePx = with(density) { GridMajorStroke.toPx() }
     val surfaceCornerPx = with(density) { SurfaceCorner.toPx() }
@@ -368,6 +445,17 @@ fun VstResponseGraph(
                     style = Stroke(width = gridMajorStrokePx),
                 )
             }
+        }
+        spectrumLayer?.let { layer ->
+            drawSpectrumLayer(
+                layer = layer,
+                fillTop = spectrumFillTop,
+                edgeColor = spectrumEdgeColor,
+                peakColor = spectrumPeakColor,
+                edgeStrokeWidth = spectrumStrokePx,
+                peakStrokeWidth = spectrumPeakStrokePx,
+                peakPathEffect = spectrumPeakPathEffect,
+            )
         }
         verticalGridLines.forEach { line ->
             val x = width * line.position

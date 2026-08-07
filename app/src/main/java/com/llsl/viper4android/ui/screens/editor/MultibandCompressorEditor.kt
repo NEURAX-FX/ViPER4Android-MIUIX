@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
@@ -40,7 +41,7 @@ import com.llsl.viper4android.ui.components.viper.VstExpandableControlGroup
 import com.llsl.viper4android.ui.components.viper.VstGraphWorkspace
 import com.llsl.viper4android.ui.components.viper.VstKnob
 import com.llsl.viper4android.ui.components.viper.VstResponseGraph
-import com.llsl.viper4android.ui.components.viper.VstSpectrumGraph
+import com.llsl.viper4android.ui.components.viper.rememberSpectrumGraphLayer
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
@@ -130,7 +131,10 @@ fun MultibandCompressorEditor(
                 MultibandEditorAction.SetCrossoverHandle(
                     crossover = index,
                     frequency = graphXToFrequency(x, sampleRate).roundToInt(),
-                    gain = graphYToDb(y, -48.0, 24.0).roundToInt().coerceIn(0, 24),
+                    gain =
+                        graphYToDb(y, presentation.graph.minDb, presentation.graph.maxDb)
+                            .roundToInt()
+                            .coerceIn(0, 24),
                     last = last,
                 ),
             )
@@ -170,20 +174,8 @@ fun MultibandCompressorEditor(
         sideBySideAtWideWidth = true,
         scrollContent = true,
         graph = {
+            val spectrumLayer = rememberSpectrumGraphLayer(telemetry)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (telemetry?.hasSpectrum == true) {
-                    Text(
-                        text = stringResource(R.string.editor_graph_live_spectrum_title),
-                        style = MiuixTheme.textStyles.body2,
-                        color = MiuixTheme.colorScheme.primary,
-                    )
-                    VstSpectrumGraph(
-                        telemetry = telemetry,
-                        verticalGridLines = editorFrequencyGrid(sampleRate),
-                        horizontalGridLines = editorDecibelGrid(-96.0, 0.0, 24.0),
-                        contentDescription = stringResource(R.string.editor_graph_live_spectrum),
-                    )
-                }
                 Text(
                     text = stringResource(R.string.editor_graph_multiband_crossover_title),
                     style = MiuixTheme.textStyles.body2,
@@ -195,10 +187,16 @@ fun MultibandCompressorEditor(
                     referenceCurves = listOf(presentation.graph.unitySumCurve),
                     bandCurveColors = bandColors,
                     bandRegions = localizedRegions,
+                    spectrumLayer = spectrumLayer,
                     selectedBandRegionIndex = band,
                     selectedHandleId = "crossover-$band".takeIf { band < handles.size },
                     verticalGridLines = editorFrequencyGrid(sampleRate),
-                    horizontalGridLines = editorDecibelGrid(-48.0, 24.0, 12.0),
+                    horizontalGridLines =
+                        editorDecibelGrid(
+                            presentation.graph.minDb,
+                            presentation.graph.maxDb,
+                            24.0,
+                        ),
                     showGridLabels = true,
                     contentDescription = stringResource(R.string.editor_graph_multiband),
                     onHandleSelected = { id ->
@@ -212,6 +210,7 @@ fun MultibandCompressorEditor(
                         onAction(MultibandEditorAction.SettleGesture)
                         onAction(MultibandEditorAction.Flush)
                     },
+                    modifier = Modifier.testTag("multiband-frequency-graph"),
                 )
                 Text(
                     text = stringResource(R.string.editor_graph_multiband_transfer_title, band + 1),

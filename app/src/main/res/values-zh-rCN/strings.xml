@@ -14,12 +14,12 @@
     <string name="editor_invalid_value">请输入有效数值。</string>
     <string name="editor_graph_fir">FIR 均衡器响应曲线图</string>
     <string name="editor_graph_dynamic_eq">动态均衡器响应曲线图</string>
-    <string name="editor_graph_multiband">多段压缩器响应曲线图</string>
+    <string name="editor_graph_multiband">实时频谱与多段压缩器响应曲线图</string>
     <string name="editor_crossovers">分频点</string>
     <string name="editor_band_number">频段 %1$d</string>
     <string name="editor_band_compression_enabled">启用频段 %1$d 压缩</string>
     <string name="editor_bypassed">已旁路</string>
-    <string name="editor_graph_multiband_crossover_title">分频响应</string>
+    <string name="editor_graph_multiband_crossover_title">频谱与分频响应</string>
     <string name="editor_graph_multiband_transfer_title">频段 %1$d 输入 / 输出</string>
     <string name="editor_graph_multiband_transfer">频段 %1$d 压缩器输入输出曲线图</string>
     <string name="editor_auto_knee_curve_unavailable">自动拐点：无法显示实时曲线</string>

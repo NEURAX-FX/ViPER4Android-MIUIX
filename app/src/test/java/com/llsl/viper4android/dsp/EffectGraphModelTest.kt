@@ -123,6 +123,8 @@ class EffectGraphModelTest {
 
         val model = multibandGraphModel(state, sampleRate)
 
+        assertEquals(-72.0, model.minDb, 0.0)
+        assertEquals(24.0, model.maxDb, 0.0)
         assertEquals(listOf("crossover-0", "crossover-1", "crossover-2", "crossover-3"), model.handles.map { it.id })
         listOf(3.0, 6.0, 9.0, 12.0).zip(model.handles).forEach { (expected, handle) ->
             assertEquals(expected, graphYToDb(handle.y, model.minDb, model.maxDb), 1e-5)
