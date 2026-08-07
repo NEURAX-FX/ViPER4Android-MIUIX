@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +58,8 @@ import com.llsl.viper4android.ui.theme.ViperDesign
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.min
@@ -74,7 +77,19 @@ fun EffectEditorScreen(
     val connected by viewModel.isServiceConnected.collectAsStateWithLifecycle()
     val undoCount by viewModel.undoCount.collectAsStateWithLifecycle()
     val redoCount by viewModel.redoCount.collectAsStateWithLifecycle()
+    val telemetry by viewModel.driverTelemetry.collectAsStateWithLifecycle()
     var showReset by remember { mutableStateOf(false) }
+
+    LaunchedEffect(kind, connected) {
+        if (kind != EditorKind.MULTIBAND_COMPRESSOR || !connected) {
+            viewModel.clearDriverTelemetry()
+            return@LaunchedEffect
+        }
+        while (isActive) {
+            viewModel.refreshDriverTelemetry()
+            delay(50L)
+        }
+    }
 
     ViperScaffold(
         topBar = {
@@ -118,6 +133,7 @@ fun EffectEditorScreen(
                 MultibandCompressorEditor(
                     state = state,
                     sampleRate = sampleRate,
+                    telemetry = telemetry,
                     onAction = viewModel::handleMultibandEditorAction,
                     modifier = Modifier.weight(1f),
                 )

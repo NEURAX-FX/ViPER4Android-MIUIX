@@ -58,6 +58,7 @@ class ViperEffect(
     val isCreated: Boolean
         get() = effect != null
 
+    @Synchronized
     fun create(): Boolean {
         if (effect != null) return true
         val c = ctor
@@ -83,6 +84,7 @@ class ViperEffect(
         }
     }
 
+    @Synchronized
     fun release() {
         effect?.release()
         effect = null
@@ -206,9 +208,11 @@ class ViperEffect(
         }
     }
 
+    @Synchronized
     fun getParameter(
         param: Int,
         size: Int,
+        logFailure: Boolean = true,
     ): ByteArray {
         val fx = effect ?: return ByteArray(0)
         val m = getParamMethod ?: return ByteArray(0)
@@ -217,15 +221,28 @@ class ViperEffect(
         try {
             val status = m.invoke(fx, paramBytes, valueBytes) as Int
             if (status < 0) {
-                FileLogger.w("Effect", "getParameter($param, size=$size) returned status $status")
+                if (logFailure) {
+                    FileLogger.w("Effect", "getParameter($param, size=$size) returned status $status")
+                }
                 return ByteArray(0)
             }
             return valueBytes
         } catch (e: Exception) {
-            FileLogger.e("Effect", "getParameter($param, size=$size) invoke failed", e)
+            if (logFailure) {
+                FileLogger.e("Effect", "getParameter($param, size=$size) invoke failed", e)
+            }
             return ByteArray(0)
         }
     }
+
+    fun getTelemetry(): DriverTelemetry? =
+        DriverTelemetry.parse(
+            getParameter(
+                param = ViperParams.PARAM_GET_TELEMETRY,
+                size = DriverTelemetry.WIRE_SIZE,
+                logFailure = false,
+            ),
+        )
 
     fun getDriverVersionCode(): Int = getParameter(ViperParams.PARAM_GET_DRIVER_VERSION_CODE)
 

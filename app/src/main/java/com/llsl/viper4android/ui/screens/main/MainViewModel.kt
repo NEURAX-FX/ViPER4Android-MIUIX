@@ -41,6 +41,7 @@ import com.llsl.viper4android.effect.NullableLongPref
 import com.llsl.viper4android.effect.StringPref
 import com.llsl.viper4android.effect.deserializeEffectPrefs
 import com.llsl.viper4android.effect.loadEffectPrefs
+import com.llsl.viper4android.effect.resolveConvolverKernel
 import com.llsl.viper4android.effect.saveEffectPrefs
 import com.llsl.viper4android.effect.serializeEffectPrefs
 import com.llsl.viper4android.service.ViperService
@@ -180,6 +181,7 @@ class MainViewModel
             viewModelScope.launch {
                 loadSettingsPreferences()
                 _uiState.update { loadEffectPrefs(repository, it) }
+                repairConvolverSelection()
                 val dbName = repository.getDeviceSettings(initialDevice.id)?.deviceName ?: initialDevice.name
                 _uiState.update { it.copy(activeDeviceName = dbName, activeDeviceId = initialDevice.id) }
                 loadEqPresetsForBandCount(_uiState.value.eq.bandCount)
@@ -705,16 +707,31 @@ class MainViewModel
         }
 
         fun setConvolverEnabled(enabled: Boolean) {
-            applyPref(Effects.convolver.enable, enabled)
-            if (enabled &&
-                _uiState.value.convolver.kernelFile
-                    .isNotEmpty()
-            ) {
-                val v = _uiState.value.convolver
-                applyPref(Effects.convolver.kernelFile, v.kernelFile)
-                viewModelScope.launch(Dispatchers.IO) {
-                    applyConvolverKernel(v.kernelFile)
-                }
+            if (!enabled) {
+                applyPref(Effects.convolver.enable, false)
+                return
+            }
+            val current = _uiState.value.convolver.kernelFile
+            val kernel = resolveConvolverKernel(current, _kernelFileList.value)
+            if (kernel == null) {
+                applyPref(Effects.convolver.enable, false)
+                return
+            }
+            if (kernel != current) {
+                applyPref(Effects.convolver.kernelFile, kernel, last = false)
+            }
+            applyPref(Effects.convolver.enable, true)
+            viewModelScope.launch(Dispatchers.IO) { applyConvolverKernel(kernel) }
+        }
+
+        private fun repairConvolverSelection() {
+            val convolver = _uiState.value.convolver
+            if (!convolver.enable) return
+            val kernel = resolveConvolverKernel(convolver.kernelFile, _kernelFileList.value)
+            if (kernel == null) {
+                applyPref(Effects.convolver.enable, false)
+            } else if (kernel != convolver.kernelFile) {
+                applyPref(Effects.convolver.kernelFile, kernel)
             }
         }
 

@@ -2,6 +2,7 @@ package com.llsl.viper4android.effect
 
 import com.llsl.viper4android.data.repository.ViperRepository
 import com.llsl.viper4android.service.ViperService
+import com.llsl.viper4android.viper.DriverTelemetry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -62,6 +63,8 @@ interface EffectDispatchTarget {
     fun setStateProvider(provider: () -> EffectState)
 
     fun dispatch(command: EffectDispatchCommand)
+
+    fun readTelemetry(): DriverTelemetry? = null
 }
 
 private class RepositoryEffectPreferenceWriter(
@@ -146,6 +149,8 @@ private class ViperServiceDispatchTarget(
             is EffectDispatchCommand.FullState -> service.dispatchFullState(command.state)
         }
     }
+
+    override fun readTelemetry(): DriverTelemetry? = service.readTelemetry()
 }
 
 /** One preference assignment inside an [EffectStateStore.applyTransaction] batch. */
@@ -206,6 +211,8 @@ class EffectStateStore internal constructor(
     fun dispatchFullState() {
         dispatchTarget?.dispatch(EffectDispatchCommand.FullState(mutableState.value))
     }
+
+    fun readTelemetry(): DriverTelemetry? = dispatchTarget?.readTelemetry()
 
     fun restoreState(state: EffectState) {
         val previous = mutableState.value

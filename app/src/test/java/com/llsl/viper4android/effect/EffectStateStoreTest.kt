@@ -1,5 +1,6 @@
 package com.llsl.viper4android.effect
 
+import com.llsl.viper4android.viper.DriverTelemetry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -244,6 +245,28 @@ class EffectStateStoreTest {
             assertEquals(0, (writer.writes.single().value as List<Int>)[1])
         }
 
+    @Test
+    fun telemetryReadsDelegateOnlyWhileServiceIsAttached() {
+        val target = RecordingDispatchTarget()
+        val store = newStore(RecordingPreferenceWriter())
+        target.telemetry =
+            DriverTelemetry(
+                sequence = 9,
+                sampleRate = 48_000,
+                fftSize = 2048,
+                validMask = DriverTelemetry.SPECTRUM_VALID,
+                overrunCount = 0,
+                spectrumDb = List(64) { -40f },
+                meterDb = List(8) { 0f },
+            )
+
+        assertEquals(null, store.readTelemetry())
+        store.attachDispatchTarget(target)
+        assertEquals(9, store.readTelemetry()?.sequence)
+        store.attachDispatchTarget(null)
+        assertEquals(null, store.readTelemetry())
+    }
+
     private fun newStore(writer: RecordingPreferenceWriter): EffectStateStore =
         EffectStateStore(
             preferenceWriter = writer,
@@ -275,6 +298,7 @@ private class RecordingPreferenceWriter : EffectPreferenceWriter {
 private class RecordingDispatchTarget : EffectDispatchTarget {
     val commands = mutableListOf<EffectDispatchCommand>()
     private var stateProvider: (() -> EffectState)? = null
+    var telemetry: DriverTelemetry? = null
 
     override fun setStateProvider(provider: () -> EffectState) {
         stateProvider = provider
@@ -283,4 +307,6 @@ private class RecordingDispatchTarget : EffectDispatchTarget {
     override fun dispatch(command: EffectDispatchCommand) {
         commands += command
     }
+
+    override fun readTelemetry(): DriverTelemetry? = telemetry
 }

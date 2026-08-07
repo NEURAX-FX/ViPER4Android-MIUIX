@@ -18,10 +18,14 @@ import com.llsl.viper4android.dsp.DEFAULT_GRAPH_SAMPLE_RATE
 import com.llsl.viper4android.dsp.safeMultibandCrossoverMax
 import com.llsl.viper4android.dsp.sanitizeGraphSampleRate
 import com.llsl.viper4android.viper.ConfigChannel
+import com.llsl.viper4android.viper.DriverTelemetry
+import com.llsl.viper4android.viper.mergeDriverTelemetry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -42,6 +46,9 @@ class EffectEditorViewModel @Inject constructor(
      */
     private val _graphSampleRate = MutableStateFlow(DEFAULT_GRAPH_SAMPLE_RATE)
     val graphSampleRate: StateFlow<Int> = _graphSampleRate.asStateFlow()
+
+    private val _driverTelemetry = MutableStateFlow<DriverTelemetry?>(null)
+    val driverTelemetry: StateFlow<DriverTelemetry?> = _driverTelemetry.asStateFlow()
 
     private val history = EditorHistory<EffectState>()
     private val _undoCount = MutableStateFlow(0)
@@ -78,6 +85,18 @@ class EffectEditorViewModel @Inject constructor(
                 listOf(Effects.multibandCompressor.crossovers setTo normalized.crossovers),
             )
         }
+    }
+
+    suspend fun refreshDriverTelemetry() {
+        val next = withContext(Dispatchers.IO) { store.readTelemetry() }
+        _driverTelemetry.value = mergeDriverTelemetry(_driverTelemetry.value, next)
+        if (next != null) {
+            _graphSampleRate.value = sanitizeGraphSampleRate(next.sampleRate)
+        }
+    }
+
+    fun clearDriverTelemetry() {
+        _driverTelemetry.value = null
     }
 
     fun beginGesture() {

@@ -22,6 +22,9 @@
     <string name="editor_graph_multiband_crossover_title">Crossover response</string>
     <string name="editor_graph_multiband_transfer_title">Band %1$d input / output</string>
     <string name="editor_graph_multiband_transfer">Band %1$d compressor input and output graph</string>
+    <string name="editor_graph_live_spectrum_title">Live output spectrum</string>
+    <string name="editor_graph_live_spectrum">Live post-processing output spectrum</string>
+    <string name="editor_band_threshold_gr">%1$d dB | GR %2$.1f dB</string>
     <string name="editor_auto_knee_curve_unavailable">Auto Knee: live curve unavailable</string>
     <string name="editor_auto_gain_curve_excluded">Auto Gain is excluded from the preview</string>
     <string name="editor_auto_timing_not_shown">Automatic timing is not shown in the steady-state curve</string>

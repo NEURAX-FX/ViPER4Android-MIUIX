@@ -29,6 +29,7 @@ import com.llsl.viper4android.dsp.safeMultibandCrossoverMax
 import com.llsl.viper4android.effect.EffectState
 import com.llsl.viper4android.effect.MULTIBAND_MIN_FREQUENCY
 import com.llsl.viper4android.effect.MultibandCompressorState
+import com.llsl.viper4android.viper.DriverTelemetry
 import com.llsl.viper4android.ui.components.viper.GraphGridLine
 import com.llsl.viper4android.ui.components.LabeledSwitch
 import com.llsl.viper4android.ui.components.viper.GraphHandle
@@ -39,6 +40,7 @@ import com.llsl.viper4android.ui.components.viper.VstExpandableControlGroup
 import com.llsl.viper4android.ui.components.viper.VstGraphWorkspace
 import com.llsl.viper4android.ui.components.viper.VstKnob
 import com.llsl.viper4android.ui.components.viper.VstResponseGraph
+import com.llsl.viper4android.ui.components.viper.VstSpectrumGraph
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
@@ -48,6 +50,7 @@ import kotlin.math.roundToInt
 fun MultibandCompressorEditor(
     state: EffectState,
     sampleRate: Int,
+    telemetry: DriverTelemetry? = null,
     onAction: (MultibandEditorAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -58,6 +61,12 @@ fun MultibandCompressorEditor(
         multibandEditorPresentation(state, sampleRate)
     }
     val compressor = state.multibandCompressor
+    val gainReduction =
+        if (telemetry?.hasMeters == true) {
+            telemetry.meterDb.take(5)
+        } else {
+            List(5) { 0f }
+        }
     val band = selectedBand.coerceIn(presentation.bands.indices)
     val transfer = remember(state.multibandCompressor, band) {
         multibandTransferPresentation(state, band)
@@ -162,6 +171,19 @@ fun MultibandCompressorEditor(
         scrollContent = true,
         graph = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (telemetry?.hasSpectrum == true) {
+                    Text(
+                        text = stringResource(R.string.editor_graph_live_spectrum_title),
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.primary,
+                    )
+                    VstSpectrumGraph(
+                        telemetry = telemetry,
+                        verticalGridLines = editorFrequencyGrid(sampleRate),
+                        horizontalGridLines = editorDecibelGrid(-96.0, 0.0, 24.0),
+                        contentDescription = stringResource(R.string.editor_graph_live_spectrum),
+                    )
+                }
                 Text(
                     text = stringResource(R.string.editor_graph_multiband_crossover_title),
                     style = MiuixTheme.textStyles.body2,
@@ -234,7 +256,11 @@ fun MultibandCompressorEditor(
                         title = stringResource(R.string.editor_band_number, item.index + 1),
                         value =
                             if (item.compressionEnabled) {
-                                "${item.thresholdDb} dB"
+                                stringResource(
+                                    R.string.editor_band_threshold_gr,
+                                    item.thresholdDb,
+                                    gainReduction[item.index],
+                                )
                             } else {
                                 stringResource(R.string.editor_bypassed)
                             },

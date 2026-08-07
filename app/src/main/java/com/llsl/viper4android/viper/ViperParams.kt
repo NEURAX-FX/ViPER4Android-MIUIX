@@ -9,6 +9,7 @@ object ViperParams {
     const val PARAM_GET_DRIVER_VERSION_CODE = 6
     const val PARAM_GET_DRIVER_VERSION_NAME = 7
     const val PARAM_GET_ARCHITECTURE = 8
+    const val PARAM_GET_TELEMETRY = 9
 
     const val PARAM_RESET_ALL_EFFECTS = 0x10101
 

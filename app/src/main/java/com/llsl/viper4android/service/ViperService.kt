@@ -25,6 +25,7 @@ import com.llsl.viper4android.utils.FileLogger
 import com.llsl.viper4android.utils.RootShell
 import com.llsl.viper4android.utils.WavDecoder
 import com.llsl.viper4android.viper.ConfigChannel
+import com.llsl.viper4android.viper.DriverTelemetry
 import com.llsl.viper4android.viper.ViperDispatcher
 import com.llsl.viper4android.viper.ViperEffect
 import com.llsl.viper4android.viper.ViperParams
@@ -79,6 +80,8 @@ class ViperService : LifecycleService() {
     private val binder = LocalBinder()
     private val sessions = SparseArray<ViperEffect>()
     private var globalEffect: ViperEffect? = null
+    @Volatile
+    private var telemetryEffect: ViperEffect? = null
     private var useAidlTypeUuid: Boolean = true
     private var globalMode: Boolean = false
     private var audioOutputDetector: AudioOutputDetector? = null
@@ -133,6 +136,7 @@ class ViperService : LifecycleService() {
             return
         }
         globalEffect = effect
+        selectTelemetryEffect()
         FileLogger.i("Service", "Global effect created (aidlType=$useAidlTypeUuid)")
     }
 
@@ -148,6 +152,7 @@ class ViperService : LifecycleService() {
                 it.release()
             }
             globalEffect = null
+            selectTelemetryEffect()
             return
         }
         if (globalMode) {
@@ -290,6 +295,7 @@ class ViperService : LifecycleService() {
                     it.release()
                 }
                 globalEffect = null
+                selectTelemetryEffect()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -318,6 +324,7 @@ class ViperService : LifecycleService() {
             it.release()
         }
         globalEffect = null
+        selectTelemetryEffect()
         releaseAllSessions()
         FileLogger.i("Service", "Service destroyed")
         super.onDestroy()
@@ -372,6 +379,7 @@ class ViperService : LifecycleService() {
         }
 
         sessions.put(sessionId, effect)
+        selectTelemetryEffect()
         FileLogger.i("Service", "Opened session $sessionId for $packageName")
 
         lifecycleScope.launch {
@@ -385,6 +393,7 @@ class ViperService : LifecycleService() {
         effect.enabled = false
         effect.release()
         sessions.remove(sessionId)
+        selectTelemetryEffect()
         FileLogger.i("Service", "Closed session $sessionId")
     }
 
@@ -395,7 +404,14 @@ class ViperService : LifecycleService() {
             effect.release()
         }
         sessions.clear()
+        selectTelemetryEffect()
     }
+
+    private fun selectTelemetryEffect() {
+        telemetryEffect = globalEffect ?: if (sessions.size > 0) sessions.valueAt(0) else null
+    }
+
+    fun readTelemetry(): DriverTelemetry? = telemetryEffect?.getTelemetry()
 
     fun dispatchParam(
         param: Int,
