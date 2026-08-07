@@ -31,6 +31,12 @@
     <string name="editor_disabled_auto_release">Управляется автовосстановлением</string>
     <string name="editor_ratio_limit">Лимит</string>
     <string name="editor_ratio_over">Перекомпрессия %1$d%%</string>
+    <string name="editor_advanced">Дополнительно</string>
+    <string name="editor_requires_auto_knee">Требуется автоколено</string>
+    <string name="editor_requires_auto_attack">Требуется автоатака</string>
+    <string name="editor_requires_auto_release">Требуется автовосстановление</string>
+    <string name="editor_requires_auto_knee_or_gain">Требуется автоколено или автоусиление</string>
+    <string name="editor_requires_auto_gain">Требуется автоусиление</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Обработка аудио</string>
     <string name="notification_channel_description">Показывать когда ViPER4Android обрабатывает аудио</string>

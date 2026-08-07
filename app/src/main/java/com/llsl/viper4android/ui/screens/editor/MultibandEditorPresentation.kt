@@ -53,6 +53,12 @@ data class MultibandControlAvailability(
     val gainEnabled: Boolean,
     val attackEnabled: Boolean,
     val releaseEnabled: Boolean,
+    val kneeMultiEnabled: Boolean,
+    val maxAttackEnabled: Boolean,
+    val maxReleaseEnabled: Boolean,
+    val crestEnabled: Boolean,
+    val adaptEnabled: Boolean,
+    val noClipEnabled: Boolean,
 )
 
 data class MultibandTransferPresentation(
@@ -174,6 +180,12 @@ fun multibandTransferPresentation(
                 gainEnabled = !compressor.gainAutos[selectedBand],
                 attackEnabled = !compressor.attackAutos[selectedBand],
                 releaseEnabled = !compressor.releaseAutos[selectedBand],
+                kneeMultiEnabled = compressor.kneeAutos[selectedBand],
+                maxAttackEnabled = compressor.attackAutos[selectedBand],
+                maxReleaseEnabled = compressor.releaseAutos[selectedBand],
+                crestEnabled = true,
+                adaptEnabled = compressor.kneeAutos[selectedBand] || compressor.gainAutos[selectedBand],
+                noClipEnabled = compressor.gainAutos[selectedBand],
             ),
         curveDashed = compressor.kneeAutos[selectedBand] || compressor.gainAutos[selectedBand],
     )

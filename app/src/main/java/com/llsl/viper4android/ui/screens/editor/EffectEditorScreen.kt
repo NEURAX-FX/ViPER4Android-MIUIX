@@ -103,26 +103,40 @@ fun EffectEditorScreen(
             )
         },
     ) { paddingValues ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(ViperDesign.sectionSpacing),
-        ) {
-            EditorStatusRow(
-                kind = kind,
-                enabled = isEnabled(kind, state),
-                connected = connected,
-                onEnabledChange = { viewModel.setEnabled(kind, it) },
-            )
-            when (kind) {
-                EditorKind.FIR_EQUALIZER -> FirEqualizerEditor(state, viewModel)
-                EditorKind.DYNAMIC_EQUALIZER -> DynamicEqualizerEditor(state, viewModel)
-                EditorKind.MULTIBAND_COMPRESSOR -> {
-                    val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
-                    MultibandCompressorEditor(
-                        state = state,
-                        sampleRate = sampleRate,
-                        onAction = viewModel::handleMultibandEditorAction,
-                    )
+        if (kind == EditorKind.MULTIBAND_COMPRESSOR) {
+            val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(ViperDesign.sectionSpacing),
+            ) {
+                EditorStatusRow(
+                    kind = kind,
+                    enabled = isEnabled(kind, state),
+                    connected = connected,
+                    onEnabledChange = { viewModel.setEnabled(kind, it) },
+                )
+                MultibandCompressorEditor(
+                    state = state,
+                    sampleRate = sampleRate,
+                    onAction = viewModel::handleMultibandEditorAction,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(paddingValues).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(ViperDesign.sectionSpacing),
+            ) {
+                EditorStatusRow(
+                    kind = kind,
+                    enabled = isEnabled(kind, state),
+                    connected = connected,
+                    onEnabledChange = { viewModel.setEnabled(kind, it) },
+                )
+                when (kind) {
+                    EditorKind.FIR_EQUALIZER -> FirEqualizerEditor(state, viewModel)
+                    EditorKind.DYNAMIC_EQUALIZER -> DynamicEqualizerEditor(state, viewModel)
+                    EditorKind.MULTIBAND_COMPRESSOR -> Unit
                 }
             }
         }

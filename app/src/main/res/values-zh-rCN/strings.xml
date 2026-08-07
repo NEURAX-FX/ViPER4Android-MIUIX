@@ -31,6 +31,12 @@
     <string name="editor_disabled_auto_release">由自动释放控制</string>
     <string name="editor_ratio_limit">限制</string>
     <string name="editor_ratio_over">过压缩 %1$d%%</string>
+    <string name="editor_advanced">高级</string>
+    <string name="editor_requires_auto_knee">需要启用自动拐点</string>
+    <string name="editor_requires_auto_attack">需要启用自动启动</string>
+    <string name="editor_requires_auto_release">需要启用自动释放</string>
+    <string name="editor_requires_auto_knee_or_gain">需要启用自动拐点或自动增益</string>
+    <string name="editor_requires_auto_gain">需要启用自动增益</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">音频处理</string>
     <string name="notification_channel_description">当 ViPER4Android 正在处理音频时显示</string>

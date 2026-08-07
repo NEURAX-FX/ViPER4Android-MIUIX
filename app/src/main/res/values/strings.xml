@@ -31,6 +31,12 @@
     <string name="editor_disabled_auto_release">Controlled by Auto Release</string>
     <string name="editor_ratio_limit">Limit</string>
     <string name="editor_ratio_over">Over %1$d%%</string>
+    <string name="editor_advanced">Advanced</string>
+    <string name="editor_requires_auto_knee">Requires Auto Knee</string>
+    <string name="editor_requires_auto_attack">Requires Auto Attack</string>
+    <string name="editor_requires_auto_release">Requires Auto Release</string>
+    <string name="editor_requires_auto_knee_or_gain">Requires Auto Knee or Auto Gain</string>
+    <string name="editor_requires_auto_gain">Requires Auto Gain</string>
     <string name="app_expanded_name">ViperFX</string>
     <string name="notification_channel_name">Audio Processing</string>
     <string name="notification_channel_description">Shows when ViPER4Android is processing audio</string>

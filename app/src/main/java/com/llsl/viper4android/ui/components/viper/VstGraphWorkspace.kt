@@ -8,13 +8,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 private val UtilityRailWidth = 56.dp
 private val RailBreakpoint = 480.dp
+private val SideBySideBreakpoint = 720.dp
 
 /**
  * Graph-first workspace: the response graph owns the dominant area, an optional utility
@@ -28,31 +33,67 @@ private val RailBreakpoint = 480.dp
 fun VstGraphWorkspace(
     modifier: Modifier = Modifier,
     utilityRail: (@Composable ColumnScope.() -> Unit)? = null,
+    sideBySideAtWideWidth: Boolean = false,
+    scrollContent: Boolean = false,
     graph: @Composable BoxScope.() -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val rail = utilityRail
-            if (rail != null && maxWidth >= RailBreakpoint) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        if (sideBySideAtWideWidth && maxWidth >= SideBySideBreakpoint) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .weight(1.15f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 12.dp),
                 ) {
-                    Box(modifier = Modifier.weight(1f), content = graph)
-                    Column(
-                        modifier = Modifier.width(UtilityRailWidth),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        content = rail,
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(), content = graph)
                 }
-            } else {
-                Box(modifier = Modifier.fillMaxWidth(), content = graph)
+                Column(
+                    modifier =
+                        Modifier
+                            .weight(0.85f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    content = content,
+                )
+            }
+        } else {
+            val columnModifier =
+                if (scrollContent) {
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            Column(
+                modifier = columnModifier,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val rail = utilityRail
+                    if (rail != null && maxWidth >= RailBreakpoint) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Box(modifier = Modifier.weight(1f), content = graph)
+                            Column(
+                                modifier = Modifier.width(UtilityRailWidth),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                content = rail,
+                            )
+                        }
+                    } else {
+                        Box(modifier = Modifier.fillMaxWidth(), content = graph)
+                    }
+                }
+                content()
             }
         }
-        content()
     }
 }

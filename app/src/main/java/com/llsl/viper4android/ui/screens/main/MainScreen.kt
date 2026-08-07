@@ -337,6 +337,7 @@ private fun EffectList(
             MultibandCompressorSection(
                 state = state,
                 viewModel = viewModel,
+                showCurvePreview = showCurvePreviews,
                 onOpenEditor = { onOpenEditor(EditorKind.MULTIBAND_COMPRESSOR) },
             )
         }

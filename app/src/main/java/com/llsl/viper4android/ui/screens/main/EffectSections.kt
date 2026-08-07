@@ -49,8 +49,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -655,6 +653,7 @@ fun FetCompressorSection(
 fun MultibandCompressorSection(
     state: EffectState,
     viewModel: MainViewModel,
+    showCurvePreview: Boolean = true,
     onOpenEditor: () -> Unit,
 ) {
     val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
@@ -668,343 +667,23 @@ fun MultibandCompressorSection(
         icon = Icons.Default.Compress,
         initiallyExpanded = true,
     ) {
-        VstResponseGraph(
-            handles = model.handles.toGraphHandles(previewColors),
-            bandCurves = model.bandCurves,
-            bandRegions = mbcBandRegions(
-                crossovers = model.crossovers,
-                minFrequency = model.minFrequency,
-                maxFrequency = model.maxFrequency,
-            ),
-            interactive = false,
-            onClick = onOpenEditor,
-            onHandleDrag = { _, _, _ -> },
-        )
-    }
-    return
-
-    val multibandCompressorVals = state.multibandCompressor
-    val enabled = multibandCompressorVals.enable
-
-    val crossoverDefaults = listOf(120, 500, 4000, 8000)
-    val bandEnables = multibandCompressorVals.bandEnables
-    val crossovers = multibandCompressorVals.crossovers
-
-    val thresholds = multibandCompressorVals.thresholds
-    val ratios = multibandCompressorVals.ratios
-    val gains = multibandCompressorVals.gains
-    val knees = multibandCompressorVals.knees
-    val kneeMultis = multibandCompressorVals.kneeMultis
-    val attacks = multibandCompressorVals.attacks
-    val maxAttacks = multibandCompressorVals.maxAttacks
-    val releases = multibandCompressorVals.releases
-    val maxReleases = multibandCompressorVals.maxReleases
-    val crests = multibandCompressorVals.crests
-    val adapts = multibandCompressorVals.adapts
-    val kneeAutos = multibandCompressorVals.kneeAutos
-    val gainAutos = multibandCompressorVals.gainAutos
-    val attackAutos = multibandCompressorVals.attackAutos
-    val releaseAutos = multibandCompressorVals.releaseAutos
-    val noClips = multibandCompressorVals.noClips
-
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val tabNames = listOf("Sub", "Low", "Mid", "Pres", "Air")
-    val b = selectedTab
-
-    val threshold = thresholds.getOrElse(b) { -18 }
-    val ratio = ratios.getOrElse(b) { 50 }
-    val gain = gains.getOrElse(b) { 24 }
-    val knee = knees.getOrElse(b) { 0 }
-    val kneeMulti = kneeMultis.getOrElse(b) { 0 }
-    val attack = attacks.getOrElse(b) { 1 }
-    val maxAttack = maxAttacks.getOrElse(b) { 44 }
-    val release = releases.getOrElse(b) { 100 }
-    val maxRelease = maxReleases.getOrElse(b) { 200 }
-    val crest = crests.getOrElse(b) { 100 }
-    val adapt = adapts.getOrElse(b) { 50 }
-    val bandEnabled = bandEnables.getOrElse(b) { true }
-    val kneeAuto = kneeAutos.getOrElse(b) { true }
-    val gainAuto = gainAutos.getOrElse(b) { true }
-    val attackAuto = attackAutos.getOrElse(b) { true }
-    val releaseAuto = releaseAutos.getOrElse(b) { true }
-    val noClip = noClips.getOrElse(b) { true }
-
-    val onBandEnableChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.bandEnables, b, it) }
-    val onCrossoverChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.crossovers, b, it) }
-    val onThresholdChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.thresholds, b, it) }
-    val onRatioChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.ratios, b, it) }
-    val onAutoKneeChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.kneeAutos, b, it) }
-    val onKneeChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.knees, b, it) }
-    val onKneeMultiChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.kneeMultis, b, it) }
-    val onAutoGainChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.gainAutos, b, it) }
-    val onGainChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.gains, b, it) }
-    val onAutoAttackChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.attackAutos, b, it) }
-    val onAttackChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.attacks, b, it) }
-    val onMaxAttackChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.maxAttacks, b, it) }
-    val onAutoReleaseChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.releaseAutos, b, it) }
-    val onReleaseChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.releases, b, it) }
-    val onMaxReleaseChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.maxReleases, b, it) }
-    val onCrestChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.crests, b, it) }
-    val onAdaptChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.adapts, b, it) }
-    val onNoClipChange: (Boolean) -> Unit = { viewModel.applyBandPref(Effects.multibandCompressor.noClips, b, it) }
-
-    EffectSection(
-        title = stringResource(R.string.section_multiband_compressor),
-        enabled = enabled,
-        onEnabledChange = viewModel::setMultibandCompressorEnabled,
-        icon = Icons.Default.Compress,
-    ) {
-        PrimaryTabRow(selectedTabIndex = selectedTab) {
-            tabNames.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { selectedTab = index },
-                    text = { Text(title) },
-                )
-            }
-        }
-
-        val lowFreq =
-            if (b == 0) 20 else crossovers.getOrElse(b - 1) { crossoverDefaults.getOrElse(b - 1) { 20 } }
-        val highFreq =
-            if (b < 4) crossovers.getOrElse(b) { crossoverDefaults.getOrElse(b) { 20000 } } else 20000
-        Text(
-            text = "$lowFreq - ${if (b < 4) "$highFreq" else "20000+"} Hz",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-        )
-
-        LabeledSwitch(
-            label = stringResource(R.string.label_band_enabled),
-            checked = bandEnabled,
-            onCheckedChange = onBandEnableChange,
-        )
-
-        if (b < 4) {
-            val crossoverHardMin = intArrayOf(30, 80, 300, 2000)
-            val crossoverHardMax = intArrayOf(300, 2000, 8000, 16000)
-            val neighborMin =
-                if (b > 0) crossovers.getOrElse(b - 1) { crossoverDefaults.getOrElse(b - 1) { 20 } } + 50 else 30
-            val neighborMax =
-                if (b < 3) crossovers.getOrElse(b + 1) { crossoverDefaults.getOrElse(b + 1) { 20000 } } - 50 else 16000
-            val minCrossover = maxOf(crossoverHardMin[b], neighborMin)
-            val maxCrossover = minOf(crossoverHardMax[b], neighborMax)
-            LabeledSlider(
-                label = stringResource(R.string.label_upper_crossover),
-                value =
-                    crossovers
-                        .getOrElse(b) { crossoverDefaults[b] }
-                        .toFloat()
-                        .coerceIn(minCrossover.toFloat(), maxCrossover.toFloat()),
-                onValueChange = { onCrossoverChange(it.roundToInt()) },
-                valueRange = minCrossover.toFloat()..maxCrossover.toFloat(),
-                steps = ((maxCrossover - minCrossover) / 5).coerceAtLeast(1) - 1,
-                valueLabel = "${crossovers.getOrElse(b) { crossoverDefaults[b] }} Hz",
-                edit =
-                    SliderEdit(
-                        displayValue = crossovers.getOrElse(b) { crossoverDefaults[b] }.toDouble(),
-                        displayRange = minCrossover.toDouble()..maxCrossover.toDouble(),
-                        decimals = 0,
-                        unit = "Hz",
-                        onCommit = { onCrossoverChange(it.roundToInt().coerceIn(minCrossover, maxCrossover)) },
-                    ),
+        if (showCurvePreview) {
+            VstResponseGraph(
+                handles = model.handles.toGraphHandles(previewColors),
+                bandCurves = model.bandCurves,
+                referenceCurves = listOf(model.unitySumCurve),
+                bandRegions = mbcBandRegions(
+                    crossovers = model.crossovers,
+                    minFrequency = model.minFrequency,
+                    maxFrequency = model.maxFrequency,
+                ),
+                interactive = false,
+                onClick = onOpenEditor,
+                onHandleDrag = { _, _, _ -> },
             )
+        } else {
+            PreviewEditAction(onClick = onOpenEditor)
         }
-
-        LabeledSlider(
-            label = stringResource(R.string.label_threshold),
-            value = threshold.toFloat(),
-            onValueChange = { onThresholdChange(it.roundToInt()) },
-            valueRange = -48f..0f,
-            valueLabel = "$threshold dB",
-            edit =
-                SliderEdit(
-                    displayValue = threshold.toDouble(),
-                    displayRange = -48.0..0.0,
-                    decimals = 0,
-                    unit = "dB",
-                    onCommit = { onThresholdChange(it.roundToInt().coerceIn(-48, 0)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_ratio),
-            value = ratio / 100f,
-            onValueChange = { onRatioChange((it * 100f).roundToInt()) },
-            valueRange = 0f..2f,
-            valueLabel = String.format(Locale.US, "%.1f", ratio / 100.0),
-            edit =
-                SliderEdit(
-                    displayValue = ratio / 100.0,
-                    displayRange = 0.0..2.0,
-                    decimals = 1,
-                    onCommit = { onRatioChange((it * 100).roundToInt().coerceIn(0, 200)) },
-                ),
-        )
-        LabeledSwitch(
-            label = stringResource(R.string.label_fet_auto_knee),
-            checked = kneeAuto,
-            onCheckedChange = onAutoKneeChange,
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_knee),
-            value = knee.toFloat(),
-            onValueChange = { onKneeChange(it.roundToInt()) },
-            valueRange = 0f..12f,
-            enabled = !kneeAuto,
-            valueLabel = "$knee dB",
-            edit =
-                SliderEdit(
-                    displayValue = knee.toDouble(),
-                    displayRange = 0.0..12.0,
-                    decimals = 0,
-                    unit = "dB",
-                    onCommit = { onKneeChange(it.roundToInt().coerceIn(0, 12)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_knee_multi),
-            value = (kneeMulti / 100f * 4f),
-            onValueChange = { onKneeMultiChange((it / 4f * 100f).roundToInt()) },
-            valueRange = 0f..4f,
-            valueLabel = String.format(Locale.US, "%.1fx", kneeMulti / 100.0 * 4.0),
-            edit =
-                SliderEdit(
-                    displayValue = kneeMulti / 100.0 * 4.0,
-                    displayRange = 0.0..4.0,
-                    decimals = 1,
-                    unit = "x",
-                    onCommit = { onKneeMultiChange((it / 4 * 100).roundToInt().coerceIn(0, 100)) },
-                ),
-        )
-        LabeledSwitch(
-            label = stringResource(R.string.label_fet_auto_gain),
-            checked = gainAuto,
-            onCheckedChange = onAutoGainChange,
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_gain),
-            value = gain.toFloat(),
-            onValueChange = { onGainChange(it.roundToInt()) },
-            valueRange = 0f..24f,
-            enabled = !gainAuto,
-            valueLabel = "$gain dB",
-            edit =
-                SliderEdit(
-                    displayValue = gain.toDouble(),
-                    displayRange = 0.0..24.0,
-                    decimals = 0,
-                    unit = "dB",
-                    onCommit = { onGainChange(it.roundToInt().coerceIn(0, 24)) },
-                ),
-        )
-        LabeledSwitch(
-            label = stringResource(R.string.label_fet_auto_attack),
-            checked = attackAuto,
-            onCheckedChange = onAutoAttackChange,
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_attack),
-            value = attack.toFloat().coerceIn(1f, 100f),
-            onValueChange = { onAttackChange(it.roundToInt()) },
-            valueRange = 1f..100f,
-            enabled = !attackAuto,
-            valueLabel = "$attack ms",
-            edit =
-                SliderEdit(
-                    displayValue = attack.toDouble(),
-                    displayRange = 1.0..100.0,
-                    decimals = 0,
-                    unit = "ms",
-                    onCommit = { onAttackChange(it.roundToInt().coerceIn(1, 100)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_max_attack),
-            value = maxAttack.toFloat().coerceIn(1f, 100f),
-            onValueChange = { onMaxAttackChange(it.roundToInt()) },
-            valueRange = 1f..100f,
-            valueLabel = "$maxAttack ms",
-            edit =
-                SliderEdit(
-                    displayValue = maxAttack.toDouble(),
-                    displayRange = 1.0..100.0,
-                    decimals = 0,
-                    unit = "ms",
-                    onCommit = { onMaxAttackChange(it.roundToInt().coerceIn(1, 100)) },
-                ),
-        )
-        LabeledSwitch(
-            label = stringResource(R.string.label_fet_auto_release),
-            checked = releaseAuto,
-            onCheckedChange = onAutoReleaseChange,
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_release),
-            value = release.toFloat().coerceIn(5f, 500f),
-            onValueChange = { onReleaseChange(it.roundToInt()) },
-            valueRange = 5f..500f,
-            enabled = !releaseAuto,
-            valueLabel = "$release ms",
-            edit =
-                SliderEdit(
-                    displayValue = release.toDouble(),
-                    displayRange = 5.0..500.0,
-                    decimals = 0,
-                    unit = "ms",
-                    onCommit = { onReleaseChange(it.roundToInt().coerceIn(5, 500)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_max_release),
-            value = maxRelease.toFloat().coerceIn(5f, 500f),
-            onValueChange = { onMaxReleaseChange(it.roundToInt()) },
-            valueRange = 5f..500f,
-            valueLabel = "$maxRelease ms",
-            edit =
-                SliderEdit(
-                    displayValue = maxRelease.toDouble(),
-                    displayRange = 5.0..500.0,
-                    decimals = 0,
-                    unit = "ms",
-                    onCommit = { onMaxReleaseChange(it.roundToInt().coerceIn(5, 500)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_crest),
-            value = crest.toFloat().coerceIn(5f, 300f),
-            onValueChange = { onCrestChange(it.roundToInt()) },
-            valueRange = 5f..300f,
-            valueLabel = "$crest ms",
-            edit =
-                SliderEdit(
-                    displayValue = crest.toDouble(),
-                    displayRange = 5.0..300.0,
-                    decimals = 0,
-                    unit = "ms",
-                    onCommit = { onCrestChange(it.roundToInt().coerceIn(5, 300)) },
-                ),
-        )
-        LabeledSlider(
-            label = stringResource(R.string.label_fet_adapt),
-            value = adapt.toFloat(),
-            onValueChange = { onAdaptChange(it.roundToInt()) },
-            valueRange = 0f..200f,
-            valueLabel = "$adapt%",
-            edit =
-                SliderEdit(
-                    displayValue = adapt.toDouble(),
-                    displayRange = 0.0..200.0,
-                    decimals = 0,
-                    unit = "%",
-                    onCommit = { onAdaptChange(it.roundToInt().coerceIn(0, 200)) },
-                ),
-        )
-        LabeledSwitch(
-            label = stringResource(R.string.label_fet_no_clip),
-            checked = noClip,
-            onCheckedChange = onNoClipChange,
-        )
     }
 }
 

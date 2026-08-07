@@ -114,4 +114,35 @@ class MultibandEditorPresentationTest {
         assertTrue(presentation.curveDashed)
         assertEquals(0.0, presentation.transferSpec.makeupGainDb, 1e-9)
     }
+
+    @Test
+    fun advancedAvailabilityFollowsTheOwningAutoModes() {
+        val automatic = multibandTransferPresentation(EffectState(), band = 0).controls
+        assertTrue(automatic.kneeMultiEnabled)
+        assertTrue(automatic.maxAttackEnabled)
+        assertTrue(automatic.maxReleaseEnabled)
+        assertTrue(automatic.crestEnabled)
+        assertTrue(automatic.adaptEnabled)
+        assertTrue(automatic.noClipEnabled)
+
+        val manual =
+            multibandTransferPresentation(
+                EffectState(
+                    multibandCompressor =
+                        MultibandCompressorState(
+                            kneeAutos = List(5) { false },
+                            gainAutos = List(5) { false },
+                            attackAutos = List(5) { false },
+                            releaseAutos = List(5) { false },
+                        ),
+                ),
+                band = 0,
+            ).controls
+        assertFalse(manual.kneeMultiEnabled)
+        assertFalse(manual.maxAttackEnabled)
+        assertFalse(manual.maxReleaseEnabled)
+        assertTrue(manual.crestEnabled)
+        assertFalse(manual.adaptEnabled)
+        assertFalse(manual.noClipEnabled)
+    }
 }

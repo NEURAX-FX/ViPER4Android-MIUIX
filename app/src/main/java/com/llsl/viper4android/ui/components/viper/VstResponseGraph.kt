@@ -3,8 +3,13 @@ package com.llsl.viper4android.ui.components.viper
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,7 +30,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -245,10 +252,12 @@ fun VstResponseGraph(
         }
     }
 
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(graphHeight)
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth().height(graphHeight),
+    ) {
+        Canvas(
+        modifier = Modifier
+            .fillMaxSize()
             .semantics { this.contentDescription = semanticsLabel }
             .onSizeChanged { size = it }
             .pointerInput(size, interactive) {
@@ -332,7 +341,7 @@ fun VstResponseGraph(
                     },
                 )
             },
-    ) {
+        ) {
         val width = size.width.toFloat()
         val height = size.height.toFloat()
         drawRoundRect(
@@ -456,6 +465,38 @@ fun VstResponseGraph(
                 val badgeY = (point.y - handleHaloSelectedPx - measured.size.height).coerceAtLeast(0f)
                 drawText(measured, topLeft = Offset(badgeX, badgeY))
             }
+        }
+        }
+        handles.forEach { handle ->
+            val targetSize = 48.dp
+            val x =
+                (maxWidth * handle.x - targetSize / 2)
+                    .coerceIn(0.dp, (maxWidth - targetSize).coerceAtLeast(0.dp))
+            val y =
+                (maxHeight * handle.y - targetSize / 2)
+                    .coerceIn(0.dp, (maxHeight - targetSize).coerceAtLeast(0.dp))
+            Box(
+                modifier =
+                    Modifier
+                        .offset(x = x, y = y)
+                        .size(targetSize)
+                        .testTag("graph-handle-${handle.id}")
+                        .semantics {
+                            this.contentDescription =
+                                buildString {
+                                    append(handle.label)
+                                    handle.valueDescription?.let {
+                                        append(' ')
+                                        append(it)
+                                    }
+                                    handle.badge?.let {
+                                        append(' ')
+                                        append(it)
+                                    }
+                                }
+                            if (!handle.enabled) disabled()
+                        },
+            )
         }
     }
 }

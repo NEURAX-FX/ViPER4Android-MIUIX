@@ -23,6 +23,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "2.0.3"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     androidResources {
@@ -129,4 +130,9 @@ dependencies {
     implementation(libs.miuix.icons)
 
     testImplementation(libs.junit)
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

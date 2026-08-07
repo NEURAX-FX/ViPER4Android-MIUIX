@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +35,7 @@ import com.llsl.viper4android.ui.components.viper.GraphHandle
 import com.llsl.viper4android.ui.components.viper.VstBandItem
 import com.llsl.viper4android.ui.components.viper.VstBandStrip
 import com.llsl.viper4android.ui.components.viper.VstControlGroup
+import com.llsl.viper4android.ui.components.viper.VstExpandableControlGroup
 import com.llsl.viper4android.ui.components.viper.VstGraphWorkspace
 import com.llsl.viper4android.ui.components.viper.VstKnob
 import com.llsl.viper4android.ui.components.viper.VstResponseGraph
@@ -50,6 +52,7 @@ fun MultibandCompressorEditor(
     modifier: Modifier = Modifier,
 ) {
     var selectedBand by remember { mutableIntStateOf(0) }
+    var advancedExpanded by rememberSaveable { mutableStateOf(false) }
     val pendingCrossovers = remember { mutableStateMapOf<Int, Int>() }
     val presentation = remember(state.multibandCompressor, sampleRate) {
         multibandEditorPresentation(state, sampleRate)
@@ -155,6 +158,8 @@ fun MultibandCompressorEditor(
 
     VstGraphWorkspace(
         modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        sideBySideAtWideWidth = true,
+        scrollContent = true,
         graph = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -258,6 +263,19 @@ fun MultibandCompressorEditor(
                 },
             )
             PrimaryDynamicsControls(
+                compressor = compressor,
+                band = band,
+                availability = transfer.controls,
+                onAction = onAction,
+            )
+        }
+        VstExpandableControlGroup(
+            title = stringResource(R.string.editor_advanced),
+            expanded = advancedExpanded,
+            onExpandedChange = { advancedExpanded = it },
+            testTag = "multiband-advanced",
+        ) {
+            AdvancedDynamicsControls(
                 compressor = compressor,
                 band = band,
                 availability = transfer.controls,
@@ -491,6 +509,95 @@ private fun MultibandAutoSwitch(
         onCheckedChange = { enabled ->
             onAction(MultibandEditorAction.BeginGesture)
             onAction(MultibandEditorAction.SetBoolean(control, band, enabled, last = true))
+            onAction(MultibandEditorAction.SettleGesture)
+            onAction(MultibandEditorAction.Flush)
+        },
+    )
+}
+
+@Composable
+private fun AdvancedDynamicsControls(
+    compressor: MultibandCompressorState,
+    band: Int,
+    availability: MultibandControlAvailability,
+    onAction: (MultibandEditorAction) -> Unit,
+) {
+    val autoKneeReason = stringResource(R.string.editor_requires_auto_knee)
+    val autoAttackReason = stringResource(R.string.editor_requires_auto_attack)
+    val autoReleaseReason = stringResource(R.string.editor_requires_auto_release)
+    val adaptReason = stringResource(R.string.editor_requires_auto_knee_or_gain)
+    val autoGainReason = stringResource(R.string.editor_requires_auto_gain)
+    KnobFlow {
+        MultibandIntKnob(
+            label = stringResource(R.string.label_fet_knee_multi),
+            value = compressor.kneeMultis[band],
+            range = 0..100,
+            control = MultibandIntControl.KNEE_MULTI,
+            band = band,
+            onAction = onAction,
+            enabled = availability.kneeMultiEnabled,
+            disabledReason = autoKneeReason,
+            formatValue = { "$it%" },
+        )
+        MultibandIntKnob(
+            label = stringResource(R.string.label_fet_max_attack),
+            value = compressor.maxAttacks[band],
+            range = 1..100,
+            control = MultibandIntControl.MAX_ATTACK,
+            band = band,
+            onAction = onAction,
+            enabled = availability.maxAttackEnabled,
+            disabledReason = autoAttackReason,
+            formatValue = { "$it ms" },
+        )
+        MultibandIntKnob(
+            label = stringResource(R.string.label_fet_max_release),
+            value = compressor.maxReleases[band],
+            range = 5..500,
+            control = MultibandIntControl.MAX_RELEASE,
+            band = band,
+            onAction = onAction,
+            enabled = availability.maxReleaseEnabled,
+            disabledReason = autoReleaseReason,
+            formatValue = { "$it ms" },
+        )
+        MultibandIntKnob(
+            label = stringResource(R.string.label_fet_crest),
+            value = compressor.crests[band],
+            range = 5..300,
+            control = MultibandIntControl.CREST,
+            band = band,
+            onAction = onAction,
+            enabled = availability.crestEnabled,
+            formatValue = { it.toString() },
+        )
+        MultibandIntKnob(
+            label = stringResource(R.string.label_fet_adapt),
+            value = compressor.adapts[band],
+            range = 0..200,
+            control = MultibandIntControl.ADAPT,
+            band = band,
+            onAction = onAction,
+            enabled = availability.adaptEnabled,
+            disabledReason = adaptReason,
+            formatValue = { it.toString() },
+        )
+    }
+    LabeledSwitch(
+        label = stringResource(R.string.label_fet_no_clip),
+        checked = compressor.noClips[band],
+        enabled = availability.noClipEnabled,
+        subtitle = autoGainReason.takeUnless { availability.noClipEnabled },
+        onCheckedChange = { enabled ->
+            onAction(MultibandEditorAction.BeginGesture)
+            onAction(
+                MultibandEditorAction.SetBoolean(
+                    MultibandBooleanControl.NO_CLIP,
+                    band,
+                    enabled,
+                    last = true,
+                ),
+            )
             onAction(MultibandEditorAction.SettleGesture)
             onAction(MultibandEditorAction.Flush)
         },
