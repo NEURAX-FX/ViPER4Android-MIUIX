@@ -157,6 +157,42 @@ LSP code may be used as an algorithm reference or through a compatible embeddabl
 library after license review. Plugin UI, port automation, and plugin thread
 ownership must not be copied into the Android driver.
 
+## Native Implementation Style
+
+New DSP code follows a C-with-classes style:
+
+- concrete `final` classes own effect state and preallocated resources;
+- public lifecycle stays small and explicit: `Prepare`, `Reset`, parameter update,
+  and `Process`;
+- the graph composes concrete modules instead of storing a polymorphic hierarchy;
+- processing code uses plain loops, POD parameter snapshots, explicit buffers, and
+  predictable control flow;
+- constructors do not perform expensive planning; `Prepare` performs all work that
+  may allocate or design coefficients;
+- `Process` is `noexcept` and performs no allocation, locking, logging, file I/O,
+  coefficient design, or container resizing;
+- exceptions and RTTI remain disabled; templates are limited to small compile-time
+  kernels and format conversion rather than framework metaprogramming;
+- RAII is used for ownership and cleanup, not to hide audio-thread work;
+- the Android effect boundary remains a C-compatible API around the concrete C++
+  graph.
+
+Typical module shape:
+
+```cpp
+class StereoLimiter final {
+public:
+    bool Prepare(const DspConfig &config, DspArena &arena);
+    void Reset() noexcept;
+    void SetParams(const LimiterParams &params) noexcept;
+    void Process(float *interleaved, size_t frames) noexcept;
+
+private:
+    LimiterParams params_{};
+    // Prepared state and non-owning arena-backed buffers.
+};
+```
+
 ## Effect Migration Order
 
 ### Phase 0: Runtime Foundation
