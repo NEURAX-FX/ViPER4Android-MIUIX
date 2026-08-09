@@ -123,8 +123,10 @@ during a swap.
 ### Crossfade
 
 For a same-rate replacement, old and new graphs may run in parallel for roughly
-5 ms and combine with an equal-power crossfade. This prevents parameter/state
-discontinuities while preserving old graph output during preparation.
+5 ms and combine with a precomputed sine/cosine crossfade normalized so correlated
+signals do not receive the roughly 3 dB midpoint boost of an unnormalized
+equal-power crossfade. This prevents parameter/state discontinuities while
+preserving old graph output during preparation.
 
 When the sample rate changes, the old graph is never fed samples at the new rate.
 Its filters and delays are mathematically invalid for that input. The new graph
@@ -289,8 +291,8 @@ Initial quantitative targets:
 - no invalid filter coefficients at or near Nyquist;
 - 384 kHz stereo Float32 CPU and memory usage within the device budget, with no
   callback heap allocation;
-- the approximately 5 ms equal-power transition peak no greater than the larger
-  pre/post level by `1 dB`;
+- the approximately 5 ms correlation-safe transition peak no greater than the
+  larger pre/post level by `1 dB`;
 - unsupported format/rate errors are visible and truthful rather than silently
   enabling a partial effect chain.
 
