@@ -139,7 +139,14 @@
     <!-- Convolver -->
     <string name="section_convolver">Конвольвер</string>
     <string name="label_convolver_kernel">Файл ядра</string>
-    <string name="label_convolver_cross_channel">Смешивание каналов</string>
+    <string name="label_convolver_cross_channel">Усиление перекрёстной ветви</string>
+    <string name="label_convolver_wet">Обработанный сигнал</string>
+    <string name="label_convolver_output_gain">Выходное усиление</string>
+    <string name="label_convolver_routing">Маршрутизация</string>
+    <string name="label_convolver_cross_delay">Перекрёстная задержка</string>
+    <string name="convolver_routing_direct_cross">Прямой + перекрёстный</string>
+    <string name="convolver_routing_direct_only">Только прямой</string>
+    <string name="convolver_routing_cross_only">Только перекрёстный</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">Объемный звук</string>

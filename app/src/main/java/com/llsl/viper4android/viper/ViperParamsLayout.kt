@@ -10,7 +10,7 @@ package com.llsl.viper4android.viper
 
 object ViperParamsLayout {
     // Root struct: viper::ViPERParams
-    const val SIZE: Int = 1144
+    const val SIZE: Int = 1160
     const val MASTER_LIMITER: Int = 0
     const val PLAYBACK_GAIN_CONTROL: Int = 12
     const val LUFS: Int = 28
@@ -21,20 +21,20 @@ object ViperParamsLayout {
     const val SPECTRUM_EXTENSION: Int = 172
     const val EQUALIZER: Int = 184
     const val CONVOLVER: Int = 316
-    const val DDC: Int = 324
-    const val FIELD_SURROUND: Int = 328
-    const val DIFF_SURROUND: Int = 344
-    const val STEREO_IMAGER: Int = 364
-    const val HEADPHONE_SURROUND: Int = 388
-    const val REVERB: Int = 396
-    const val DYNAMIC_SYSTEM: Int = 420
-    const val CLARITY: Int = 452
-    const val CURE: Int = 464
-    const val TUBE_SIMULATOR: Int = 472
-    const val ANALOG_X: Int = 476
-    const val SPEAKER_CORRECTION: Int = 484
-    const val MULTIBAND_COMPRESSOR: Int = 488
-    const val DYNAMIC_EQ: Int = 856
+    const val DDC: Int = 340
+    const val FIELD_SURROUND: Int = 344
+    const val DIFF_SURROUND: Int = 360
+    const val STEREO_IMAGER: Int = 380
+    const val HEADPHONE_SURROUND: Int = 404
+    const val REVERB: Int = 412
+    const val DYNAMIC_SYSTEM: Int = 436
+    const val CLARITY: Int = 468
+    const val CURE: Int = 480
+    const val TUBE_SIMULATOR: Int = 488
+    const val ANALOG_X: Int = 492
+    const val SPEAKER_CORRECTION: Int = 500
+    const val MULTIBAND_COMPRESSOR: Int = 504
+    const val DYNAMIC_EQ: Int = 872
 
     object MasterLimiter {
         const val SIZE: Int = 12
@@ -123,9 +123,13 @@ object ViperParamsLayout {
     }
 
     object Convolver {
-        const val SIZE: Int = 8
+        const val SIZE: Int = 24
         const val ENABLE: Int = 0
         const val CROSS_CHANNEL: Int = 4
+        const val WET: Int = 8
+        const val OUTPUT_GAIN_DB: Int = 12
+        const val ROUTING: Int = 16
+        const val CROSS_DELAY_MS: Int = 20
     }
 
     object Ddc {

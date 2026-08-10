@@ -732,6 +732,42 @@ class ConvolverEffect : EffectGroupBuilder("convolver") {
             { copy(convolver = convolver.copy(crossChannel = it)) },
             range = 0..100,
         )
+    val wet =
+        int(
+            ViperParams.PARAM_CONVOLVER_WET,
+            "wet",
+            100,
+            { it.convolver.wet },
+            { copy(convolver = convolver.copy(wet = it)) },
+            range = 0..100,
+        )
+    val outputGain =
+        int(
+            ViperParams.PARAM_CONVOLVER_OUTPUT_GAIN,
+            "outputGain",
+            0,
+            { it.convolver.outputGain },
+            { copy(convolver = convolver.copy(outputGain = it)) },
+            range = -240..240,
+        )
+    val routing =
+        int(
+            ViperParams.PARAM_CONVOLVER_ROUTING,
+            "routing",
+            0,
+            { it.convolver.routing },
+            { copy(convolver = convolver.copy(routing = it)) },
+            range = 0..2,
+        )
+    val crossDelay100Ns =
+        int(
+            ViperParams.PARAM_CONVOLVER_CROSS_DELAY,
+            "crossDelay100Ns",
+            3125,
+            { it.convolver.crossDelay100Ns },
+            { copy(convolver = convolver.copy(crossDelay100Ns = it)) },
+            range = 0..100000,
+        )
 }
 
 class FieldSurroundEffect : EffectGroupBuilder("fieldSurround") {

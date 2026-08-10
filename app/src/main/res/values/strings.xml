@@ -142,7 +142,14 @@
     <!-- Convolver -->
     <string name="section_convolver">Convolver</string>
     <string name="label_convolver_kernel">Kernel File</string>
-    <string name="label_convolver_cross_channel">Cross-Channel</string>
+    <string name="label_convolver_cross_channel">Cross Branch Gain</string>
+    <string name="label_convolver_wet">Wet</string>
+    <string name="label_convolver_output_gain">Output Gain</string>
+    <string name="label_convolver_routing">Routing</string>
+    <string name="label_convolver_cross_delay">Cross Delay</string>
+    <string name="convolver_routing_direct_cross">Direct + Cross</string>
+    <string name="convolver_routing_direct_only">Direct Only</string>
+    <string name="convolver_routing_cross_only">Cross Only</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">Field Surround</string>

@@ -1131,6 +1131,10 @@ fun ConvolverSection(
     val enabled = vals.enable
     val kernel = vals.kernelFile
     val crossChannel = vals.crossChannel
+    val wet = vals.wet
+    val outputGain = vals.outputGain
+    val routing = vals.routing
+    val crossDelay100Ns = vals.crossDelay100Ns
 
     val kernelFiles by viewModel.kernelFileList.collectAsStateWithLifecycle()
     val kernelNoneLabel = stringResource(R.string.label_none)
@@ -1157,12 +1161,82 @@ fun ConvolverSection(
             value = crossChannel.toFloat(),
             onValueChange = { viewModel.applyPref(Effects.convolver.crossChannel, it.roundToInt()) },
             valueRange = 0f..100f,
+            valueLabel = "$crossChannel%",
             edit =
                 SliderEdit(
                     displayValue = crossChannel.toDouble(),
                     displayRange = 0.0..100.0,
                     decimals = 0,
                     onCommit = { viewModel.applyPref(Effects.convolver.crossChannel, it.roundToInt().coerceIn(0, 100)) },
+                ),
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_convolver_wet),
+            value = wet.toFloat(),
+            onValueChange = { viewModel.applyPref(Effects.convolver.wet, it.roundToInt()) },
+            valueRange = 0f..100f,
+            valueLabel = "$wet%",
+            edit =
+                SliderEdit(
+                    displayValue = wet.toDouble(),
+                    displayRange = 0.0..100.0,
+                    decimals = 0,
+                    unit = "%",
+                    onCommit = { viewModel.applyPref(Effects.convolver.wet, it.roundToInt().coerceIn(0, 100)) },
+                ),
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_convolver_output_gain),
+            value = outputGain.toFloat(),
+            onValueChange = { viewModel.applyPref(Effects.convolver.outputGain, it.roundToInt()) },
+            valueRange = -240f..240f,
+            valueLabel = String.format(Locale.US, "%.1f dB", outputGain / 10f),
+            edit =
+                SliderEdit(
+                    displayValue = outputGain / 10.0,
+                    displayRange = -24.0..24.0,
+                    decimals = 1,
+                    unit = "dB",
+                    onCommit = {
+                        viewModel.applyPref(
+                            Effects.convolver.outputGain,
+                            (it * 10).roundToInt().coerceIn(-240, 240),
+                        )
+                    },
+                ),
+        )
+        val routingOptions =
+            listOf(
+                stringResource(R.string.convolver_routing_direct_cross),
+                stringResource(R.string.convolver_routing_direct_only),
+                stringResource(R.string.convolver_routing_cross_only),
+            )
+        LabeledDropdown(
+            label = stringResource(R.string.label_convolver_routing),
+            selectedValue = routingOptions.getOrElse(routing) { routingOptions[0] },
+            options = routingOptions,
+            onOptionSelected = { index, _ -> viewModel.applyPref(Effects.convolver.routing, index) },
+        )
+        LabeledSlider(
+            label = stringResource(R.string.label_convolver_cross_delay),
+            value = crossDelay100Ns.toFloat(),
+            onValueChange = {
+                viewModel.applyPref(Effects.convolver.crossDelay100Ns, it.roundToInt())
+            },
+            valueRange = 0f..100000f,
+            valueLabel = String.format(Locale.US, "%.4f ms", crossDelay100Ns / 10000f),
+            edit =
+                SliderEdit(
+                    displayValue = crossDelay100Ns / 10000.0,
+                    displayRange = 0.0..10.0,
+                    decimals = 4,
+                    unit = "ms",
+                    onCommit = {
+                        viewModel.applyPref(
+                            Effects.convolver.crossDelay100Ns,
+                            (it * 10000).roundToInt().coerceIn(0, 100000),
+                        )
+                    },
                 ),
         )
     }

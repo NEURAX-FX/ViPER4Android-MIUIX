@@ -271,6 +271,10 @@ object ViperParamsSerializer {
         val effectiveEnable = s.enable && s.kernelFile.isNotEmpty()
         buf.putBool(base + l.ENABLE, effectiveEnable)
         buf.putFloat(base + l.CROSS_CHANNEL, s.crossChannel / 100f)
+        buf.putFloat(base + l.WET, s.wet / 100f)
+        buf.putFloat(base + l.OUTPUT_GAIN_DB, s.outputGain / 10f)
+        buf.putInt(base + l.ROUTING, s.routing)
+        buf.putFloat(base + l.CROSS_DELAY_MS, s.crossDelay100Ns / 10000f)
     }
 
     private fun writeDdc(

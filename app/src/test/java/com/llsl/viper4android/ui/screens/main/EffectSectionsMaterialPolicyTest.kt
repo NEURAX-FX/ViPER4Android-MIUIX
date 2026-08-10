@@ -18,6 +18,16 @@ class EffectSectionsMaterialPolicyTest {
         assertFalse("Main effect cards should not use Material3 Switch", "import androidx.compose.material3.Switch" in source)
     }
 
+    @Test
+    fun convolverExposesEelMixAndRoutingControls() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
+
+        assertTrue("Convolver should expose Wet", "Effects.convolver.wet" in source)
+        assertTrue("Convolver should expose Output Gain", "Effects.convolver.outputGain" in source)
+        assertTrue("Convolver should expose Routing", "Effects.convolver.routing" in source)
+        assertTrue("Convolver should expose precise Cross Delay", "Effects.convolver.crossDelay100Ns" in source)
+    }
+
     private fun projectRoot(): Path {
         val start = Paths.get(System.getProperty("user.dir")).toAbsolutePath()
         return generateSequence(start) { it.parent }

@@ -101,6 +101,10 @@ data class ConvolverState(
     val enable: Boolean = false,
     val kernelFile: String = "",
     val crossChannel: Int = 0,
+    val wet: Int = 100,
+    val outputGain: Int = 0,
+    val routing: Int = 0,
+    val crossDelay100Ns: Int = 3125,
 )
 
 data class FieldSurroundState(

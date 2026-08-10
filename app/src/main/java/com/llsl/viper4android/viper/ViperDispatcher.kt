@@ -541,6 +541,13 @@ object ViperDispatcher {
         effect.setParameter(ViperParams.PARAM_CONVOLVER_ENABLE, if (state.convolver.enable) 1 else 0)
         if (state.convolver.enable) {
             effect.setParameter(ViperParams.PARAM_CONVOLVER_CROSS_CHANNEL, state.convolver.crossChannel)
+            effect.setParameter(ViperParams.PARAM_CONVOLVER_WET, state.convolver.wet)
+            effect.setParameter(ViperParams.PARAM_CONVOLVER_OUTPUT_GAIN, state.convolver.outputGain)
+            effect.setParameter(ViperParams.PARAM_CONVOLVER_ROUTING, state.convolver.routing)
+            effect.setParameter(
+                ViperParams.PARAM_CONVOLVER_CROSS_DELAY,
+                state.convolver.crossDelay100Ns,
+            )
         }
 
         // Field Surround

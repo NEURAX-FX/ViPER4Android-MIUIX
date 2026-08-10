@@ -139,7 +139,14 @@
     <!-- Convolver -->
     <string name="section_convolver">脉冲卷积器</string>
     <string name="label_convolver_kernel">样本文件</string>
-    <string name="label_convolver_cross_channel">通道路由</string>
+    <string name="label_convolver_cross_channel">交叉支路增益</string>
+    <string name="label_convolver_wet">湿声比例</string>
+    <string name="label_convolver_output_gain">输出增益</string>
+    <string name="label_convolver_routing">路由模式</string>
+    <string name="label_convolver_cross_delay">交叉延迟</string>
+    <string name="convolver_routing_direct_cross">直达 + 交叉</string>
+    <string name="convolver_routing_direct_only">仅直达</string>
+    <string name="convolver_routing_cross_only">仅交叉</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">场环绕</string>

@@ -28,7 +28,7 @@ object ConfigChannel {
     private const val SHM_BULK_PATH = "/data/local/tmp/v4a/shm_bulk.bin"
 
     private const val SHM_MAGIC = 0x534D3456 // 'V4MS' little-endian
-    private const val FORMAT_VERSION = 5
+    private const val FORMAT_VERSION = 6
 
     private const val STATUS_SHM_SIZE = 256
     private const val PARAM_SHM_SIZE = 4096
