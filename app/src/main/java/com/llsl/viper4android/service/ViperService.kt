@@ -26,6 +26,7 @@ import com.llsl.viper4android.utils.RootShell
 import com.llsl.viper4android.utils.WavDecoder
 import com.llsl.viper4android.viper.ConfigChannel
 import com.llsl.viper4android.viper.DriverTelemetry
+import com.llsl.viper4android.viper.IemDriverTelemetry
 import com.llsl.viper4android.viper.ViperDispatcher
 import com.llsl.viper4android.viper.ViperEffect
 import com.llsl.viper4android.viper.ViperParams
@@ -412,6 +413,9 @@ class ViperService : LifecycleService() {
     }
 
     fun readTelemetry(): DriverTelemetry? = telemetryEffect?.getTelemetry()
+
+    fun readIemTelemetry(): IemDriverTelemetry? =
+        if (useAidlTypeUuid) null else telemetryEffect?.getIemTelemetry()
 
     fun dispatchParam(
         param: Int,

@@ -244,6 +244,15 @@ class ViperEffect(
             ),
         )
 
+    fun getIemTelemetry(): IemDriverTelemetry? =
+        IemDriverTelemetry.parse(
+            getParameter(
+                param = ViperParams.PARAM_GET_IEM_TELEMETRY,
+                size = IemDriverTelemetry.WIRE_SIZE,
+                logFailure = false,
+            ),
+        )
+
     fun getDriverVersionCode(): Int = getParameter(ViperParams.PARAM_GET_DRIVER_VERSION_CODE)
 
     fun getArchitectureString(): String {

@@ -756,6 +756,22 @@ class MainViewModel
             viewModelScope.launch(Dispatchers.IO) { applyConvolverKernel(kernel) }
         }
 
+        fun setIemEnabled(enabled: Boolean) {
+            applyPref(Effects.iem.enable, enabled)
+        }
+
+        fun setIemEncoderMode(mode: Int) {
+            applyPref(Effects.iem.encoderMode, mode.coerceIn(0, 2))
+        }
+
+        fun setIemOrder(order: Int) {
+            applyPref(Effects.iem.order, order.coerceIn(1, 3))
+        }
+
+        fun setIemWet(wetPercent: Int) {
+            applyPref(Effects.iem.wet, wetPercent.coerceIn(0, 100))
+        }
+
         private fun repairConvolverSelection() {
             val convolver = _uiState.value.convolver
             if (!convolver.enable) return

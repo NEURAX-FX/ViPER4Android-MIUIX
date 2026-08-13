@@ -1,5 +1,7 @@
 package com.llsl.viper4android.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +58,7 @@ fun SettingsDialog(
     onDebugUnlocked: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
     var driverTapCount by remember { mutableIntStateOf(0) }
     val unknown = stringResource(R.string.status_unknown)
     val driverVersion = driverStatus.versionName.ifBlank { unknown }
@@ -144,6 +148,14 @@ fun SettingsDialog(
                 SettingsInfoRow(
                     title = stringResource(R.string.settings_app_version),
                     value = appVersionName,
+                )
+                SettingsRowDivider()
+                SettingsActionRow(
+                    title = stringResource(R.string.iem_license_title),
+                    summary = stringResource(R.string.iem_license_summary),
+                    onClick = {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://plugins.iem.at")))
+                    },
                 )
             }
         }

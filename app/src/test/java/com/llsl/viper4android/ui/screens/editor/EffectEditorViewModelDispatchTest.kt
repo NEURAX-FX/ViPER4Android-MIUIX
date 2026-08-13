@@ -289,6 +289,25 @@ class EffectEditorViewModelDispatchTest {
             assertEquals(1, viewModel.undoCount.value)
         }
 
+    @Test
+    fun iemRuntimeCommandsAreTransientAndIndexedSourcesDispatchCorrectly() =
+        runBlocking {
+            val target = RecordingTarget()
+            val store = newStore()
+            store.replaceState(EffectState(masterEnable = true, iem = com.llsl.viper4android.effect.IemState(general = com.llsl.viper4android.effect.IemGeneralState(enable = true))))
+            store.attachDispatchTarget(target)
+            target.commands.clear()
+            val viewModel = EffectEditorViewModel(store)
+
+            viewModel.setIemFreeze(true)
+            assertEquals(EffectDispatchCommand.Scalar(0x12102, 1, true), target.commands.last())
+            assertTrue(store.state.value.iem.freeze)
+            viewModel.resetIemRotation()
+            assertEquals(EffectDispatchCommand.Scalar(0x12101, 1, true), target.commands.last())
+            viewModel.updateIemMultiSource(Effects.iem.multiAzimuth, 1, 4200)
+            assertEquals(EffectDispatchCommand.Band(0x12020, 1, 4200, true), target.commands.last())
+        }
+
     private fun newStore(): EffectStateStore =
         EffectStateStore(
             preferenceWriter = NoopWriter(),

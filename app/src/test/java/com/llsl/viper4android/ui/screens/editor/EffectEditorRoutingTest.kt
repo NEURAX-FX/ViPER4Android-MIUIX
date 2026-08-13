@@ -13,6 +13,11 @@ class EffectEditorRoutingTest {
     }
 
     @Test
+    fun iemUsesStableEditorRoute() {
+        assertEquals(EditorKind.IEM, editorKindFromRoute("iem"))
+    }
+
+    @Test
     fun unknownEditorRouteIsRejected() {
         assertNull(editorKindFromRoute("unknown-effect"))
         assertNull(editorKindFromRoute(null))

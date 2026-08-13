@@ -3,7 +3,8 @@ package com.llsl.viper4android.ui.screens.editor
 enum class EditorKind {
     FIR_EQUALIZER,
     DYNAMIC_EQUALIZER,
-    MULTIBAND_COMPRESSOR;
+    MULTIBAND_COMPRESSOR,
+    IEM;
 
     val route: String
         get() = name.lowercase()

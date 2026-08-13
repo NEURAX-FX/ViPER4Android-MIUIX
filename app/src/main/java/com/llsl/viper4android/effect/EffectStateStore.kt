@@ -3,6 +3,8 @@ package com.llsl.viper4android.effect
 import com.llsl.viper4android.data.repository.ViperRepository
 import com.llsl.viper4android.service.ViperService
 import com.llsl.viper4android.viper.DriverTelemetry
+import com.llsl.viper4android.viper.IemDriverTelemetry
+import com.llsl.viper4android.viper.ViperParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -65,6 +67,8 @@ interface EffectDispatchTarget {
     fun dispatch(command: EffectDispatchCommand)
 
     fun readTelemetry(): DriverTelemetry? = null
+
+    fun readIemTelemetry(): IemDriverTelemetry? = null
 }
 
 private class RepositoryEffectPreferenceWriter(
@@ -151,6 +155,8 @@ private class ViperServiceDispatchTarget(
     }
 
     override fun readTelemetry(): DriverTelemetry? = service.readTelemetry()
+
+    override fun readIemTelemetry(): IemDriverTelemetry? = service.readIemTelemetry()
 }
 
 /** One preference assignment inside an [EffectStateStore.applyTransaction] batch. */
@@ -213,6 +219,18 @@ class EffectStateStore internal constructor(
     }
 
     fun readTelemetry(): DriverTelemetry? = dispatchTarget?.readTelemetry()
+
+    fun readIemTelemetry(): IemDriverTelemetry? = dispatchTarget?.readIemTelemetry()
+
+    fun dispatchTransientIemCommand(
+        paramId: Int,
+        value: Int,
+    ) {
+        if (paramId == ViperParams.COMMAND_IEM_GRANULAR_FREEZE) {
+            mutableState.update { current -> current.copy(iem = current.iem.copy(freeze = value != 0)) }
+        }
+        dispatchTarget?.dispatch(EffectDispatchCommand.Scalar(paramId, value, true))
+    }
 
     fun restoreState(state: EffectState) {
         val previous = mutableState.value
@@ -355,7 +373,10 @@ class EffectStateStore internal constructor(
     }
 
     private fun normalizeEffectState(state: EffectState): EffectState =
-        state.copy(multibandCompressor = normalizeMultibandCompressorState(state.multibandCompressor))
+        state.copy(
+            multibandCompressor = normalizeMultibandCompressorState(state.multibandCompressor),
+            iem = normalizeIemState(state.iem),
+        )
 
     private fun changedMultibandWrites(
         before: EffectState,

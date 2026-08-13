@@ -16,7 +16,7 @@ class MultibandPreviewPolicyTest {
         assertTrue("MainScreen must pass the preview preference", "showCurvePreview = showCurvePreviews" in mainScreen)
         assertTrue("The section must accept the preview preference", "showCurvePreview: Boolean = true" in sections)
         assertTrue("Preview mode must be explicit", "if (showCurvePreview)" in sections)
-        assertTrue("No-graph mode must keep an edit action", "PreviewEditAction(onClick = onOpenEditor)" in sections)
+        assertTrue("No-graph mode must keep an explicit editor row", "ViperEditorRow(" in sections)
     }
 
     @Test

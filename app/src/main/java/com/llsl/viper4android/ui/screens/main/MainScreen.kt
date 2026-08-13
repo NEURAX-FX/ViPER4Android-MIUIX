@@ -168,6 +168,7 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             },
             state = state,
             viewModel = viewModel,
+            aidlModeActive = aidlMode,
             showCurvePreviews = showCurvePreviews,
             onOpenEditor = { kind ->
                 context.startActivity(EffectEditorActivity.createIntent(context, kind))
@@ -315,6 +316,7 @@ private fun EffectList(
     headerContent: @Composable () -> Unit,
     state: EffectState,
     viewModel: MainViewModel,
+    aidlModeActive: Boolean,
     showCurvePreviews: Boolean,
     onOpenEditor: (EditorKind) -> Unit,
     modifier: Modifier = Modifier,
@@ -356,10 +358,20 @@ private fun EffectList(
             DynamicEqSection(
                 state = state,
                 viewModel = viewModel,
+                showCurvePreview = showCurvePreviews,
                 onOpenEditor = { onOpenEditor(EditorKind.DYNAMIC_EQUALIZER) },
             )
         }
         item { ConvolverSection(state, viewModel) }
+        if (shouldShowIemCard(aidlModeActive)) {
+            item {
+                IemSection(
+                    state = state,
+                    viewModel = viewModel,
+                    onOpenEditor = { onOpenEditor(EditorKind.IEM) },
+                )
+            }
+        }
         item { FieldSurroundSection(state, viewModel) }
         item { DiffSurroundSection(state, viewModel) }
         item { StereoImagerSection(state, viewModel) }

@@ -1,6 +1,8 @@
 package com.llsl.viper4android.effect
 
 import com.llsl.viper4android.viper.DriverTelemetry
+import com.llsl.viper4android.viper.IemDriverTelemetry
+import com.llsl.viper4android.viper.ViperParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -267,6 +269,33 @@ class EffectStateStoreTest {
         assertEquals(null, store.readTelemetry())
     }
 
+    @Test
+    fun freezeCommandUpdatesTransientStateWithoutPreferenceWrite() =
+        runBlocking {
+            val writer = RecordingPreferenceWriter()
+            val target = RecordingDispatchTarget()
+            val store = newStore(writer)
+            store.replaceState(EffectState(masterEnable = true))
+            store.attachDispatchTarget(target)
+            target.commands.clear()
+
+            store.dispatchTransientIemCommand(ViperParams.COMMAND_IEM_GRANULAR_FREEZE, 1)
+            store.flush()
+
+            assertTrue(store.state.value.iem.freeze)
+            assertEquals(
+                listOf(
+                    EffectDispatchCommand.Scalar(
+                        ViperParams.COMMAND_IEM_GRANULAR_FREEZE,
+                        1,
+                        true,
+                    ),
+                ),
+                target.commands,
+            )
+            assertTrue(writer.writes.isEmpty())
+        }
+
     private fun newStore(writer: RecordingPreferenceWriter): EffectStateStore =
         EffectStateStore(
             preferenceWriter = writer,
@@ -299,6 +328,7 @@ private class RecordingDispatchTarget : EffectDispatchTarget {
     val commands = mutableListOf<EffectDispatchCommand>()
     private var stateProvider: (() -> EffectState)? = null
     var telemetry: DriverTelemetry? = null
+    var iemTelemetry: IemDriverTelemetry? = null
 
     override fun setStateProvider(provider: () -> EffectState) {
         stateProvider = provider
@@ -309,4 +339,6 @@ private class RecordingDispatchTarget : EffectDispatchTarget {
     }
 
     override fun readTelemetry(): DriverTelemetry? = telemetry
+
+    override fun readIemTelemetry(): IemDriverTelemetry? = iemTelemetry
 }

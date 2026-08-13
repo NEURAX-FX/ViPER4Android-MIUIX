@@ -11,10 +11,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.PowerSettingsNew
-import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -73,6 +73,10 @@ fun EffectEditorScreen(
     viewModel: EffectEditorViewModel,
     onBack: () -> Unit,
 ) {
+    if (kind == EditorKind.IEM) {
+        IemEditorScreen(viewModel = viewModel, onBack = onBack)
+        return
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val connected by viewModel.isServiceConnected.collectAsStateWithLifecycle()
     val undoCount by viewModel.undoCount.collectAsStateWithLifecycle()
@@ -105,14 +109,16 @@ fun EffectEditorScreen(
                     }
                 },
                 actions = {
-                    ViperIconButton(onClick = { showReset = true }) {
-                        Icon(Icons.Default.RestartAlt, contentDescription = stringResource(R.string.editor_reset))
-                    }
-                    ViperIconButton(enabled = undoCount > 0, onClick = viewModel::undo) {
-                        Icon(Icons.Default.Undo, contentDescription = stringResource(R.string.editor_undo))
-                    }
-                    ViperIconButton(enabled = redoCount > 0, onClick = viewModel::redo) {
-                        Icon(Icons.Default.Redo, contentDescription = stringResource(R.string.editor_redo))
+                    if (kind != EditorKind.IEM) {
+                        ViperIconButton(onClick = { showReset = true }) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = stringResource(R.string.editor_reset))
+                        }
+                        ViperIconButton(enabled = undoCount > 0, onClick = viewModel::undo) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.editor_undo))
+                        }
+                        ViperIconButton(enabled = redoCount > 0, onClick = viewModel::redo) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = stringResource(R.string.editor_redo))
+                        }
                     }
                 },
             )
@@ -153,6 +159,7 @@ fun EffectEditorScreen(
                     EditorKind.FIR_EQUALIZER -> FirEqualizerEditor(state, viewModel)
                     EditorKind.DYNAMIC_EQUALIZER -> DynamicEqualizerEditor(state, viewModel)
                     EditorKind.MULTIBAND_COMPRESSOR -> Unit
+                    EditorKind.IEM -> Unit
                 }
             }
         }
@@ -415,6 +422,7 @@ private fun editorTitle(kind: EditorKind): String =
         EditorKind.FIR_EQUALIZER -> "FIR Equalizer"
         EditorKind.DYNAMIC_EQUALIZER -> "Dynamic EQ"
         EditorKind.MULTIBAND_COMPRESSOR -> "Multiband Compressor"
+        EditorKind.IEM -> "IEM Spatial Audio"
     }
 
 private fun isEnabled(kind: EditorKind, state: EffectState): Boolean =
@@ -422,6 +430,7 @@ private fun isEnabled(kind: EditorKind, state: EffectState): Boolean =
         EditorKind.FIR_EQUALIZER -> state.eq.enable
         EditorKind.DYNAMIC_EQUALIZER -> state.dynamicEq.enable
         EditorKind.MULTIBAND_COMPRESSOR -> state.multibandCompressor.enable
+        EditorKind.IEM -> state.iem.general.enable
     }
 
 internal fun editorFrequencyGrid(sampleRate: Int): List<GraphGridLine> =

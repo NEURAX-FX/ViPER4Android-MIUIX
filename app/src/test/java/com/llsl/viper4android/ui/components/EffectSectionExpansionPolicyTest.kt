@@ -9,33 +9,29 @@ import java.nio.file.Paths
 
 class EffectSectionExpansionPolicyTest {
     @Test
-    fun enableSwitchExpandsAndDisablesCollapseForNonToggleOnlySections() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
+    fun headerExpansionAndPowerSwitchStayIndependent() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/viper/ViperEffectCard.kt")
 
-        assertTrue("EffectSection should route switch changes through a local handler", "onCheckedChange = { checked ->" in source)
-        assertTrue("Switch handler should preserve existing enable callback", "onEnabledChange(checked)" in source)
-        assertTrue("Switch handler should expand normal sections when enabled", "expanded = checked" in source)
-        assertTrue("Switch handler should skip expansion state changes for toggle-only sections", "if (!toggleOnly)" in switchHandler(source))
+        assertTrue("Header should own expansion", "Modifier.clickable { expanded = !expanded }" in source)
+        assertTrue("Power switch should directly delegate enable state", "onCheckedChange = onEnabledChange" in source)
+        assertFalse("Power switch must not mutate expansion", "expanded = checked" in source)
     }
 
     @Test
     fun toggleOnlySectionsStillDoNotExposeExpandableContent() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/viper/ViperEffectCard.kt")
 
-        assertTrue("Toggle-only sections should not make the header clickable", ".then(if (toggleOnly) Modifier else Modifier.clickable" in source)
+        assertTrue("Toggle-only sections should not make the header clickable", "if (toggleOnly) {" in source)
         assertTrue("Toggle-only sections should not render AnimatedVisibility content", "if (!toggleOnly) {" in source && "AnimatedVisibility(" in source)
     }
 
     @Test
-    fun switchNoLongerDirectlyDelegatesToEnableCallback() {
-        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
+    fun switchDirectlyDelegatesWithoutHiddenExpansionSideEffects() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/components/viper/ViperEffectCard.kt")
 
-        assertFalse("Switch should not directly delegate because expansion state must be updated too", "onCheckedChange = onEnabledChange" in source)
+        assertTrue("Switch should directly delegate enable changes", "onCheckedChange = onEnabledChange" in source)
+        assertFalse("Switch should not own an expansion handler", "onCheckedChange = { checked ->" in source)
     }
-
-    private fun switchHandler(source: String): String =
-        source.substringAfter("onCheckedChange = { checked ->", missingDelimiterValue = "")
-            .substringBefore("}", missingDelimiterValue = "")
 
     private fun readSource(relativePath: String): String =
         String(Files.readAllBytes(projectRoot().resolve(relativePath)), Charsets.UTF_8)
