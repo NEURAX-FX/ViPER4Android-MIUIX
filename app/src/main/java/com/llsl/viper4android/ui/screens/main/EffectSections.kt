@@ -1,22 +1,17 @@
 package com.llsl.viper4android.ui.screens.main
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -56,38 +51,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
-import com.llsl.viper4android.dsp.GraphHandlePoint
 import com.llsl.viper4android.dsp.dynamicEqGraphModel
 import com.llsl.viper4android.dsp.firGraphModel
 import com.llsl.viper4android.dsp.multibandGraphModel
 import com.llsl.viper4android.effect.EffectState
 import com.llsl.viper4android.effect.Effects
-import com.llsl.viper4android.ui.screens.editor.mbcBandRegions
 import com.llsl.viper4android.ui.components.EqEditDialog
 import com.llsl.viper4android.ui.components.LabeledDropdown
 import com.llsl.viper4android.ui.components.LabeledSlider
 import com.llsl.viper4android.ui.components.LabeledSwitch
 import com.llsl.viper4android.ui.components.SliderEdit
 import com.llsl.viper4android.ui.components.resolvePresetName
-import com.llsl.viper4android.ui.components.viper.GraphDragAxis
-import com.llsl.viper4android.ui.components.viper.GraphHandle
-import com.llsl.viper4android.ui.components.viper.VstResponseGraph
+import com.llsl.viper4android.ui.components.viper.ViperEffectCard
+import com.llsl.viper4android.ui.components.viper.ViperCurvePreview
+import com.llsl.viper4android.ui.components.viper.ViperEditorRow
+import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.EqCurveGraph
-import top.yukonga.miuix.kmp.basic.Card as MiuixCard
-import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
-import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
-import top.yukonga.miuix.kmp.basic.Text as MiuixText
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
@@ -96,135 +82,6 @@ import kotlin.math.roundToInt
 private fun rawToDb(raw: Number): Double = 20.0 * log10(raw.toDouble() / 100.0)
 
 private fun dbToRaw(db: Double): Int = (10.0.pow(db / 20.0) * 100.0).roundToInt()
-
-private val previewColors = listOf(
-    Color(0xFF70D8E0),
-    Color(0xFFE2A65A),
-    Color(0xFFB8A4F4),
-    Color(0xFF7DC889),
-    Color(0xFFE37B93),
-)
-
-/**
- * Converts the shared, driver-derived graph model into the Compose handles this screen
- * draws. The preview and the dedicated editor must never derive their own curve again.
- */
-private fun List<GraphHandlePoint>.toGraphHandles(colors: List<Color>): List<GraphHandle> =
-    mapIndexed { index, point ->
-        GraphHandle(
-            id = point.id,
-            x = point.x,
-            y = point.y,
-            color = colors[index % colors.size],
-            label = point.label,
-            valueDescription = point.valueDescription,
-        )
-    }
-
-@Composable
-private fun PreviewEditAction(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(20.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        MiuixText(
-            text = stringResource(R.string.action_edit_curve),
-            color = MiuixTheme.colorScheme.primary,
-            style = MiuixTheme.textStyles.body1,
-        )
-    }
-}
-
-@Composable
-fun EffectSection(
-    title: String,
-    enabled: Boolean,
-    onEnabledChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    hasEnableSwitch: Boolean = true,
-    toggleOnly: Boolean = false,
-    initiallyExpanded: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-
-    MiuixCard(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
-        cornerRadius = 12.dp,
-        insideMargin = PaddingValues(0.dp),
-    ) {
-        Column {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .then(if (toggleOnly) Modifier else Modifier.clickable { expanded = !expanded })
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (icon != null) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(28.dp)
-                                .background(
-                                    color = MiuixTheme.colorScheme.primary.copy(alpha = if (enabled) 0.16f else 0.08f),
-                                    shape = RoundedCornerShape(8.dp),
-                                ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        MiuixIcon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint =
-                                if (enabled) {
-                                    MiuixTheme.colorScheme.primary
-                                } else {
-                                    MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
-                                },
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                }
-                MiuixText(
-                    text = title,
-                    style = MiuixTheme.textStyles.body1,
-                    modifier = Modifier.weight(1f),
-                )
-                if (hasEnableSwitch) {
-                    MiuixSwitch(
-                        checked = enabled,
-                        onCheckedChange = { checked ->
-                            onEnabledChange(checked)
-                            if (!toggleOnly) {
-                                expanded = checked
-                            }
-                        },
-                    )
-                }
-            }
-
-            if (!toggleOnly) {
-                AnimatedVisibility(
-                    visible = expanded,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp, vertical = 6.dp),
-                    ) {
-                        content()
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun MasterLimiterRows(
@@ -238,12 +95,18 @@ fun MasterLimiterRows(
     val limDb = if (limiter > 0) rawToDb(limiter) else -99.9
     val left = 50 - channelPan / 2
     val right = 50 + channelPan / 2
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_output),
+        summary =
+            formatOutputSummary(
+                outputVolume,
+                channelPan,
+                limiter,
+                stringResource(R.string.label_output_limiter),
+            ),
         enabled = state.masterEnable,
         onEnabledChange = viewModel::setMasterEnabled,
         icon = Icons.AutoMirrored.Filled.VolumeUp,
-        initiallyExpanded = true,
     ) {
         LabeledSlider(
             label = stringResource(R.string.label_output_volume),
@@ -302,9 +165,16 @@ fun PlaybackGainSection(
     val strength = vals.strength
     val maxGain = vals.maxGain
     val threshold = vals.outputThreshold
+    val threshDb = if (threshold > 0) rawToDb(threshold) else -99.9
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_agc),
+        summary =
+            joinEffectSummary(
+                formatMultiplier(strength),
+                "${stringResource(R.string.label_max_gain)} ${formatMultiplier(maxGain)}",
+                String.format(Locale.US, "%.1f dB", threshDb),
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setPlaybackGainControlEnabled,
         icon = Icons.AutoMirrored.Filled.TrendingUp,
@@ -339,7 +209,6 @@ fun PlaybackGainSection(
                     onCommit = { viewModel.applyPref(Effects.playbackGainControl.maxGain, (it * 100).roundToInt().coerceIn(100, 1000)) },
                 ),
         )
-        val threshDb = if (threshold > 0) rawToDb(threshold) else -99.9
         LabeledSlider(
             label = stringResource(R.string.label_agc_output_threshold),
             value = threshold.toFloat(),
@@ -376,8 +245,14 @@ fun LUFSTargetingSection(
             stringResource(R.string.label_lufs_speed_fast),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_lufs_targeting),
+        summary =
+            joinEffectSummary(
+                String.format(Locale.US, "%.1f LUFS", target / -10f),
+                "${stringResource(R.string.label_max_gain)} ${String.format(Locale.US, "%.1f dB", maxGain / 10f)}",
+                speedNames.getOrElse(speed) { speedNames[1] },
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setLufsEnabled,
         icon = Icons.Default.CrisisAlert,
@@ -447,8 +322,14 @@ fun FetCompressorSection(
     val adapt = vals.adapt
     val noClip = vals.noClip
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_fet_compressor),
+        summary =
+            joinEffectSummary(
+                "$threshold dB",
+                String.format(Locale.US, "%.1f:1", ratio / 100.0),
+                if (gainAuto) stringResource(R.string.label_fet_auto_gain) else "$gain dB",
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setFetCompressorEnabled,
         icon = Icons.Default.VerticalAlignCenter,
@@ -660,30 +541,31 @@ fun MultibandCompressorSection(
     val model = remember(state.multibandCompressor, sampleRate) {
         multibandGraphModel(state, sampleRate)
     }
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_multiband_compressor),
+        summary =
+            stringResource(
+                R.string.summary_active_bands,
+                state.multibandCompressor.bandEnables.count { it },
+            ),
         enabled = state.multibandCompressor.enable,
         onEnabledChange = viewModel::setMultibandCompressorEnabled,
         icon = Icons.Default.Compress,
-        initiallyExpanded = true,
     ) {
         if (showCurvePreview) {
-            VstResponseGraph(
-                handles = model.handles.toGraphHandles(previewColors),
+            ViperCurvePreview(
+                curve = model.unitySumCurve,
                 bandCurves = model.bandCurves,
-                referenceCurves = listOf(model.unitySumCurve),
-                bandRegions = mbcBandRegions(
-                    crossovers = model.crossovers,
-                    minFrequency = model.minFrequency,
-                    maxFrequency = model.maxFrequency,
-                ),
-                interactive = false,
+                contentDescription = stringResource(R.string.section_multiband_compressor),
                 onClick = onOpenEditor,
-                onHandleDrag = { _, _, _ -> },
             )
-        } else {
-            PreviewEditAction(onClick = onOpenEditor)
+            Spacer(Modifier.height(8.dp))
         }
+        ViperEditorRow(
+            title = stringResource(R.string.action_open_mbc_editor),
+            icon = Icons.Default.Insights,
+            onClick = onOpenEditor,
+        )
     }
 }
 
@@ -700,8 +582,9 @@ fun DdcSection(
     val vdcNoneLabel = stringResource(R.string.label_none)
     val cdvOptions = vdcFiles.ifEmpty { listOf(vdcNoneLabel) }
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_ddc),
+        summary = basenameOrNone(device, vdcNoneLabel),
         enabled = enabled,
         onEnabledChange = viewModel::setDdcEnabled,
         icon = Icons.Default.SettingsInputComponent,
@@ -729,8 +612,9 @@ fun SpectrumExtensionSection(
     val strength = vals.strength
     val exciter = vals.exciter
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_spectrum_extension),
+        summary = joinEffectSummary("$strength Hz", "$exciter%"),
         enabled = enabled,
         onEnabledChange = viewModel::setSpectrumExtensionEnabled,
         icon = Icons.Default.Waves,
@@ -778,26 +662,35 @@ fun EqualizerSection(
 ) {
     val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
     val model = remember(state.eq, sampleRate) { firGraphModel(state, sampleRate) }
-    val handleColors = listOf(MiuixTheme.colorScheme.primary, MiuixTheme.colorScheme.secondary)
-    EffectSection(
+    val presetName =
+        state.eq.presets
+            .firstOrNull { it.id == state.eq.presetId }
+            ?.let { resolvePresetName(it) }
+            ?: stringResource(R.string.label_custom)
+    ViperEffectCard(
         title = stringResource(R.string.section_equalizer),
+        summary =
+            joinEffectSummary(
+                stringResource(R.string.label_eq_n_bands, state.eq.bandCount),
+                presetName,
+            ),
         enabled = state.eq.enable,
         onEnabledChange = viewModel::setEqEnabled,
         icon = Icons.Default.Equalizer,
-        initiallyExpanded = true,
     ) {
         if (showCurvePreview) {
-            VstResponseGraph(
-                handles = model.handles.toGraphHandles(handleColors),
+            ViperCurvePreview(
                 curve = model.curve,
-                interactive = false,
-                graphHeight = 180.dp,
+                contentDescription = stringResource(R.string.section_equalizer),
                 onClick = onOpenEditor,
-                onHandleDrag = { _, _, _ -> },
             )
-        } else {
-            PreviewEditAction(onClick = onOpenEditor)
+            Spacer(Modifier.height(8.dp))
         }
+        ViperEditorRow(
+            title = stringResource(R.string.action_open_eq_editor),
+            icon = Icons.Default.Equalizer,
+            onClick = onOpenEditor,
+        )
     }
     return
 
@@ -820,7 +713,7 @@ fun EqualizerSection(
     val onPresetDelete = viewModel::deleteEqPreset
     val onReset = viewModel::resetEqBands
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_equalizer),
         enabled = enabled,
         onEnabledChange = onEnabledChange,
@@ -877,24 +770,34 @@ fun EqualizerSection(
 fun DynamicEqSection(
     state: EffectState,
     viewModel: MainViewModel,
+    showCurvePreview: Boolean = true,
     onOpenEditor: () -> Unit,
 ) {
     val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
     val model = remember(state.dynamicEq, sampleRate) { dynamicEqGraphModel(state, sampleRate) }
-    val handleColors = listOf(MiuixTheme.colorScheme.primary, MiuixTheme.colorScheme.secondary)
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_dynamic_eq),
+        summary =
+            joinEffectSummary(
+                stringResource(R.string.label_eq_n_bands, state.dynamicEq.bandCount),
+                stringResource(R.string.label_custom),
+            ),
         enabled = state.dynamicEq.enable,
         onEnabledChange = viewModel::setDynamicEqEnabled,
         icon = Icons.Default.GraphicEq,
-        initiallyExpanded = true,
     ) {
-        VstResponseGraph(
-            handles = model.handles.toGraphHandles(handleColors),
-            curve = model.curve,
-            interactive = false,
+        if (showCurvePreview) {
+            ViperCurvePreview(
+                curve = model.curve,
+                contentDescription = stringResource(R.string.section_dynamic_eq),
+                onClick = onOpenEditor,
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        ViperEditorRow(
+            title = stringResource(R.string.action_open_dynamic_eq_editor),
+            icon = Icons.Default.GraphicEq,
             onClick = onOpenEditor,
-            onHandleDrag = { _, _, _ -> },
         )
     }
     return
@@ -942,7 +845,7 @@ fun DynamicEqSection(
         )
     }
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_dynamic_eq),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicEqEnabled,
@@ -1140,8 +1043,16 @@ fun ConvolverSection(
     val kernelNoneLabel = stringResource(R.string.label_none)
     val kernelOptions = kernelFiles.ifEmpty { listOf(kernelNoneLabel) }
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_convolver),
+        summary =
+            formatConvolverSummary(
+                kernel,
+                wet,
+                crossDelay100Ns,
+                kernelNoneLabel,
+                stringResource(R.string.label_convolver_wet),
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setConvolverEnabled,
         icon = Icons.Default.BlurCircular,
@@ -1243,6 +1154,61 @@ fun ConvolverSection(
 }
 
 @Composable
+fun IemSection(
+    state: EffectState,
+    viewModel: MainViewModel,
+    onOpenEditor: () -> Unit,
+) {
+    val iem = state.iem
+    val modeOptions =
+        listOf(
+            stringResource(R.string.iem_mode_stereo),
+            stringResource(R.string.iem_mode_multi),
+            stringResource(R.string.iem_mode_granular),
+            stringResource(R.string.iem_mode_halo),
+        )
+    val orderOptions =
+        listOf(
+            stringResource(R.string.iem_order_first),
+            stringResource(R.string.iem_order_second),
+            stringResource(R.string.iem_order_third),
+        )
+
+    ViperEffectCard(
+        title = stringResource(R.string.section_iem),
+        summary = iemSummary(iem),
+        enabled = iem.general.enable,
+        onEnabledChange = viewModel::setIemEnabled,
+        icon = Icons.Default.SurroundSound,
+    ) {
+        LabeledDropdown(
+            label = stringResource(R.string.iem_encoder_mode),
+            selectedValue = modeOptions[iem.general.encoderMode.coerceIn(modeOptions.indices)],
+            options = modeOptions,
+            onOptionSelected = { index, _ -> viewModel.setIemEncoderMode(index) },
+        )
+        ViperTabs(
+            tabs = orderOptions,
+            selectedTabIndex = (iem.general.order - 1).coerceIn(orderOptions.indices),
+            onTabSelected = { viewModel.setIemOrder(it + 1) },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        )
+        LabeledSlider(
+            label = stringResource(R.string.iem_wet),
+            value = iem.output.wetPercent.toFloat(),
+            onValueChange = { viewModel.setIemWet(it.roundToInt()) },
+            valueRange = 0f..100f,
+            valueLabel = "${iem.output.wetPercent}%",
+        )
+        ViperEditorRow(
+            title = stringResource(R.string.action_open_iem_editor),
+            icon = Icons.Default.SpatialAudio,
+            onClick = onOpenEditor,
+        )
+    }
+}
+
+@Composable
 fun FieldSurroundSection(
     state: EffectState,
     viewModel: MainViewModel,
@@ -1253,8 +1219,9 @@ fun FieldSurroundSection(
     val midImage = vals.midImage
     val depth = vals.depth
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_field_surround),
+        summary = joinEffectSummary("$widening", "$midImage", "$depth"),
         enabled = enabled,
         onEnabledChange = viewModel::setFieldSurroundEnabled,
         icon = Icons.Default.SurroundSound,
@@ -1317,8 +1284,14 @@ fun DiffSurroundSection(
     val wetDryMix = vals.wetDryMix
     val lpCutoff = vals.lpCutoff
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_diff_surround),
+        summary =
+            joinEffectSummary(
+                "$delay ms",
+                "$wetDryMix%",
+                if (reverse) stringResource(R.string.label_diff_surround_reverse) else stringResource(R.string.label_off),
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setDiffSurroundEnabled,
         icon = Icons.Default.SpatialAudio,
@@ -1391,8 +1364,9 @@ fun StereoImagerSection(
     val lowCrossover = vals.lowCrossover
     val highCrossover = vals.highCrossover
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_stereo_imager),
+        summary = "$lowWidth% / $midWidth% / $highWidth%",
         enabled = enabled,
         onEnabledChange = viewModel::setStereoImagerEnabled,
         icon = Icons.Default.AspectRatio,
@@ -1486,8 +1460,9 @@ fun HeadphoneSurroundSection(
     val enabled = vals.enable
     val quality = vals.quality
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_headphone_surround),
+        summary = stringResource(R.string.label_vhe_quality) + " $quality",
         enabled = enabled,
         onEnabledChange = viewModel::setHeadphoneSurroundEnabled,
         icon = Icons.Default.Headphones,
@@ -1522,8 +1497,9 @@ fun ReverberationSection(
     val wet = vals.wet
     val dry = vals.dry
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_reverb),
+        summary = joinEffectSummary("$roomSize", "$damp", "$wet%"),
         enabled = enabled,
         onEnabledChange = viewModel::setReverbEnabled,
         icon = Icons.Default.BlurOn,
@@ -1633,19 +1609,20 @@ fun DynamicSystemSection(
     val onPresetAdd = viewModel::addDynamicSystemPreset
     val onPresetDelete = viewModel::deleteDynamicSystemPreset
     val onReset = viewModel::resetDynamicSystemCoefficients
+    val dynamicPresetName =
+        dsPresets.find { it.id == dsPresetId }?.let { resolvePresetName(it) }
+            ?: stringResource(R.string.label_custom)
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_dynamic_system),
+        summary = joinEffectSummary(dynamicPresetName, "$strength%"),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicSystemEnabled,
         icon = Icons.Default.CandlestickChart,
     ) {
-        val presetName =
-            dsPresets.find { it.id == dsPresetId }?.let { resolvePresetName(it) }
-                ?: stringResource(R.string.label_custom)
         LabeledDropdown(
             label = stringResource(R.string.label_preset),
-            selectedValue = presetName,
+            selectedValue = dynamicPresetName,
             options = dsPresets.map { resolvePresetName(it) },
             onOptionSelected = { index, _ -> onPresetSelect(dsPresets[index].id) },
         )
@@ -1842,8 +1819,9 @@ fun TubeSimulatorSection(
     val vals = state.tubeSimulator
     val enabled = vals.enable
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_tube_simulator),
+        summary = stringResource(if (enabled) R.string.status_active else R.string.status_inactive),
         enabled = enabled,
         onEnabledChange = viewModel::setTubeSimulatorEnabled,
         icon = Icons.Default.MusicNote,
@@ -1873,8 +1851,9 @@ fun PsychoacousticBassSection(
     val harmonicValues = listOf(2, 3, 4, 5)
     val harmonicIndex = harmonicValues.indexOf(harmonicOrder).coerceAtLeast(0)
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_psycho_bass),
+        summary = joinEffectSummary("$cutoff Hz", "$intensity%", harmonicNames[harmonicIndex]),
         enabled = enabled,
         onEnabledChange = viewModel::setPsychoacousticBassEnabled,
         icon = Icons.Default.Psychology,
@@ -1954,8 +1933,14 @@ fun ViperBassSection(
             stringResource(R.string.bass_mode_subwoofer),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_viper_bass),
+        summary =
+            joinEffectSummary(
+                modeNames.getOrElse(mode) { modeNames[0] },
+                if (mode != 2) "${frequency + 15} Hz" else "",
+                formatMultiplier(gain),
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setBassEnabled,
         icon = Icons.Default.GraphicEq,
@@ -2026,8 +2011,14 @@ fun ViperBassMonoSection(
             stringResource(R.string.bass_mode_subwoofer),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_viper_bass_mono),
+        summary =
+            joinEffectSummary(
+                modeNames.getOrElse(mode) { modeNames[0] },
+                if (mode != 2) "${frequency + 15} Hz" else "",
+                formatMultiplier(gain),
+            ),
         enabled = enabled,
         onEnabledChange = viewModel::setBassMonoEnabled,
         icon = Icons.Default.GraphicEq,
@@ -2096,8 +2087,9 @@ fun ViperClaritySection(
             stringResource(R.string.clarity_mode_xhifi),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_viper_clarity),
+        summary = joinEffectSummary(modeNames.getOrElse(mode) { modeNames[0] }, formatMultiplier(gain)),
         enabled = enabled,
         onEnabledChange = viewModel::setClarityEnabled,
         icon = Icons.Default.Hearing,
@@ -2142,8 +2134,9 @@ fun AuditoryProtectionSection(
             stringResource(R.string.label_strong),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_cure),
+        summary = strengthNames.getOrElse(crossfeedPreset) { strengthNames[0] },
         enabled = enabled,
         onEnabledChange = viewModel::setCureEnabled,
         icon = Icons.Default.HealthAndSafety,
@@ -2175,8 +2168,9 @@ fun AnalogXSection(
             stringResource(R.string.label_strong),
         )
 
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_analogx),
+        summary = modeNames.getOrElse(mode) { modeNames[0] },
         enabled = enabled,
         onEnabledChange = viewModel::setAnalogXEnabled,
         icon = Icons.Default.Memory,
@@ -2195,8 +2189,12 @@ fun SpeakerOptSection(
     state: EffectState,
     viewModel: MainViewModel,
 ) {
-    EffectSection(
+    ViperEffectCard(
         title = stringResource(R.string.section_speaker_optimization),
+        summary =
+            stringResource(
+                if (state.speakerCorrection.enable) R.string.status_active else R.string.status_inactive,
+            ),
         enabled = state.speakerCorrection.enable,
         onEnabledChange = viewModel::setSpeakerCorrectionEnabled,
         icon = Icons.Default.SpeakerPhone,

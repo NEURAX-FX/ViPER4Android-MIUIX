@@ -19,6 +19,8 @@ import com.llsl.viper4android.dsp.safeMultibandCrossoverMax
 import com.llsl.viper4android.dsp.sanitizeGraphSampleRate
 import com.llsl.viper4android.viper.ConfigChannel
 import com.llsl.viper4android.viper.DriverTelemetry
+import com.llsl.viper4android.viper.IemDriverTelemetry
+import com.llsl.viper4android.viper.ViperParams
 import com.llsl.viper4android.viper.mergeDriverTelemetry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +51,8 @@ class EffectEditorViewModel @Inject constructor(
 
     private val _driverTelemetry = MutableStateFlow<DriverTelemetry?>(null)
     val driverTelemetry: StateFlow<DriverTelemetry?> = _driverTelemetry.asStateFlow()
+    private val _iemTelemetry = MutableStateFlow<IemDriverTelemetry?>(null)
+    val iemTelemetry: StateFlow<IemDriverTelemetry?> = _iemTelemetry.asStateFlow()
 
     private val history = EditorHistory<EffectState>()
     private val _undoCount = MutableStateFlow(0)
@@ -99,6 +103,14 @@ class EffectEditorViewModel @Inject constructor(
         _driverTelemetry.value = null
     }
 
+    fun refreshIemTelemetry() {
+        _iemTelemetry.value = store.readIemTelemetry()
+    }
+
+    fun clearIemTelemetry() {
+        _iemTelemetry.value = null
+    }
+
     fun beginGesture() {
         history.beginGesture(state.value)
     }
@@ -123,6 +135,7 @@ class EffectEditorViewModel @Inject constructor(
             EditorKind.FIR_EQUALIZER -> store.updatePref(Effects.equalizer.enable, enabled)
             EditorKind.DYNAMIC_EQUALIZER -> store.updatePref(Effects.dynamicEq.enable, enabled)
             EditorKind.MULTIBAND_COMPRESSOR -> store.updatePref(Effects.multibandCompressor.enable, enabled)
+            EditorKind.IEM -> store.updatePref(Effects.iem.enable, enabled)
         }
     }
 
@@ -130,6 +143,30 @@ class EffectEditorViewModel @Inject constructor(
         beginGesture()
         edit()
         settleGesture()
+    }
+
+    fun updateIemInt(pref: IntPref, value: Int, last: Boolean = true) {
+        store.updatePref(pref, pref.clamp(value), last)
+    }
+
+    fun updateIemBool(pref: BoolPref, value: Boolean) {
+        store.updatePref(pref, value)
+    }
+
+    fun updateIemMultiSource(pref: IntListPref, source: Int, value: Int, last: Boolean = true) {
+        store.updateBandPref(pref, source, pref.clampElement(value), count = 2, last = last)
+    }
+
+    fun updateIemMultiSource(pref: com.llsl.viper4android.effect.BoolListPref, source: Int, value: Boolean) {
+        store.updateBandPref(pref, source, value, count = 2)
+    }
+
+    fun setIemFreeze(enabled: Boolean) {
+        store.dispatchTransientIemCommand(ViperParams.COMMAND_IEM_GRANULAR_FREEZE, if (enabled) 1 else 0)
+    }
+
+    fun resetIemRotation() {
+        store.dispatchTransientIemCommand(ViperParams.COMMAND_IEM_RESET_ROTATION, 1)
     }
 
     fun updateFirBand(index: Int, gain: Double, last: Boolean = true) {
@@ -486,6 +523,7 @@ class EffectEditorViewModel @Inject constructor(
                 )
                 settleGesture()
             }
+            EditorKind.IEM -> Unit
         }
     }
 
