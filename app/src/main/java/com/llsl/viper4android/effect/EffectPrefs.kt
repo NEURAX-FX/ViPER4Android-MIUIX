@@ -244,7 +244,7 @@ suspend fun loadEffectPrefs(
                 }
             }
     }
-    return s
+    return s.copy(iem = normalizeIemState(s.iem))
 }
 
 suspend fun saveEffectPrefs(
@@ -346,7 +346,7 @@ fun deserializeEffectPrefs(
             s = applyPrefFromJson(s, pref, sub)
         }
     }
-    return s
+    return s.copy(iem = normalizeIemState(s.iem))
 }
 
 private fun applyPrefFromJson(

@@ -11,6 +11,10 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object ViperDispatcher {
+    internal sealed interface IemWrite {
+        data class Scalar(val param: Int, val value: Int) : IemWrite
+        data class Indexed(val param: Int, val index: Int, val value: Int) : IemWrite
+    }
     data class BuiltinEqPreset(
         val key: String,
         val nameRes: Int,
@@ -550,6 +554,8 @@ object ViperDispatcher {
             )
         }
 
+        dispatchIemState(effect, state)
+
         // Field Surround
         effect.setParameter(ViperParams.PARAM_FIELD_SURROUND_ENABLE, if (state.fieldSurround.enable) 1 else 0)
         if (state.fieldSurround.enable) {
@@ -656,6 +662,101 @@ object ViperDispatcher {
 
         // Speaker Correction
         effect.setParameter(ViperParams.PARAM_SPEAKER_CORRECTION_ENABLE, if (state.speakerCorrection.enable) 1 else 0)
+    }
+
+    internal fun dispatchIemState(
+        effect: ViperEffect,
+        state: EffectState,
+    ) {
+        iemWrites(state).forEach { write ->
+            when (write) {
+                is IemWrite.Scalar -> effect.setParameter(write.param, write.value)
+                is IemWrite.Indexed -> effect.setParameter(write.param, write.index, write.value)
+            }
+        }
+    }
+
+    internal fun iemWrites(state: EffectState): List<IemWrite> = buildList {
+        val iem = state.iem
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, 0))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_WET, iem.output.wetPercent))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_OUTPUT_GAIN, iem.output.gainDecidb))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_ORDER, iem.general.order))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_ENCODER_MODE, iem.general.encoderMode))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_RENDER_MODE, iem.general.renderMode))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_LATENCY_PROFILE, iem.output.latencyProfile))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_LIMITER_ENABLE, if (iem.output.limiterEnabled) 1 else 0))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_LIMITER_CEILING, iem.output.limiterCeilingCentidb))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_STEREO_AZIMUTH, iem.stereo.azimuthCentidegrees))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_STEREO_ELEVATION, iem.stereo.elevationCentidegrees))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_STEREO_ROLL, iem.stereo.rollCentidegrees))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_STEREO_WIDTH, iem.stereo.widthCentidegrees))
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_STEREO_SAMPLE_WISE, if (iem.stereo.sampleWise) 1 else 0))
+        for (source in 0..1) {
+            add(IemWrite.Indexed(ViperParams.PARAM_IEM_MULTI_AZIMUTH, source,
+                iem.multi.azimuthCentidegrees.getOrElse(source) { if (source == 0) -3000 else 3000 }))
+            add(IemWrite.Indexed(ViperParams.PARAM_IEM_MULTI_ELEVATION, source,
+                iem.multi.elevationCentidegrees.getOrElse(source) { 0 }))
+            add(IemWrite.Indexed(ViperParams.PARAM_IEM_MULTI_GAIN, source,
+                iem.multi.gainDecidb.getOrElse(source) { 0 }))
+            add(IemWrite.Indexed(ViperParams.PARAM_IEM_MULTI_MUTE, source,
+                if (iem.multi.mute.getOrElse(source) { false }) 1 else 0))
+        }
+        val granular = iem.granular
+        listOf(
+            ViperParams.PARAM_IEM_GRANULAR_AZIMUTH to granular.azimuthCentidegrees,
+            ViperParams.PARAM_IEM_GRANULAR_ELEVATION to granular.elevationCentidegrees,
+            ViperParams.PARAM_IEM_GRANULAR_SHAPE to granular.shapeTenths,
+            ViperParams.PARAM_IEM_GRANULAR_SIZE to granular.sizeCentidegrees,
+            ViperParams.PARAM_IEM_GRANULAR_ROLL to granular.rollCentidegrees,
+            ViperParams.PARAM_IEM_GRANULAR_WIDTH to granular.widthCentidegrees,
+            ViperParams.PARAM_IEM_GRANULAR_DELTA_TIME to granular.deltaTimeUs,
+            ViperParams.PARAM_IEM_GRANULAR_DELTA_TIME_MOD to granular.deltaTimeModTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_GRAIN_LENGTH to granular.grainLengthUs,
+            ViperParams.PARAM_IEM_GRANULAR_GRAIN_LENGTH_MOD to granular.grainLengthModTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_READ_POSITION to granular.readPositionUs,
+            ViperParams.PARAM_IEM_GRANULAR_POSITION_MOD to granular.positionModUs,
+            ViperParams.PARAM_IEM_GRANULAR_PITCH to granular.pitchMilliSemitones,
+            ViperParams.PARAM_IEM_GRANULAR_PITCH_MOD to granular.pitchModMilliSemitones,
+            ViperParams.PARAM_IEM_GRANULAR_WINDOW_ATTACK to granular.attackTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_ATTACK_MOD to granular.attackModTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_WINDOW_DECAY to granular.decayTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_DECAY_MOD to granular.decayModTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_MIX to granular.mixTenthsPercent,
+            ViperParams.PARAM_IEM_GRANULAR_SOURCE_PROBABILITY to granular.sourceProbabilityHundredths,
+            ViperParams.PARAM_IEM_GRANULAR_SPATIAL_MODE to granular.spatialMode,
+            ViperParams.PARAM_IEM_GRANULAR_SAMPLE_WISE to if (granular.sampleWise) 1 else 0,
+        ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
+        val halo = iem.halo
+        listOf(
+            ViperParams.PARAM_IEM_HALO_DIALOG_ISOLATE to halo.dialogIsolateThousandths,
+            ViperParams.PARAM_IEM_HALO_DIALOG_AGGRESS to halo.dialogAggressThousandths,
+            ViperParams.PARAM_IEM_HALO_DIALOG_ATTACK to halo.dialogAttackThousandths,
+            ViperParams.PARAM_IEM_HALO_DIALOG_RELEASE to halo.dialogReleaseThousandths,
+            ViperParams.PARAM_IEM_HALO_DIALOG_MIX_IN to halo.dialogMixInThousandths,
+            ViperParams.PARAM_IEM_HALO_DIVERGENCE to halo.divergenceThousandths,
+            ViperParams.PARAM_IEM_HALO_FADE to halo.fadeThousandths,
+            ViperParams.PARAM_IEM_HALO_FADE_REARS to halo.fadeRearsThousandths,
+            ViperParams.PARAM_IEM_HALO_DIFFUSION to halo.diffusionThousandths,
+            ViperParams.PARAM_IEM_HALO_SPACE to halo.spaceThousandths,
+            ViperParams.PARAM_IEM_HALO_BACK_BOOST to if (halo.backBoost) 1 else 0,
+            ViperParams.PARAM_IEM_HALO_REAR_SHELF_ENABLE to if (halo.rearShelfEnable) 1 else 0,
+            ViperParams.PARAM_IEM_HALO_REAR_SHELF_FREQ to halo.rearShelfFreqThousandths,
+            ViperParams.PARAM_IEM_HALO_REAR_SHELF_GAIN to halo.rearShelfGainThousandths,
+        ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
+        val rotation = iem.rotation
+        listOf(
+            ViperParams.PARAM_IEM_ROTATION_YAW to rotation.yawCentidegrees,
+            ViperParams.PARAM_IEM_ROTATION_PITCH to rotation.pitchCentidegrees,
+            ViperParams.PARAM_IEM_ROTATION_ROLL to rotation.rollCentidegrees,
+            ViperParams.PARAM_IEM_ROTATION_INVERT_YAW to if (rotation.invertYaw) 1 else 0,
+            ViperParams.PARAM_IEM_ROTATION_INVERT_PITCH to if (rotation.invertPitch) 1 else 0,
+            ViperParams.PARAM_IEM_ROTATION_INVERT_ROLL to if (rotation.invertRoll) 1 else 0,
+            ViperParams.PARAM_IEM_ROTATION_INVERT_OVERALL to if (rotation.invertOverall) 1 else 0,
+            ViperParams.PARAM_IEM_ROTATION_SEQUENCE to rotation.sequence,
+            ViperParams.PARAM_IEM_HEADPHONE_EQ to iem.decoder.headphoneEq,
+        ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
+        add(IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, if (iem.general.enable) 1 else 0))
     }
 
     fun eqBandLevelsToBytes(bands: List<Double>): ByteArray {

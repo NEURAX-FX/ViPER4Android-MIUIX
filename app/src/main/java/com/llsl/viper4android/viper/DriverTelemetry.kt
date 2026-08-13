@@ -58,6 +58,83 @@ data class DriverTelemetry(
     }
 }
 
+data class IemDriverTelemetry(
+    val sequence: Long,
+    val processedFrames: Long,
+    val latestProcessNs: Long,
+    val averageProcessNs: Long,
+    val maxProcessNs: Long,
+    val deadlineMisses: Long,
+    val outputUnderflows: Long,
+    val inputOverflows: Long,
+    val outputOverflows: Long,
+    val grainPoolExhaustions: Long,
+    val graphGeneration: Long,
+    val hostSampleRate: Int,
+    val internalSampleRate: Int,
+    val latencyFrames: Int,
+    val bypassReason: Int,
+    val enabled: Boolean,
+    val prepared: Boolean,
+    val activeGrains: Int,
+    val encoderMode: Int,
+    val renderMode: Int,
+    val ambisonicsOrder: Int,
+    val haloPrepared: Boolean,
+    val haloStftLatencyFrames: Int,
+    val dialogNetResult: Int,
+    val faultCode: Int,
+    val preparationResult: Int,
+    val latencyMs: Float,
+    val limiterGainReductionDb: Float,
+) {
+    companion object {
+        const val VERSION = 3
+        const val WIRE_SIZE = 168
+
+        fun parse(payload: ByteArray): IemDriverTelemetry? {
+            if (payload.size != WIRE_SIZE) return null
+            val buffer = ByteBuffer.wrap(payload).order(ByteOrder.LITTLE_ENDIAN)
+            if (buffer.int != VERSION || buffer.int != WIRE_SIZE) return null
+            val telemetry =
+                IemDriverTelemetry(
+                    sequence = buffer.long,
+                    processedFrames = buffer.long,
+                    latestProcessNs = buffer.long,
+                    averageProcessNs = buffer.long,
+                    maxProcessNs = buffer.long,
+                    deadlineMisses = buffer.long,
+                    outputUnderflows = buffer.long,
+                    inputOverflows = buffer.long,
+                    outputOverflows = buffer.long,
+                    grainPoolExhaustions = buffer.long,
+                    graphGeneration = buffer.long,
+                    hostSampleRate = buffer.int,
+                    internalSampleRate = buffer.int,
+                    latencyFrames = buffer.int,
+                    bypassReason = buffer.int,
+                    enabled = buffer.int != 0,
+                    prepared = buffer.int != 0,
+                    activeGrains = buffer.int,
+                    encoderMode = buffer.int,
+                    renderMode = buffer.int,
+                    ambisonicsOrder = buffer.int,
+                    haloPrepared = buffer.int != 0,
+                    haloStftLatencyFrames = buffer.int,
+                    dialogNetResult = buffer.int,
+                    faultCode = buffer.int,
+                    preparationResult = buffer.int,
+                    latencyMs = buffer.float,
+                    limiterGainReductionDb = buffer.float,
+                )
+            if (telemetry.hostSampleRate <= 0 || telemetry.internalSampleRate != 96_000) return null
+            if (telemetry.encoderMode !in 0..3 || telemetry.renderMode !in 0..2 || telemetry.ambisonicsOrder !in 1..3) return null
+            if (!telemetry.latencyMs.isFinite() || !telemetry.limiterGainReductionDb.isFinite()) return null
+            return telemetry
+        }
+    }
+}
+
 fun mergeDriverTelemetry(
     current: DriverTelemetry?,
     next: DriverTelemetry?,

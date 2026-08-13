@@ -73,6 +73,51 @@ class DriverTelemetryTest {
         assertNull(mergeDriverTelemetry(current, null))
     }
 
+    @Test
+    fun parsesIemTelemetryV3AndRejectsMalformedPayloads() {
+        val payload =
+            ByteBuffer.allocate(IemDriverTelemetry.WIRE_SIZE)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .apply {
+                    putInt(IemDriverTelemetry.VERSION)
+                    putInt(IemDriverTelemetry.WIRE_SIZE)
+                    repeat(11) { putLong((it + 1).toLong()) }
+                    putInt(48_000)
+                    putInt(96_000)
+                    putInt(1024)
+                    putInt(0)
+                    putInt(1)
+                    putInt(1)
+                    putInt(17)
+                    putInt(3)
+                    putInt(0)
+                    putInt(3)
+                    putInt(1)
+                    putInt(1024)
+                    putInt(1)
+                    putInt(4)
+                    putInt(1)
+                    putFloat(21.333334f)
+                    putFloat(2.5f)
+                }.array()
+
+        val telemetry = IemDriverTelemetry.parse(payload)!!
+        assertEquals(1L, telemetry.sequence)
+        assertEquals(11L, telemetry.graphGeneration)
+        assertEquals(17, telemetry.activeGrains)
+        assertEquals(3, telemetry.encoderMode)
+        assertEquals(0, telemetry.renderMode)
+        assertEquals(3, telemetry.ambisonicsOrder)
+        assertTrue(telemetry.haloPrepared)
+        assertEquals(1024, telemetry.haloStftLatencyFrames)
+        assertEquals(1, telemetry.dialogNetResult)
+        assertTrue(telemetry.enabled)
+        assertEquals(21.333334f, telemetry.latencyMs, 0f)
+        assertNull(IemDriverTelemetry.parse(ByteArray(IemDriverTelemetry.WIRE_SIZE - 1)))
+        payload[0] = 1
+        assertNull(IemDriverTelemetry.parse(payload))
+    }
+
     private fun telemetryPayload(
         version: Int = 1,
         sequence: Int = 1,

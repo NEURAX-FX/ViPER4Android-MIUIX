@@ -1345,6 +1345,7 @@ object Effects {
     val tubeSimulator = TubeSimulatorEffect()
     val analogX = AnalogXEffect()
     val speakerCorrection = SpeakerCorrectionEffect()
+    val iem = IemEffect()
 }
 
 val EFFECT_GROUPS: List<EffectGroup> =
@@ -1373,4 +1374,5 @@ val EFFECT_GROUPS: List<EffectGroup> =
         Effects.tubeSimulator,
         Effects.analogX,
         Effects.speakerCorrection,
+        Effects.iem,
     ).map { it.toGroup() }
