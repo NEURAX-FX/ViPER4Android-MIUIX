@@ -229,6 +229,10 @@ data class IemHaloState(
     val rearShelfEnable: Boolean = true,
     val rearShelfFreqThousandths: Int = 816,
     val rearShelfGainThousandths: Int = 475,
+    val lfeEnabled: Boolean = true,
+    val lfeFrequencyMillionths: Int = 750000,
+    val lfeSplitMillionths: Int = 0,
+    val lfeGainMillionths: Int = 272727,
 )
 
 data class IemStereoState(
@@ -335,6 +339,9 @@ fun normalizeIemState(state: IemState): IemState {
             spaceThousandths = state.halo.spaceThousandths.coerceIn(0, 1000),
             rearShelfFreqThousandths = state.halo.rearShelfFreqThousandths.coerceIn(0, 1000),
             rearShelfGainThousandths = state.halo.rearShelfGainThousandths.coerceIn(0, 1000),
+            lfeFrequencyMillionths = state.halo.lfeFrequencyMillionths.coerceIn(0, 1000000),
+            lfeSplitMillionths = state.halo.lfeSplitMillionths.coerceIn(0, 1000000),
+            lfeGainMillionths = state.halo.lfeGainMillionths.coerceIn(0, 1000000),
         ),
         freeze = false,
     )

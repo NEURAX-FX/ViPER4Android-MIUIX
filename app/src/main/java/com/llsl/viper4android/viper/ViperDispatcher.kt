@@ -743,6 +743,10 @@ object ViperDispatcher {
             ViperParams.PARAM_IEM_HALO_REAR_SHELF_ENABLE to if (halo.rearShelfEnable) 1 else 0,
             ViperParams.PARAM_IEM_HALO_REAR_SHELF_FREQ to halo.rearShelfFreqThousandths,
             ViperParams.PARAM_IEM_HALO_REAR_SHELF_GAIN to halo.rearShelfGainThousandths,
+            ViperParams.PARAM_IEM_HALO_LFE_ENABLE to if (halo.lfeEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY to halo.lfeFrequencyMillionths,
+            ViperParams.PARAM_IEM_HALO_LFE_SPLIT to halo.lfeSplitMillionths,
+            ViperParams.PARAM_IEM_HALO_LFE_GAIN to halo.lfeGainMillionths,
         ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
         val rotation = iem.rotation
         listOf(

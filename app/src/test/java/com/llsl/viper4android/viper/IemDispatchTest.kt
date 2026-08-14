@@ -30,7 +30,7 @@ class IemDispatchTest {
 
         assertEquals(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, 0), writes.first())
         assertEquals(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, 1), writes.last())
-        assertEquals(68, writes.size)
+        assertEquals(72, writes.size)
         assertEquals(8, writes.filterIsInstance<ViperDispatcher.IemWrite.Indexed>().size)
         assertTrue(
             writes.contains(
@@ -39,6 +39,10 @@ class IemDispatchTest {
         )
         assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_RENDER_MODE, 1)))
         assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_SPACE, 800)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_ENABLE, 1)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY, 750000)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_SPLIT, 0)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_GAIN, 272727)))
         assertFalse(
             writes.any {
                 it is ViperDispatcher.IemWrite.Scalar &&
@@ -56,6 +60,10 @@ class IemDispatchTest {
         assertEquals(0x12008, ViperParams.PARAM_IEM_RENDER_MODE)
         assertEquals(0x12070, ViperParams.PARAM_IEM_HALO_DIALOG_ISOLATE)
         assertEquals(0x1207D, ViperParams.PARAM_IEM_HALO_REAR_SHELF_GAIN)
+        assertEquals(0x1207E, ViperParams.PARAM_IEM_HALO_LFE_ENABLE)
+        assertEquals(0x1207F, ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY)
+        assertEquals(0x12080, ViperParams.PARAM_IEM_HALO_LFE_SPLIT)
+        assertEquals(0x12081, ViperParams.PARAM_IEM_HALO_LFE_GAIN)
         assertEquals(0x12102, ViperParams.COMMAND_IEM_GRANULAR_FREEZE)
     }
 }

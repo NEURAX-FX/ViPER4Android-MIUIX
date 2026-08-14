@@ -180,6 +180,20 @@ class IemEffect : EffectGroupBuilder("iem") {
         "haloRearShelfFreq", 816, { it.rearShelfFreqThousandths }, { copy(rearShelfFreqThousandths = it) })
     val haloRearShelfGain = haloInt(ViperParams.PARAM_IEM_HALO_REAR_SHELF_GAIN,
         "haloRearShelfGain", 475, { it.rearShelfGainThousandths }, { copy(rearShelfGainThousandths = it) })
+    val haloLfeEnable = bool(ViperParams.PARAM_IEM_HALO_LFE_ENABLE, "haloLfeEnabled", true,
+        { it.iem.halo.lfeEnabled }, { copy(iem = iem.copy(halo = iem.halo.copy(lfeEnabled = it))) })
+    val haloLfeFrequency = int(ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY,
+        "haloLfeFrequencyMillionths", 750000, { it.iem.halo.lfeFrequencyMillionths },
+        { copy(iem = iem.copy(halo = iem.halo.copy(lfeFrequencyMillionths = it))) },
+        range = 0..1000000)
+    val haloLfeSplit = int(ViperParams.PARAM_IEM_HALO_LFE_SPLIT,
+        "haloLfeSplitMillionths", 0, { it.iem.halo.lfeSplitMillionths },
+        { copy(iem = iem.copy(halo = iem.halo.copy(lfeSplitMillionths = it))) },
+        range = 0..1000000)
+    val haloLfeGain = int(ViperParams.PARAM_IEM_HALO_LFE_GAIN,
+        "haloLfeGainMillionths", 272727, { it.iem.halo.lfeGainMillionths },
+        { copy(iem = iem.copy(halo = iem.halo.copy(lfeGainMillionths = it))) },
+        range = 0..1000000)
 
     private fun stereoInt(param: Int, key: String, default: Int, range: IntRange,
         getValue: (IemStereoState) -> Int,
