@@ -250,6 +250,11 @@
     <string name="iem_editor_halo_rear_shelf_enable">Rear Shelf</string>
     <string name="iem_editor_halo_rear_shelf_freq">Rear Shelf Frequency</string>
     <string name="iem_editor_halo_rear_shelf_gain">Rear Shelf Gain</string>
+    <string name="iem_editor_halo_lfe_section">Halo 7.1 / LFE</string>
+    <string name="iem_editor_halo_lfe_enable">LFE Synthesis</string>
+    <string name="iem_editor_halo_lfe_frequency">LFE Frequency</string>
+    <string name="iem_editor_halo_lfe_split">LFE Split</string>
+    <string name="iem_editor_halo_lfe_gain">LFE Gain</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">Field Surround</string>

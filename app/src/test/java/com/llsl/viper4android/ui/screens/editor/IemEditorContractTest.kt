@@ -18,7 +18,20 @@ class IemEditorContractTest {
         assertFalse(shouldEnableHeadphoneEq(renderMode = 0))
         assertFalse(shouldEnableHeadphoneEq(renderMode = 1))
         assertTrue(shouldEnableHeadphoneEq(renderMode = 2))
-        assertEquals(14, iemHaloControls().size)
+        assertEquals(18, iemHaloControls().size)
+        assertTrue(iemHaloControls().containsAll(listOf("lfeEnable", "lfeFrequency", "lfeSplit", "lfeGain")))
+    }
+
+    @Test
+    fun haloLfeUiMappingsMatchBinaryCurves() {
+        assertEquals(10.0, haloLfeCutoffHz(0), 1.0e-9)
+        assertEquals(200.0, haloLfeCutoffHz(1_000_000), 1.0e-9)
+        assertEquals(94.5741609003176, haloLfeCutoffHz(750_000), 1.0e-9)
+        assertEquals(750_000, haloLfeFrequencyMillionths(haloLfeCutoffHz(750_000)))
+        assertEquals(-45.0, haloLfeGainDb(0), 1.0e-9)
+        assertEquals(10.0, haloLfeGainDb(1_000_000), 1.0e-9)
+        assertEquals(-30.000015, haloLfeGainDb(272_727), 1.0e-9)
+        assertEquals(272_727, haloLfeGainMillionths(haloLfeGainDb(272_727)))
     }
 
     @Test

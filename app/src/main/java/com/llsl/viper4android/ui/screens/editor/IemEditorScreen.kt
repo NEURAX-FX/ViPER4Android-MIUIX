@@ -47,6 +47,8 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.Locale
+import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.roundToInt
 
 const val IEM_PROJECT_URL = "https://plugins.iem.at"
@@ -60,9 +62,26 @@ fun shouldEnableHeadphoneEq(renderMode: Int): Boolean = renderMode == 2
 fun iemHaloControls(): List<String> = listOf(
     "dialogIsolate", "dialogAggress", "dialogAttack", "dialogRelease", "dialogMixIn",
     "divergence", "fade", "fadeRears", "diffusion", "space", "backBoost",
-    "rearShelfEnable", "rearShelfFreq", "rearShelfGain",
+    "rearShelfEnable", "rearShelfFreq", "rearShelfGain", "lfeEnable", "lfeFrequency",
+    "lfeSplit", "lfeGain",
 )
 fun iemTelemetryKeys(): List<String> = listOf("latency", "activeGrains", "queueFaults", "limiterReduction", "fault", "preparation")
+fun haloLfeCutoffHz(normalizedMillionths: Int): Double {
+    val normalized = normalizedMillionths.coerceIn(0, 1_000_000) / 1_000_000.0
+    return exp(ln(10.0) + normalized * (ln(200.0) - ln(10.0)))
+}
+fun haloLfeFrequencyMillionths(frequencyHz: Double): Int {
+    val frequency = frequencyHz.coerceIn(10.0, 200.0)
+    return (((ln(frequency) - ln(10.0)) / (ln(200.0) - ln(10.0))) * 1_000_000.0)
+        .roundToInt()
+        .coerceIn(0, 1_000_000)
+}
+fun haloLfeGainDb(normalizedMillionths: Int): Double =
+    55.0 * normalizedMillionths.coerceIn(0, 1_000_000) / 1_000_000.0 - 45.0
+fun haloLfeGainMillionths(gainDb: Double): Int =
+    (((gainDb.coerceIn(-45.0, 10.0) + 45.0) / 55.0) * 1_000_000.0)
+        .roundToInt()
+        .coerceIn(0, 1_000_000)
 
 fun headphoneEqOptions(): List<HeadphoneEqOption> =
     listOf(
@@ -177,6 +196,41 @@ private fun HaloControls(state: EffectState, vm: EffectEditorViewModel) {
     IemSwitch(stringResource(R.string.iem_editor_halo_rear_shelf_enable), h.rearShelfEnable, Effects.iem.haloRearShelfEnable, vm)
     IemSlider(stringResource(R.string.iem_editor_halo_rear_shelf_freq), h.rearShelfFreqThousandths, 0..1000, 10.0, "%", Effects.iem.haloRearShelfFreq, vm)
     IemSlider(stringResource(R.string.iem_editor_halo_rear_shelf_gain), h.rearShelfGainThousandths, 0..1000, 10.0, "%", Effects.iem.haloRearShelfGain, vm)
+    SectionTitle(stringResource(R.string.iem_editor_halo_lfe_section))
+    IemSwitch(stringResource(R.string.iem_editor_halo_lfe_enable), h.lfeEnabled, Effects.iem.haloLfeEnable, vm)
+    IemMappedSlider(
+        label = stringResource(R.string.iem_editor_halo_lfe_frequency),
+        value = h.lfeFrequencyMillionths,
+        displayValue = haloLfeCutoffHz(h.lfeFrequencyMillionths),
+        displayRange = 10.0..200.0,
+        decimals = 1,
+        unit = "Hz",
+        enabled = h.lfeEnabled,
+        onValueChange = { vm.updateIemInt(Effects.iem.haloLfeFrequency, it) },
+        onDisplayCommit = { haloLfeFrequencyMillionths(it) },
+    )
+    IemSlider(
+        stringResource(R.string.iem_editor_halo_lfe_split),
+        h.lfeSplitMillionths,
+        0..1_000_000,
+        10_000.0,
+        "%",
+        Effects.iem.haloLfeSplit,
+        vm,
+        decimals = 1,
+        enabled = h.lfeEnabled,
+    )
+    IemMappedSlider(
+        label = stringResource(R.string.iem_editor_halo_lfe_gain),
+        value = h.lfeGainMillionths,
+        displayValue = haloLfeGainDb(h.lfeGainMillionths),
+        displayRange = -45.0..10.0,
+        decimals = 1,
+        unit = "dB",
+        enabled = h.lfeEnabled,
+        onValueChange = { vm.updateIemInt(Effects.iem.haloLfeGain, it) },
+        onDisplayCommit = { haloLfeGainMillionths(it) },
+    )
 }
 
 @Composable
@@ -316,18 +370,40 @@ private fun OutputTab(state: EffectState, telemetry: IemDriverTelemetry?, vm: Ef
     ReadOnlyRow(stringResource(R.string.iem_editor_dialog_net), telemetry?.dialogNetResult?.toString() ?: "—")
 }
 
-@Composable private fun IemSlider(label: String, value: Int, range: IntRange, scale: Double, unit: String, pref: IntPref, vm: EffectEditorViewModel, decimals: Int = if (scale >= 100.0) 2 else 1) =
-    IemRawSlider(label, value, range, scale, unit, decimals) { vm.updateIemInt(pref, it) }
+@Composable private fun IemSlider(label: String, value: Int, range: IntRange, scale: Double, unit: String, pref: IntPref, vm: EffectEditorViewModel, decimals: Int = if (scale >= 100.0) 2 else 1, enabled: Boolean = true) =
+    IemRawSlider(label, value, range, scale, unit, decimals, enabled) { vm.updateIemInt(pref, it) }
 
 @Composable
-private fun IemRawSlider(label: String, value: Int, range: IntRange, scale: Double, unit: String, decimals: Int = if (scale >= 100.0) 2 else 1, update: (Int) -> Unit) {
+private fun IemRawSlider(label: String, value: Int, range: IntRange, scale: Double, unit: String, decimals: Int = if (scale >= 100.0) 2 else 1, enabled: Boolean = true, update: (Int) -> Unit) {
     val display = value / scale
     LabeledSlider(
         label = label, value = value.toFloat(), onValueChange = { update(it.roundToInt()) },
         valueRange = range.first.toFloat()..range.last.toFloat(), valueLabel = "${format(display, decimals)} $unit".trim(),
         edit = SliderEdit(display, range.first / scale..range.last / scale, decimals, { update((it * scale).roundToInt()) }, unit),
+        enabled = enabled,
     )
 }
+
+@Composable
+private fun IemMappedSlider(
+    label: String,
+    value: Int,
+    displayValue: Double,
+    displayRange: ClosedFloatingPointRange<Double>,
+    decimals: Int,
+    unit: String,
+    enabled: Boolean,
+    onValueChange: (Int) -> Unit,
+    onDisplayCommit: (Double) -> Int,
+) = LabeledSlider(
+    label = label,
+    value = value.toFloat(),
+    onValueChange = { onValueChange(it.roundToInt()) },
+    valueRange = 0f..1_000_000f,
+    valueLabel = "${format(displayValue, decimals)} $unit",
+    edit = SliderEdit(displayValue, displayRange, decimals, { onValueChange(onDisplayCommit(it)) }, unit),
+    enabled = enabled,
+)
 
 @Composable private fun IemSwitch(label: String, checked: Boolean, pref: BoolPref, vm: EffectEditorViewModel) = LabeledSwitch(label, checked, { vm.updateIemBool(pref, it) })
 

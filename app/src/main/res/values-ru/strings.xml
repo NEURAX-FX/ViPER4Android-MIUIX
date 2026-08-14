@@ -247,6 +247,11 @@
     <string name="iem_editor_halo_rear_shelf_enable">Тыловой полочный фильтр</string>
     <string name="iem_editor_halo_rear_shelf_freq">Частота тылового фильтра</string>
     <string name="iem_editor_halo_rear_shelf_gain">Усиление тылового фильтра</string>
+    <string name="iem_editor_halo_lfe_section">Halo 7.1 / LFE</string>
+    <string name="iem_editor_halo_lfe_enable">Синтез LFE</string>
+    <string name="iem_editor_halo_lfe_frequency">Частота LFE</string>
+    <string name="iem_editor_halo_lfe_split">Разделение LFE</string>
+    <string name="iem_editor_halo_lfe_gain">Усиление LFE</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">Объемный звук</string>

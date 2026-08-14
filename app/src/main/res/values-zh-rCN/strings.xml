@@ -247,6 +247,11 @@
     <string name="iem_editor_halo_rear_shelf_enable">后方搁架滤波</string>
     <string name="iem_editor_halo_rear_shelf_freq">后方搁架频率</string>
     <string name="iem_editor_halo_rear_shelf_gain">后方搁架增益</string>
+    <string name="iem_editor_halo_lfe_section">Halo 7.1 / 低频效果</string>
+    <string name="iem_editor_halo_lfe_enable">LFE 合成</string>
+    <string name="iem_editor_halo_lfe_frequency">LFE 频率</string>
+    <string name="iem_editor_halo_lfe_split">LFE 低频分离</string>
+    <string name="iem_editor_halo_lfe_gain">LFE 增益</string>
 
     <!-- Field Surround -->
     <string name="section_field_surround">场环绕</string>
