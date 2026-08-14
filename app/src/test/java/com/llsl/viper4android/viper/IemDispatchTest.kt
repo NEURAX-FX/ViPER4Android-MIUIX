@@ -30,7 +30,7 @@ class IemDispatchTest {
 
         assertEquals(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, 0), writes.first())
         assertEquals(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, 1), writes.last())
-        assertEquals(72, writes.size)
+        assertEquals(101, writes.size)
         assertEquals(8, writes.filterIsInstance<ViperDispatcher.IemWrite.Indexed>().size)
         assertTrue(
             writes.contains(
@@ -43,6 +43,10 @@ class IemDispatchTest {
         assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY, 750000)))
         assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_SPLIT, 0)))
         assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_HALO_LFE_GAIN, 272727)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_DOWNMIX_DELAY_ENABLE, 1)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_DOWNMIX_CENTER_TRIM, 744444)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_DOWNMIX_LFE_LPF_ENABLE, 0)))
+        assertTrue(writes.contains(ViperDispatcher.IemWrite.Scalar(ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_HPF_FREQUENCY, 57898)))
         assertFalse(
             writes.any {
                 it is ViperDispatcher.IemWrite.Scalar &&
@@ -64,6 +68,10 @@ class IemDispatchTest {
         assertEquals(0x1207F, ViperParams.PARAM_IEM_HALO_LFE_FREQUENCY)
         assertEquals(0x12080, ViperParams.PARAM_IEM_HALO_LFE_SPLIT)
         assertEquals(0x12081, ViperParams.PARAM_IEM_HALO_LFE_GAIN)
+        assertEquals(0x12090, ViperParams.PARAM_IEM_DOWNMIX_DELAY_ENABLE)
+        assertEquals(0x1209D, ViperParams.PARAM_IEM_DOWNMIX_CENTER_DIVERGENCE)
+        assertEquals(0x120A5, ViperParams.PARAM_IEM_DOWNMIX_LFE_TRIM)
+        assertEquals(0x120AC, ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_RIGHT_TRIM)
         assertEquals(0x12102, ViperParams.COMMAND_IEM_GRANULAR_FREEZE)
     }
 }

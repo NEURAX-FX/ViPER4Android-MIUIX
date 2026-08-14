@@ -150,6 +150,78 @@ class IemEffect : EffectGroupBuilder("iem") {
     val headphoneEq = int(ViperParams.PARAM_IEM_HEADPHONE_EQ, "headphoneEq", -1,
         { it.iem.decoder.headphoneEq },
         { copy(iem = iem.copy(decoder = iem.decoder.copy(headphoneEq = it))) }, range = -1..22)
+    val downmixDelayEnable = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_DELAY_ENABLE,
+        "downmixDelayEnabled", true, { it.delayEnabled }, { copy(delayEnabled = it) })
+    val downmixLsDelay = downmixInt(ViperParams.PARAM_IEM_DOWNMIX_LS_DELAY,
+        "downmixLsDelayUs", 0, 0..32000, { it.lsDelayUs }, { copy(lsDelayUs = it) })
+    val downmixRsDelay = downmixInt(ViperParams.PARAM_IEM_DOWNMIX_RS_DELAY,
+        "downmixRsDelayUs", 0, 0..32000, { it.rsDelayUs }, { copy(rsDelayUs = it) })
+    val downmixLsrDelay = downmixInt(ViperParams.PARAM_IEM_DOWNMIX_LSR_DELAY,
+        "downmixLsrDelayUs", 0, 0..32000, { it.lsrDelayUs }, { copy(lsrDelayUs = it) })
+    val downmixRsrDelay = downmixInt(ViperParams.PARAM_IEM_DOWNMIX_RSR_DELAY,
+        "downmixRsrDelayUs", 0, 0..32000, { it.rsrDelayUs }, { copy(rsrDelayUs = it) })
+    val downmixSideShelfEnable = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_ENABLE,
+        "downmixSideShelfEnabled", false, { it.sideShelfEnabled }, { copy(sideShelfEnabled = it) })
+    val downmixSideShelfFrequency = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_FREQUENCY,
+        "downmixSideShelfFrequencyMillionths", 229819, { it.sideShelfFrequencyMillionths },
+        { copy(sideShelfFrequencyMillionths = it) })
+    val downmixSideShelfGain = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_GAIN,
+        "downmixSideShelfGainMillionths", 777778, { it.sideShelfGainMillionths },
+        { copy(sideShelfGainMillionths = it) })
+    val downmixRearShelfEnable = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_ENABLE,
+        "downmixRearShelfEnabled", false, { it.rearShelfEnabled }, { copy(rearShelfEnabled = it) })
+    val downmixRearShelfFrequency = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_FREQUENCY,
+        "downmixRearShelfFrequencyMillionths", 229819, { it.rearShelfFrequencyMillionths },
+        { copy(rearShelfFrequencyMillionths = it) })
+    val downmixRearShelfGain = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_GAIN,
+        "downmixRearShelfGainMillionths", 777778, { it.rearShelfGainMillionths },
+        { copy(rearShelfGainMillionths = it) })
+    val downmixPanLeft = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_PAN_LEFT,
+        "downmixPanLeftMillionths", 1000000, { it.panLeftMillionths }, { copy(panLeftMillionths = it) })
+    val downmixPanRight = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_PAN_RIGHT,
+        "downmixPanRightMillionths", 1000000, { it.panRightMillionths }, { copy(panRightMillionths = it) })
+    val downmixCenterDivergence = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_CENTER_DIVERGENCE,
+        "downmixCenterDivergenceMillionths", 0, { it.centerDivergenceMillionths },
+        { copy(centerDivergenceMillionths = it) })
+    val downmixFrontMidTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_FRONT_MID_TRIM,
+        "downmixFrontMidTrimMillionths", 777778, { it.frontMidTrimMillionths },
+        { copy(frontMidTrimMillionths = it) })
+    val downmixFrontSideTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_FRONT_SIDE_TRIM,
+        "downmixFrontSideTrimMillionths", 777778, { it.frontSideTrimMillionths },
+        { copy(frontSideTrimMillionths = it) })
+    val downmixCenterTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_CENTER_TRIM,
+        "downmixCenterTrimMillionths", 744444, { it.centerTrimMillionths }, { copy(centerTrimMillionths = it) })
+    val downmixSurroundMidTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_SURROUND_MID_TRIM,
+        "downmixSurroundMidTrimMillionths", 744444, { it.surroundMidTrimMillionths },
+        { copy(surroundMidTrimMillionths = it) })
+    val downmixSurroundSideTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_SURROUND_SIDE_TRIM,
+        "downmixSurroundSideTrimMillionths", 744444, { it.surroundSideTrimMillionths },
+        { copy(surroundSideTrimMillionths = it) })
+    val downmixRearMidTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_REAR_MID_TRIM,
+        "downmixRearMidTrimMillionths", 711111, { it.rearMidTrimMillionths }, { copy(rearMidTrimMillionths = it) })
+    val downmixRearSideTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_REAR_SIDE_TRIM,
+        "downmixRearSideTrimMillionths", 711111, { it.rearSideTrimMillionths }, { copy(rearSideTrimMillionths = it) })
+    val downmixLfeTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_LFE_TRIM,
+        "downmixLfeTrimMillionths", 777778, { it.lfeTrimMillionths }, { copy(lfeTrimMillionths = it) })
+    val downmixLfeLpfEnable = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_LFE_LPF_ENABLE,
+        "downmixLfeLpfEnabled", false, { it.lfeLpfEnabled }, { copy(lfeLpfEnabled = it) })
+    val downmixLfeLpfFrequency = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_LFE_LPF_FREQUENCY,
+        "downmixLfeLpfFrequencyMillionths", 328797, { it.lfeLpfFrequencyMillionths },
+        { copy(lfeLpfFrequencyMillionths = it) })
+    val downmixScaleInputByOutputCount = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_SCALE_INPUT_BY_OUTPUT_COUNT,
+        "downmixScaleInputByOutputCount", false, { it.scaleInputByOutputCount },
+        { copy(scaleInputByOutputCount = it) })
+    val downmixOutputHpfEnable = downmixBool(ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_HPF_ENABLE,
+        "downmixOutputHpfEnabled", false, { it.outputHpfEnabled }, { copy(outputHpfEnabled = it) })
+    val downmixOutputHpfFrequency = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_HPF_FREQUENCY,
+        "downmixOutputHpfFrequencyMillionths", 57898, { it.outputHpfFrequencyMillionths },
+        { copy(outputHpfFrequencyMillionths = it) })
+    val downmixOutputLeftTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_LEFT_TRIM,
+        "downmixOutputLeftTrimMillionths", 777778, { it.outputLeftTrimMillionths },
+        { copy(outputLeftTrimMillionths = it) })
+    val downmixOutputRightTrim = downmixNormalized(ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_RIGHT_TRIM,
+        "downmixOutputRightTrimMillionths", 777778, { it.outputRightTrimMillionths },
+        { copy(outputRightTrimMillionths = it) })
 
     val haloDialogIsolate = haloInt(ViperParams.PARAM_IEM_HALO_DIALOG_ISOLATE,
         "haloDialogIsolate", 0, { it.dialogIsolateThousandths }, { copy(dialogIsolateThousandths = it) })
@@ -218,6 +290,25 @@ class IemEffect : EffectGroupBuilder("iem") {
         setValue: IemRotationState.(Boolean) -> IemRotationState): BoolPref =
         bool(param, key, false, { getValue(it.iem.rotation) },
             { copy(iem = iem.copy(rotation = setValue.invoke(iem.rotation, it))) })
+
+    private fun downmixInt(param: Int, key: String, default: Int, range: IntRange,
+        getValue: (IemDownmixState) -> Int,
+        setValue: IemDownmixState.(Int) -> IemDownmixState): IntPref =
+        int(param, key, default, { getValue(it.iem.decoder.downmix) },
+            { copy(iem = iem.copy(decoder = iem.decoder.copy(
+                downmix = setValue.invoke(iem.decoder.downmix, it)))) }, range = range)
+
+    private fun downmixNormalized(param: Int, key: String, default: Int,
+        getValue: (IemDownmixState) -> Int,
+        setValue: IemDownmixState.(Int) -> IemDownmixState): IntPref =
+        downmixInt(param, key, default, 0..1000000, getValue, setValue)
+
+    private fun downmixBool(param: Int, key: String, default: Boolean,
+        getValue: (IemDownmixState) -> Boolean,
+        setValue: IemDownmixState.(Boolean) -> IemDownmixState): BoolPref =
+        bool(param, key, default, { getValue(it.iem.decoder.downmix) },
+            { copy(iem = iem.copy(decoder = iem.decoder.copy(
+                downmix = setValue.invoke(iem.decoder.downmix, it)))) })
 
     private fun haloInt(param: Int, key: String, default: Int,
         getValue: (IemHaloState) -> Int,

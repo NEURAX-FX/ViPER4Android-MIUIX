@@ -25,8 +25,13 @@ class IemStateContractTest {
         assertEquals(5000, iem.granular.deltaTimeUs)
         assertEquals(250000, iem.granular.grainLengthUs)
         assertEquals(-1, iem.decoder.headphoneEq)
+        assertTrue(iem.decoder.downmix.delayEnabled)
+        assertEquals(744444, iem.decoder.downmix.centerTrimMillionths)
+        assertEquals(711111, iem.decoder.downmix.rearMidTrimMillionths)
+        assertFalse(iem.decoder.downmix.lfeLpfEnabled)
+        assertFalse(iem.decoder.downmix.outputHpfEnabled)
         assertEquals(-30, iem.output.limiterCeilingCentidb)
-        assertEquals(67, EFFECT_GROUPS.first { it.effectKey == "iem" }.prefs.size)
+        assertEquals(96, EFFECT_GROUPS.first { it.effectKey == "iem" }.prefs.size)
     }
 
     @Test
@@ -48,6 +53,14 @@ class IemStateContractTest {
                         lfeSplitMillionths = -1,
                         lfeGainMillionths = 1200000,
                     ),
+                    decoder = IemDecoderState(
+                        downmix = IemDownmixState(
+                            lsDelayUs = -1,
+                            rsDelayUs = 32001,
+                            sideShelfFrequencyMillionths = -1,
+                            outputRightTrimMillionths = 1000001,
+                        ),
+                    ),
                     freeze = true,
                 ),
             )
@@ -62,6 +75,10 @@ class IemStateContractTest {
         assertEquals(1000000, normalized.halo.lfeFrequencyMillionths)
         assertEquals(0, normalized.halo.lfeSplitMillionths)
         assertEquals(1000000, normalized.halo.lfeGainMillionths)
+        assertEquals(0, normalized.decoder.downmix.lsDelayUs)
+        assertEquals(32000, normalized.decoder.downmix.rsDelayUs)
+        assertEquals(0, normalized.decoder.downmix.sideShelfFrequencyMillionths)
+        assertEquals(1000000, normalized.decoder.downmix.outputRightTrimMillionths)
         assertFalse(normalized.freeze)
     }
 
@@ -82,7 +99,40 @@ class IemStateContractTest {
                         ),
                         multi = IemMultiState(gainDecidb = listOf(-20, 30)),
                         rotation = IemRotationState(yawCentidegrees = 4500),
-                        decoder = IemDecoderState(headphoneEq = 22),
+                        decoder = IemDecoderState(
+                            headphoneEq = 22,
+                            downmix = IemDownmixState(
+                                delayEnabled = false,
+                                lsDelayUs = 1000,
+                                rsDelayUs = 2000,
+                                lsrDelayUs = 3000,
+                                rsrDelayUs = 4000,
+                                sideShelfEnabled = true,
+                                sideShelfFrequencyMillionths = 111111,
+                                sideShelfGainMillionths = 222222,
+                                rearShelfEnabled = true,
+                                rearShelfFrequencyMillionths = 333333,
+                                rearShelfGainMillionths = 444444,
+                                panLeftMillionths = 555555,
+                                panRightMillionths = 666666,
+                                centerDivergenceMillionths = 777777,
+                                frontMidTrimMillionths = 111112,
+                                frontSideTrimMillionths = 222223,
+                                centerTrimMillionths = 333334,
+                                surroundMidTrimMillionths = 444445,
+                                surroundSideTrimMillionths = 555556,
+                                rearMidTrimMillionths = 666667,
+                                rearSideTrimMillionths = 777778,
+                                lfeTrimMillionths = 888889,
+                                lfeLpfEnabled = true,
+                                lfeLpfFrequencyMillionths = 123456,
+                                scaleInputByOutputCount = true,
+                                outputHpfEnabled = true,
+                                outputHpfFrequencyMillionths = 234567,
+                                outputLeftTrimMillionths = 345678,
+                                outputRightTrimMillionths = 456789,
+                            ),
+                        ),
                         freeze = true,
                     ),
             )
@@ -103,6 +153,7 @@ class IemStateContractTest {
         assertEquals(listOf(-20, 30), restored.iem.multi.gainDecidb)
         assertEquals(4500, restored.iem.rotation.yawCentidegrees)
         assertEquals(22, restored.iem.decoder.headphoneEq)
+        assertEquals(original.iem.decoder.downmix, restored.iem.decoder.downmix)
         assertFalse(restored.iem.freeze)
     }
 }

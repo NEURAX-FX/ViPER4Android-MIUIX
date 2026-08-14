@@ -760,6 +760,38 @@ object ViperDispatcher {
             ViperParams.PARAM_IEM_ROTATION_SEQUENCE to rotation.sequence,
             ViperParams.PARAM_IEM_HEADPHONE_EQ to iem.decoder.headphoneEq,
         ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
+        val downmix = iem.decoder.downmix
+        listOf(
+            ViperParams.PARAM_IEM_DOWNMIX_DELAY_ENABLE to if (downmix.delayEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_LS_DELAY to downmix.lsDelayUs,
+            ViperParams.PARAM_IEM_DOWNMIX_RS_DELAY to downmix.rsDelayUs,
+            ViperParams.PARAM_IEM_DOWNMIX_LSR_DELAY to downmix.lsrDelayUs,
+            ViperParams.PARAM_IEM_DOWNMIX_RSR_DELAY to downmix.rsrDelayUs,
+            ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_ENABLE to if (downmix.sideShelfEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_FREQUENCY to downmix.sideShelfFrequencyMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_SIDE_SHELF_GAIN to downmix.sideShelfGainMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_ENABLE to if (downmix.rearShelfEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_FREQUENCY to downmix.rearShelfFrequencyMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_REAR_SHELF_GAIN to downmix.rearShelfGainMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_PAN_LEFT to downmix.panLeftMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_PAN_RIGHT to downmix.panRightMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_CENTER_DIVERGENCE to downmix.centerDivergenceMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_FRONT_MID_TRIM to downmix.frontMidTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_FRONT_SIDE_TRIM to downmix.frontSideTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_CENTER_TRIM to downmix.centerTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_SURROUND_MID_TRIM to downmix.surroundMidTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_SURROUND_SIDE_TRIM to downmix.surroundSideTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_REAR_MID_TRIM to downmix.rearMidTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_REAR_SIDE_TRIM to downmix.rearSideTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_LFE_TRIM to downmix.lfeTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_LFE_LPF_ENABLE to if (downmix.lfeLpfEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_LFE_LPF_FREQUENCY to downmix.lfeLpfFrequencyMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_SCALE_INPUT_BY_OUTPUT_COUNT to if (downmix.scaleInputByOutputCount) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_HPF_ENABLE to if (downmix.outputHpfEnabled) 1 else 0,
+            ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_HPF_FREQUENCY to downmix.outputHpfFrequencyMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_LEFT_TRIM to downmix.outputLeftTrimMillionths,
+            ViperParams.PARAM_IEM_DOWNMIX_OUTPUT_RIGHT_TRIM to downmix.outputRightTrimMillionths,
+        ).forEach { (param, value) -> add(IemWrite.Scalar(param, value)) }
         add(IemWrite.Scalar(ViperParams.PARAM_IEM_ENABLE, if (iem.general.enable) 1 else 0))
     }
 
