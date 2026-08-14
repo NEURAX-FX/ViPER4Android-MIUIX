@@ -57,8 +57,18 @@ data class HeadphoneEqOption(val id: Int, val label: String)
 
 fun iemEditorTabs(): List<String> = listOf("encoder", "rotation", "decoder", "output")
 fun iemGranularSections(): List<String> = listOf("spatial", "timing", "pitch", "window", "mix")
-fun iemRenderModes(): List<String> = listOf("off", "simple", "ku100")
+fun iemRenderModes(): List<String> = listOf("off", "haloDownmix", "ku100")
 fun shouldEnableHeadphoneEq(renderMode: Int): Boolean = renderMode == 2
+fun iemDownmixControls(): List<String> = listOf(
+    "delayEnable", "lsDelay", "rsDelay", "lsrDelay", "rsrDelay",
+    "sideShelfEnable", "sideShelfFrequency", "sideShelfGain",
+    "rearShelfEnable", "rearShelfFrequency", "rearShelfGain",
+    "panLeft", "panRight", "centerDivergence",
+    "frontMidTrim", "frontSideTrim", "centerTrim", "surroundMidTrim",
+    "surroundSideTrim", "rearMidTrim", "rearSideTrim", "lfeTrim",
+    "outputLeftTrim", "outputRightTrim", "lfeLpfEnable", "lfeLpfFrequency",
+    "scaleInputByOutputCount", "outputHpfEnable", "outputHpfFrequency",
+)
 fun iemHaloControls(): List<String> = listOf(
     "dialogIsolate", "dialogAggress", "dialogAttack", "dialogRelease", "dialogMixIn",
     "divergence", "fade", "fadeRears", "diffusion", "space", "backBoost",
@@ -80,6 +90,20 @@ fun haloLfeGainDb(normalizedMillionths: Int): Double =
     55.0 * normalizedMillionths.coerceIn(0, 1_000_000) / 1_000_000.0 - 45.0
 fun haloLfeGainMillionths(gainDb: Double): Int =
     (((gainDb.coerceIn(-45.0, 10.0) + 45.0) / 55.0) * 1_000_000.0)
+        .roundToInt()
+        .coerceIn(0, 1_000_000)
+fun haloDownmixFrequencyHz(normalizedMillionths: Int): Double {
+    val normalized = normalizedMillionths.coerceIn(0, 1_000_000) / 1_000_000.0
+    return 20.0 * exp(ln(1100.0) * normalized)
+}
+fun haloDownmixFrequencyMillionths(frequencyHz: Double): Int =
+    ((ln(frequencyHz.coerceIn(20.0, 22000.0) / 20.0) / ln(1100.0)) * 1_000_000.0)
+        .roundToInt()
+        .coerceIn(0, 1_000_000)
+fun haloDownmixGainDb(normalizedMillionths: Int): Double =
+    90.0 * normalizedMillionths.coerceIn(0, 1_000_000) / 1_000_000.0 - 70.0
+fun haloDownmixGainMillionths(gainDb: Double): Int =
+    (((gainDb.coerceIn(-70.0, 20.0) + 70.0) / 90.0) * 1_000_000.0)
         .roundToInt()
         .coerceIn(0, 1_000_000)
 
@@ -116,6 +140,7 @@ fun IemEditorScreen(viewModel: EffectEditorViewModel, onBack: () -> Unit) {
             ViperTopBar(
                 title = stringResource(R.string.section_iem),
                 largeTitle = stringResource(R.string.section_iem),
+                compact = true,
                 navigationIcon = {
                     ViperIconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.editor_back))
@@ -343,6 +368,50 @@ private fun DecoderTab(state: EffectState, vm: EffectEditorViewModel) {
         onOptionSelected = { index, _ -> vm.updateIemInt(Effects.iem.headphoneEq, options[index].id) },
         enabled = shouldEnableHeadphoneEq(state.iem.general.renderMode),
     )
+    if (state.iem.general.renderMode == 1) DownmixControls(state, vm)
+}
+
+@Composable
+private fun DownmixControls(state: EffectState, vm: EffectEditorViewModel) {
+    val d = state.iem.decoder.downmix
+    SectionTitle(stringResource(R.string.iem_editor_downmix_timing))
+    IemSwitch(stringResource(R.string.iem_editor_downmix_delay_enable), d.delayEnabled, Effects.iem.downmixDelayEnable, vm)
+    IemSlider(stringResource(R.string.iem_editor_downmix_ls_delay), d.lsDelayUs, 0..32000, 1000.0, "ms", Effects.iem.downmixLsDelay, vm, 2, d.delayEnabled)
+    IemSlider(stringResource(R.string.iem_editor_downmix_rs_delay), d.rsDelayUs, 0..32000, 1000.0, "ms", Effects.iem.downmixRsDelay, vm, 2, d.delayEnabled)
+    IemSlider(stringResource(R.string.iem_editor_downmix_lsr_delay), d.lsrDelayUs, 0..32000, 1000.0, "ms", Effects.iem.downmixLsrDelay, vm, 2, d.delayEnabled)
+    IemSlider(stringResource(R.string.iem_editor_downmix_rsr_delay), d.rsrDelayUs, 0..32000, 1000.0, "ms", Effects.iem.downmixRsrDelay, vm, 2, d.delayEnabled)
+
+    SectionTitle(stringResource(R.string.iem_editor_downmix_tone))
+    IemSwitch(stringResource(R.string.iem_editor_downmix_side_shelf), d.sideShelfEnabled, Effects.iem.downmixSideShelfEnable, vm)
+    DownmixFrequencySlider(stringResource(R.string.iem_editor_downmix_side_shelf_frequency), d.sideShelfFrequencyMillionths, Effects.iem.downmixSideShelfFrequency, vm, d.sideShelfEnabled)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_side_shelf_gain), d.sideShelfGainMillionths, Effects.iem.downmixSideShelfGain, vm, d.sideShelfEnabled)
+    IemSwitch(stringResource(R.string.iem_editor_downmix_rear_shelf), d.rearShelfEnabled, Effects.iem.downmixRearShelfEnable, vm)
+    DownmixFrequencySlider(stringResource(R.string.iem_editor_downmix_rear_shelf_frequency), d.rearShelfFrequencyMillionths, Effects.iem.downmixRearShelfFrequency, vm, d.rearShelfEnabled)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_rear_shelf_gain), d.rearShelfGainMillionths, Effects.iem.downmixRearShelfGain, vm, d.rearShelfEnabled)
+
+    SectionTitle(stringResource(R.string.iem_editor_downmix_image))
+    IemSlider(stringResource(R.string.iem_editor_downmix_pan_left), d.panLeftMillionths, 0..1_000_000, 10_000.0, "%", Effects.iem.downmixPanLeft, vm, 1)
+    IemSlider(stringResource(R.string.iem_editor_downmix_pan_right), d.panRightMillionths, 0..1_000_000, 10_000.0, "%", Effects.iem.downmixPanRight, vm, 1)
+    IemSlider(stringResource(R.string.iem_editor_downmix_center_divergence), d.centerDivergenceMillionths, 0..1_000_000, 10_000.0, "%", Effects.iem.downmixCenterDivergence, vm, 1)
+
+    SectionTitle(stringResource(R.string.iem_editor_downmix_levels))
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_front_mid_trim), d.frontMidTrimMillionths, Effects.iem.downmixFrontMidTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_front_side_trim), d.frontSideTrimMillionths, Effects.iem.downmixFrontSideTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_center_trim), d.centerTrimMillionths, Effects.iem.downmixCenterTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_surround_mid_trim), d.surroundMidTrimMillionths, Effects.iem.downmixSurroundMidTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_surround_side_trim), d.surroundSideTrimMillionths, Effects.iem.downmixSurroundSideTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_rear_mid_trim), d.rearMidTrimMillionths, Effects.iem.downmixRearMidTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_rear_side_trim), d.rearSideTrimMillionths, Effects.iem.downmixRearSideTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_lfe_trim), d.lfeTrimMillionths, Effects.iem.downmixLfeTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_output_left_trim), d.outputLeftTrimMillionths, Effects.iem.downmixOutputLeftTrim, vm)
+    DownmixGainSlider(stringResource(R.string.iem_editor_downmix_output_right_trim), d.outputRightTrimMillionths, Effects.iem.downmixOutputRightTrim, vm)
+
+    SectionTitle(stringResource(R.string.iem_editor_downmix_filters))
+    IemSwitch(stringResource(R.string.iem_editor_downmix_lfe_lpf), d.lfeLpfEnabled, Effects.iem.downmixLfeLpfEnable, vm)
+    DownmixFrequencySlider(stringResource(R.string.iem_editor_downmix_lfe_lpf_frequency), d.lfeLpfFrequencyMillionths, Effects.iem.downmixLfeLpfFrequency, vm, d.lfeLpfEnabled)
+    IemSwitch(stringResource(R.string.iem_editor_downmix_scale_input), d.scaleInputByOutputCount, Effects.iem.downmixScaleInputByOutputCount, vm)
+    IemSwitch(stringResource(R.string.iem_editor_downmix_output_hpf), d.outputHpfEnabled, Effects.iem.downmixOutputHpfEnable, vm)
+    DownmixFrequencySlider(stringResource(R.string.iem_editor_downmix_output_hpf_frequency), d.outputHpfFrequencyMillionths, Effects.iem.downmixOutputHpfFrequency, vm, d.outputHpfEnabled)
 }
 
 @Composable
@@ -403,6 +472,44 @@ private fun IemMappedSlider(
     valueLabel = "${format(displayValue, decimals)} $unit",
     edit = SliderEdit(displayValue, displayRange, decimals, { onValueChange(onDisplayCommit(it)) }, unit),
     enabled = enabled,
+)
+
+@Composable
+private fun DownmixFrequencySlider(
+    label: String,
+    value: Int,
+    pref: IntPref,
+    vm: EffectEditorViewModel,
+    enabled: Boolean = true,
+) = IemMappedSlider(
+    label = label,
+    value = value,
+    displayValue = haloDownmixFrequencyHz(value),
+    displayRange = 20.0..22000.0,
+    decimals = 1,
+    unit = "Hz",
+    enabled = enabled,
+    onValueChange = { vm.updateIemInt(pref, it) },
+    onDisplayCommit = ::haloDownmixFrequencyMillionths,
+)
+
+@Composable
+private fun DownmixGainSlider(
+    label: String,
+    value: Int,
+    pref: IntPref,
+    vm: EffectEditorViewModel,
+    enabled: Boolean = true,
+) = IemMappedSlider(
+    label = label,
+    value = value,
+    displayValue = haloDownmixGainDb(value),
+    displayRange = -70.0..20.0,
+    decimals = 1,
+    unit = "dB",
+    enabled = enabled,
+    onValueChange = { vm.updateIemInt(pref, it) },
+    onDisplayCommit = ::haloDownmixGainMillionths,
 )
 
 @Composable private fun IemSwitch(label: String, checked: Boolean, pref: BoolPref, vm: EffectEditorViewModel) = LabeledSwitch(label, checked, { vm.updateIemBool(pref, it) })

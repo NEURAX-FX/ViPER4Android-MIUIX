@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,9 +35,58 @@ fun ViperTopBar(
     modifier: Modifier = Modifier,
     deviceName: String = "",
     scrollBehavior: ScrollBehavior? = null,
+    compact: Boolean = false,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
+    if (compact) {
+        SideEffect {
+            scrollBehavior?.state?.heightOffsetLimit = 0f
+        }
+        Row(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(52.dp)
+                    .padding(
+                        start = if (navigationIcon != null) 4.dp else 18.dp,
+                        end = 8.dp,
+                    ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            navigationIcon?.invoke()
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = title,
+                    fontSize = 20.sp,
+                    lineHeight = 24.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MiuixTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (deviceName.isNotBlank()) {
+                    Text(
+                        text = deviceName,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.outline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions,
+            )
+        }
+        return
+    }
+
     val density = LocalDensity.current
     val collapseRangePx = with(density) { 30.dp.toPx() }
     SideEffect {

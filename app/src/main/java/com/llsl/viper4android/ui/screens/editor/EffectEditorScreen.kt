@@ -100,6 +100,7 @@ fun EffectEditorScreen(
             ViperTopBar(
                 title = editorTitle(kind),
                 largeTitle = editorTitle(kind),
+                compact = true,
                 navigationIcon = {
                     ViperIconButton(onClick = onBack) {
                         Icon(

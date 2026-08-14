@@ -27,8 +27,12 @@ class IemCardPolicyTest {
     fun defaultSummaryDescribesEncoderOrderAndDecoder() {
         assertEquals("Stereo · 3rd order · KU100", iemSummary(EffectState().iem))
         assertEquals(
-            "Halo · 3rd order · Off",
+            "Halo 7.1 · 3rd order · Off",
             iemSummary(IemState(general = IemGeneralState(encoderMode = 3, renderMode = 0))),
+        )
+        assertEquals(
+            "Stereo · 3rd order · Halo Downmix",
+            iemSummary(IemState(general = IemGeneralState(renderMode = 1))),
         )
     }
 }

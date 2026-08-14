@@ -63,7 +63,7 @@ internal fun iemSummary(state: IemState): String {
         when (state.general.encoderMode) {
             1 -> "Multi"
             2 -> "Granular"
-            3 -> "Halo"
+            3 -> "Halo 7.1"
             else -> "Stereo"
         }
     val order =
@@ -74,7 +74,7 @@ internal fun iemSummary(state: IemState): String {
         }
     val render = when (state.general.renderMode) {
         0 -> "Off"
-        1 -> "Simple"
+        1 -> "Halo Downmix"
         else -> "KU100"
     }
     return "$mode · $order order · $render"
