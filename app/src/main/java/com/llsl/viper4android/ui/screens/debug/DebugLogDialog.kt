@@ -35,12 +35,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.viper.ViperDialog
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.SearchBar
 import top.yukonga.miuix.kmp.basic.Text
@@ -209,7 +208,7 @@ fun DebugLogDialog(
 
                 Text(
                     text = "${filteredLines.size} / ${state.totalCount}",
-                    style = MiuixTheme.textStyles.body2,
+            style = ViperType.caption,
                     color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                     modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
                 )
@@ -258,7 +257,7 @@ private fun DebugLogSearchBar(
                 expanded = false,
                 onExpandedChange = {},
                 label = stringResource(R.string.debug_search_hint),
-                textStyle = MiuixTheme.textStyles.body2,
+                textStyle = ViperType.body,
             )
         },
         onExpandedChange = {},
@@ -283,9 +282,8 @@ private fun DebugFilterGroup(
     ) {
         Text(
             text = title,
-            style = MiuixTheme.textStyles.body2,
-            fontSize = 11.sp,
-            color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.72f),
+            style = ViperType.section,
+            color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(0.22f),
@@ -311,8 +309,7 @@ private fun DebugFilterChip(
     val selectedColor = if (accentColor == Color.Unspecified) MiuixTheme.colorScheme.primary else accentColor
     Text(
         text = label,
-        style = MiuixTheme.textStyles.body2,
-        fontSize = 12.sp,
+        style = ViperType.caption,
         color = if (selected) selectedColor else MiuixTheme.colorScheme.onSurfaceVariantActions,
         modifier =
             Modifier
@@ -349,7 +346,7 @@ private fun DebugLogList(
         if (lines.isEmpty()) {
             Text(
                 text = stringResource(R.string.debug_log_empty),
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
                 color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.66f),
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -361,8 +358,7 @@ private fun DebugLogList(
                 items(lines) { line ->
                     Text(
                         text = line,
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp,
+                        style = ViperType.mono,
                         color = colorForLogLine(line),
                         modifier = Modifier.padding(vertical = 1.dp),
                     )

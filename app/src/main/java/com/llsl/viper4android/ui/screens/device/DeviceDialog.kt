@@ -42,6 +42,7 @@ import com.llsl.viper4android.data.model.DeviceSettings
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
+import com.llsl.viper4android.ui.theme.ViperType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -145,7 +146,7 @@ fun DeviceDialog(
                     }
                     Text(
                         text = selectedDevice.deviceName,
-                        style = MiuixTheme.textStyles.title3,
+                        style = ViperType.title,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -195,7 +196,7 @@ private fun DeviceListView(
         ) {
             Text(
                 text = stringResource(R.string.device_no_devices),
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
                 color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             )
         }
@@ -238,7 +239,7 @@ private fun DeviceListView(
                         }
                         Text(
                             text = device.deviceName,
-                            style = MiuixTheme.textStyles.body2,
+                            style = ViperType.body,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -252,7 +253,7 @@ private fun DeviceListView(
                                         System.currentTimeMillis(),
                                         DateUtils.MINUTE_IN_MILLIS,
                                     ).toString(),
-                            style = MiuixTheme.textStyles.body2,
+                            style = ViperType.caption,
                             color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                         )
                     }
@@ -354,12 +355,12 @@ private fun StatusRow(
     ) {
         Text(
             text = label,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.caption,
             color = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
         Text(
             text = value,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.value,
         )
     }
 }
@@ -381,7 +382,7 @@ private fun ActionItem(
     ) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = tint)
         Spacer(modifier = Modifier.height(4.dp))
-        Text(label, style = MiuixTheme.textStyles.body2, color = tint)
+        Text(label, style = ViperType.caption, color = tint)
     }
 }
 
@@ -417,7 +418,7 @@ private fun DeviceConfirmationDialog(
         content = {
             Text(
                 text = message,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.body,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
             )
         },

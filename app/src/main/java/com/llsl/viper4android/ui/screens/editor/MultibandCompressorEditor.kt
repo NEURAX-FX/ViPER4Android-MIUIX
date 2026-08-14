@@ -42,6 +42,7 @@ import com.llsl.viper4android.ui.components.viper.VstGraphWorkspace
 import com.llsl.viper4android.ui.components.viper.VstKnob
 import com.llsl.viper4android.ui.components.viper.VstResponseGraph
 import com.llsl.viper4android.ui.components.viper.rememberSpectrumGraphLayer
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
@@ -178,7 +179,7 @@ fun MultibandCompressorEditor(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(R.string.editor_graph_multiband_crossover_title),
-                    style = MiuixTheme.textStyles.body2,
+                    style = ViperType.caption,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
                 VstResponseGraph(
@@ -214,7 +215,7 @@ fun MultibandCompressorEditor(
                 )
                 Text(
                     text = stringResource(R.string.editor_graph_multiband_transfer_title, band + 1),
-                    style = MiuixTheme.textStyles.body2,
+                    style = ViperType.caption,
                     color = bandColors[band],
                 )
                 VstResponseGraph(
@@ -645,7 +646,7 @@ private fun KnobFlow(content: @Composable () -> Unit) {
 private fun AutoStateText(text: String) {
     Text(
         text = text,
-        style = MiuixTheme.textStyles.body2,
+        style = ViperType.caption,
         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
     )
 }

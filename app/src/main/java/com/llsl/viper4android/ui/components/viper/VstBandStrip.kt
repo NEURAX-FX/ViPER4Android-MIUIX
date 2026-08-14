@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -82,12 +83,12 @@ fun VstBandStrip(
             ) {
                 Text(
                     text = item.title,
-                    style = MiuixTheme.textStyles.body2,
+                    style = ViperType.caption,
                     color = if (isSelected) accent else MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
                 Text(
                     text = item.value,
-                    style = MiuixTheme.textStyles.body2,
+                    style = ViperType.value,
                     color = if (isSelected) {
                         MiuixTheme.colorScheme.onSurface
                     } else {

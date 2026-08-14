@@ -29,12 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.screens.main.DriverStatus
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Switch
@@ -183,9 +183,8 @@ private fun SettingsGroupCard(
 private fun SettingsSectionTitle(title: String) {
     Text(
         text = title,
-        color = MiuixTheme.colorScheme.primary,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Medium,
+        color = MiuixTheme.colorScheme.onSurfaceVariantActions,
+        style = ViperType.section,
         modifier = Modifier.padding(horizontal = 6.dp),
     )
 }
@@ -239,7 +238,7 @@ private fun SettingsActionRow(
         Text(
             text = ">",
             color = MiuixTheme.colorScheme.outline,
-            fontSize = 15.sp,
+            style = ViperType.caption,
             modifier = Modifier.wrapContentWidth(),
         )
     }
@@ -266,8 +265,8 @@ private fun SettingsInfoRow(
     ) {
         Text(
             text = title,
-            color = MiuixTheme.colorScheme.onBackground,
-            fontSize = 14.sp,
+            color = ViperInk,
+            style = ViperType.body,
             modifier = Modifier.weight(1f),
         )
         Spacer(Modifier.width(16.dp))
@@ -282,7 +281,7 @@ private fun SettingsInfoRow(
         Text(
             text = value,
             color = MiuixTheme.colorScheme.outline,
-            fontSize = 13.sp,
+            style = ViperType.caption,
             modifier = Modifier.wrapContentWidth(),
         )
     }
@@ -300,14 +299,13 @@ private fun SettingsTextBlock(
     ) {
         Text(
             text = title,
-            color = MiuixTheme.colorScheme.onBackground,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            color = ViperInk,
+            style = ViperType.body,
         )
         Text(
             text = summary,
             color = MiuixTheme.colorScheme.outline,
-            fontSize = 12.sp,
+            style = ViperType.caption,
         )
     }
 }

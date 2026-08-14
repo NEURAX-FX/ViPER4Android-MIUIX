@@ -31,6 +31,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
@@ -100,15 +102,15 @@ fun ViperEffectCard(
             Column(modifier = Modifier.weight(1f)) {
                 MiuixText(
                     text = title,
-                    style = MiuixTheme.textStyles.body1,
-                    color = MiuixTheme.colorScheme.onSurface,
+                    style = ViperType.body,
+                    color = ViperInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 summary?.takeIf(String::isNotBlank)?.let {
                     MiuixText(
                         text = it,
-                        style = MiuixTheme.textStyles.body2,
+                        style = ViperType.caption,
                         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

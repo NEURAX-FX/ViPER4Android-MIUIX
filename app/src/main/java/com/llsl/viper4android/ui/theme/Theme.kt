@@ -5,8 +5,11 @@ import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -39,12 +42,20 @@ object ViperDesign {
     val graphPositiveColor: Color = ViperGraphPositive
     val graphNegativeColor: Color = ViperGraphNegative
     val graphNeutralColor: Color = ViperGraphNeutral
+    val type: ViperTypography = ViperType
     val cardCorner: Dp = 18.dp
     val dialogCorner: Dp = 24.dp
     val rowSpacing: Dp = 12.dp
     val sectionSpacing: Dp = 16.dp
     val compactControlHeight: Dp = 40.dp
 }
+
+private val LocalViperInk = staticCompositionLocalOf { ViperInkLight }
+
+val ViperInk: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalViperInk.current
 
 @Composable
 fun ViperTheme(
@@ -88,8 +99,9 @@ fun ViperTheme(
 
     ViperSystemBars(isDark = isDark)
 
+    val ink = if (isDark) ViperInkDark else ViperInkLight
     MiuixTheme(controller = controller) {
-        content()
+        CompositionLocalProvider(LocalViperInk provides ink, content = content)
     }
 }
 

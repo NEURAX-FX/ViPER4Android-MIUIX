@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.screens.main.DriverStatus
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -33,7 +34,7 @@ fun DriverStatusDialog(
             if (!driverStatus.installed) {
                 Text(
                     text = stringResource(R.string.driver_not_found),
-                    style = MiuixTheme.textStyles.body1,
+                    style = ViperType.body,
                     color = MiuixTheme.colorScheme.error,
                 )
             } else {
@@ -92,12 +93,12 @@ private fun StatusRow(
     ) {
         Text(
             text = label,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.caption,
             color = MiuixTheme.colorScheme.onSurfaceVariantActions,
         )
         Text(
             text = value,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.value,
         )
     }
 }

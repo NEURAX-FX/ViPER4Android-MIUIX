@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -83,7 +85,7 @@ fun LabeledSlider(
 
     val titleColor =
         if (enabled) {
-            MiuixTheme.colorScheme.onSurface
+            ViperInk
         } else {
             MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
         }
@@ -97,7 +99,7 @@ fun LabeledSlider(
     Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(
             text = label,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.body,
             color = titleColor,
             modifier = Modifier.padding(bottom = 6.dp),
         )
@@ -119,7 +121,7 @@ fun LabeledSlider(
             )
             Text(
                 text = valueLabel ?: value.roundToInt().toString(),
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.value,
                 color = valueColor,
                 textAlign = TextAlign.End,
                 modifier = Modifier
@@ -154,11 +156,11 @@ fun LabeledSlider(
             keyboardActions = KeyboardActions(
                 onDone = { confirmPrecisionInput() },
             ),
-            textStyle = MiuixTheme.textStyles.body2.copy(
-                color = MiuixTheme.colorScheme.onBackground,
+            textStyle = ViperType.body.copy(
+                color = ViperInk,
             ),
             backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
-            labelColor = MiuixTheme.colorScheme.onBackground,
+            labelColor = ViperInk,
             borderColor = MiuixTheme.colorScheme.outline,
             modifier = Modifier.fillMaxWidth(),
         )

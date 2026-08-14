@@ -42,6 +42,7 @@ import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import com.llsl.viper4android.ui.components.viper.VstResponseGraph
+import com.llsl.viper4android.ui.theme.ViperType
 import com.llsl.viper4android.viper.ViperDispatcher
 import kotlin.math.roundToInt
 import top.yukonga.miuix.kmp.basic.Card
@@ -238,7 +239,7 @@ fun EqEditDialog(
                         ) {
                             Text(
                                 text = label,
-                                style = MiuixTheme.textStyles.body2,
+                                style = ViperType.caption,
                                 modifier = Modifier.width(48.dp),
                             )
                             ViperIconButton(
@@ -279,7 +280,7 @@ fun EqEditDialog(
                             }
                             Text(
                                 text = "${"%.1f".format(localBands[index])}dB",
-                                style = MiuixTheme.textStyles.body2,
+                                style = ViperType.value,
                                 modifier = Modifier.width(52.dp),
                                 maxLines = 1,
                             )

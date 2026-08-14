@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.LocalContentColor
@@ -173,7 +174,7 @@ private fun ViperFloatingCapsuleItem(
             Text(
                 text = label,
                 color = contentColor,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
             )
         }
     }

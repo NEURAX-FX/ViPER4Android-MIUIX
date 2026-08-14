@@ -17,10 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -62,17 +62,15 @@ fun ViperTopBar(
             ) {
                 Text(
                     text = title,
-                    fontSize = 20.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MiuixTheme.colorScheme.onBackground,
+                    style = ViperType.title,
+                    color = ViperInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (deviceName.isNotBlank()) {
                     Text(
                         text = deviceName,
-                        style = MiuixTheme.textStyles.body2,
+                        style = ViperType.caption,
                         color = MiuixTheme.colorScheme.outline,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -133,18 +131,15 @@ fun ViperTopBar(
             ) {
                 Text(
                     text = largeTitle,
-                    fontSize = 40.sp,
-                    lineHeight = 42.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MiuixTheme.colorScheme.onBackground,
+                    style = ViperType.display,
+                    color = ViperInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 if (deviceName.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = deviceName,
-                        style = MiuixTheme.textStyles.body2,
+                        style = ViperType.caption,
                         color = MiuixTheme.colorScheme.outline,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -153,9 +148,7 @@ fun ViperTopBar(
             }
             Text(
                 text = title,
-                fontSize = 20.sp,
-                lineHeight = 24.sp,
-                fontWeight = FontWeight.Medium,
+                style = ViperType.title,
                 color = MiuixTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

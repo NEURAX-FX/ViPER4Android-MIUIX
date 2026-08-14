@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.Text as MiuixText
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -47,8 +49,8 @@ fun ViperEditorRow(
         Spacer(Modifier.width(10.dp))
         MiuixText(
             text = title,
-            style = MiuixTheme.textStyles.body1,
-            color = MiuixTheme.colorScheme.primary,
+            style = ViperType.body,
+            color = ViperInk,
             modifier = Modifier.weight(1f),
         )
         MiuixIcon(

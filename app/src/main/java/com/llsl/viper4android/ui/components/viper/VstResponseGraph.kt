@@ -38,14 +38,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.llsl.viper4android.ui.screens.editor.GraphBandRegion
+import com.llsl.viper4android.ui.theme.ViperType
 import com.llsl.viper4android.ui.screens.editor.GraphHandleModel
 import com.llsl.viper4android.ui.screens.editor.bandRegionAt
 import com.llsl.viper4android.ui.screens.editor.nearestGraphHandle
@@ -265,7 +264,7 @@ fun VstResponseGraph(
     }
     val responseRenderNode = remember { ResponseRenderNode() }
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = remember(labelColor) { TextStyle(color = labelColor, fontSize = 9.sp) }
+    val labelStyle = remember(labelColor) { ViperType.micro.copy(color = labelColor) }
     // Canvas draws in pixels, so every visual dimension has to be converted once here.
     // Leaving them as raw floats made strokes and handles shrink on high-density screens
     // while the 28dp touch target stayed the same size.

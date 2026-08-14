@@ -74,6 +74,7 @@ import com.llsl.viper4android.ui.components.viper.ViperCurvePreview
 import com.llsl.viper4android.ui.components.viper.ViperEditorRow
 import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.EqCurveGraph
+import com.llsl.viper4android.ui.theme.ViperType
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
@@ -871,7 +872,7 @@ fun DynamicEqSection(
                     Text(
                         text = formatFreq(freqs.getOrElse(i) { 1000 }),
                         color = color,
-                        style = MaterialTheme.typography.labelLarge,
+                        style = ViperType.section,
                     )
                 }
             }

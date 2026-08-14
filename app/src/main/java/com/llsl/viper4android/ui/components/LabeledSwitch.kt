@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -26,7 +28,7 @@ fun LabeledSwitch(
 ) {
     val titleColor =
         if (enabled) {
-            MiuixTheme.colorScheme.onSurface
+            ViperInk
         } else {
             MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
         }
@@ -48,13 +50,13 @@ fun LabeledSwitch(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.body,
                 color = titleColor,
             )
             if (!subtitle.isNullOrBlank()) {
                 Text(
                     text = subtitle,
-                    style = MiuixTheme.textStyles.body2,
+                    style = ViperType.caption,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }

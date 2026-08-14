@@ -31,6 +31,7 @@ import com.llsl.viper4android.data.model.Preset
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
@@ -190,7 +191,7 @@ fun PresetDialog(
                 if (visiblePresets.isEmpty() && pendingDeletePreset == null) {
                     Text(
                         text = stringResource(R.string.preset_empty),
-                        style = MiuixTheme.textStyles.body2,
+                        style = ViperType.caption,
                         color = MiuixTheme.colorScheme.onSurfaceVariantActions,
                     )
                 } else {
@@ -253,7 +254,7 @@ private fun PresetItem(
     ) {
         Text(
             text = preset.name,
-            style = MiuixTheme.textStyles.body1,
+                style = ViperType.body,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -300,14 +301,14 @@ private fun DeletedPresetItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = preset.name,
-                style = MiuixTheme.textStyles.body1,
+                style = ViperType.body,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.5f),
             )
             Text(
                 text = stringResource(R.string.label_deleted),
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
                 color = MiuixTheme.colorScheme.error.copy(alpha = 0.7f),
             )
         }
@@ -336,7 +337,7 @@ private fun PresetConfirmationDialog(
         content = {
             Text(
                 text = message,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.body,
                 color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
             )
         },

@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
+import com.llsl.viper4android.ui.theme.ViperType
 import kotlin.math.cos
 import kotlin.math.sin
 import top.yukonga.miuix.kmp.basic.Text
@@ -180,12 +181,12 @@ fun VstKnob(
         }
         Text(
             text = label,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.caption,
             color = summaryColor,
         )
         Text(
             text = formatValue(if (dragging) dragValue else value),
-            style = MiuixTheme.textStyles.body1,
+            style = ViperType.value,
             color = valueColor.copy(alpha = if (enabled) 1f else 0.50f),
             modifier = Modifier.clickable(
                 enabled = enabled,

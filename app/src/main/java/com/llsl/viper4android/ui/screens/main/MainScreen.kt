@@ -59,6 +59,7 @@ import com.llsl.viper4android.ui.screens.preset.PresetDialog
 import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
 import com.llsl.viper4android.ui.screens.editor.EditorKind
+import com.llsl.viper4android.ui.theme.ViperType
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -306,7 +307,7 @@ private fun MainActionButton(
             color = MiuixTheme.colorScheme.onSurfaceVariantActions,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = MiuixTheme.textStyles.body2,
+            style = ViperType.caption,
         )
     }
 }

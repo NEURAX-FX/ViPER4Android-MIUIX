@@ -55,6 +55,7 @@ import com.llsl.viper4android.ui.components.viper.GraphDragAxis
 import com.llsl.viper4android.ui.components.viper.GraphGridLine
 import com.llsl.viper4android.ui.components.viper.GraphHandle
 import com.llsl.viper4android.ui.theme.ViperDesign
+import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -199,12 +200,12 @@ private fun EditorStatusRow(
             Text(
                 text = if (connected) stringResource(R.string.editor_live) else stringResource(R.string.editor_offline),
                 color = if (connected) MiuixTheme.colorScheme.primary else MiuixTheme.colorScheme.outline,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
             )
             Text(
                 text = stringResource(R.string.editor_bypass),
                 color = MiuixTheme.colorScheme.outline,
-                style = MiuixTheme.textStyles.body2,
+                style = ViperType.caption,
             )
         }
         ViperPowerButton(

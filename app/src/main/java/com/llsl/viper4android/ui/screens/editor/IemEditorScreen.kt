@@ -39,6 +39,8 @@ import com.llsl.viper4android.ui.components.viper.ViperPowerButton
 import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
+import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperType
 import com.llsl.viper4android.viper.IemDriverTelemetry
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -516,13 +518,13 @@ private fun DownmixGainSlider(
 
 @Composable private fun SectionTitle(text: String) {
     HorizontalDivider(Modifier.padding(top = 8.dp))
-    Text(text, color = MiuixTheme.colorScheme.primary, style = MiuixTheme.textStyles.subtitle)
+    Text(text, color = MiuixTheme.colorScheme.onSurfaceVariantActions, style = ViperType.section)
 }
 
 @Composable private fun ReadOnlyRow(label: String, value: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MiuixTheme.textStyles.body2)
-        Text(value, color = MiuixTheme.colorScheme.onSurfaceVariantSummary, style = MiuixTheme.textStyles.body2)
+        Text(label, color = ViperInk, style = ViperType.body)
+        Text(value, color = MiuixTheme.colorScheme.onSurfaceVariantSummary, style = ViperType.value)
     }
 }
 
@@ -531,7 +533,7 @@ private fun DownmixGainSlider(
     Text(
         stringResource(R.string.iem_powered_by),
         color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-        style = MiuixTheme.textStyles.body2,
+        style = ViperType.caption,
         modifier = Modifier.fillMaxWidth().clickable {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(IEM_PROJECT_URL)))
         }.padding(vertical = 24.dp),
