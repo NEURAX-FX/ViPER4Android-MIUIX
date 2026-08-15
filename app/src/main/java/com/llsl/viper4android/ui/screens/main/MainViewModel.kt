@@ -78,6 +78,11 @@ data class DriverStatus(
     val architecture: String = "",
     val streaming: Boolean = false,
     val samplingRate: Int = 0,
+    val audioSessionId: Int = -1,
+    val pinnedGlobalActive: Boolean = false,
+    val session0CacheGeneration: Long = 0,
+    val contextInstanceId: Long = 0,
+    val session0LiveContextCount: Int = 0,
 )
 
 internal data class IndexedBandPrefWrite<E>(
@@ -1410,6 +1415,7 @@ class MainViewModel
             val archName = effect.getArchitectureString()
             val streaming = effect.isStreaming()
             val samplingRate = effect.getParameter(ViperParams.PARAM_GET_SAMPLING_RATE)
+            val iemTelemetry = effect.getIemTelemetry()
             val versionBytes = effect.getParameter(ViperParams.PARAM_GET_DRIVER_VERSION_NAME, 256)
             val versionName =
                 if (versionBytes.isNotEmpty()) {
@@ -1426,6 +1432,13 @@ class MainViewModel
                     architecture = archName,
                     streaming = streaming,
                     samplingRate = samplingRate,
+                    audioSessionId = iemTelemetry?.audioSessionId ?: -1,
+                    pinnedGlobalActive = iemTelemetry?.session0Active ?: false,
+                    session0CacheGeneration =
+                        iemTelemetry?.session0CacheGeneration ?: 0,
+                    contextInstanceId = iemTelemetry?.contextInstanceId ?: 0,
+                    session0LiveContextCount =
+                        iemTelemetry?.session0LiveContextCount ?: 0,
                 )
         }
 

@@ -403,6 +403,11 @@
     <string name="driver_architecture">Архитектура</string>
     <string name="driver_streaming">Потоковая передача</string>
     <string name="driver_sampling_rate">Частота дискретизации</string>
+    <string name="driver_audio_session">Аудиосессия</string>
+    <string name="driver_pinned_global">Закреплённый глобальный эффект</string>
+    <string name="driver_cache_generation">Поколение кэша Session 0</string>
+    <string name="driver_context_instance">Экземпляр контекста</string>
+    <string name="driver_live_session0_contexts">Активные контексты Session 0</string>
     <string name="status_active">Активна</string>
     <string name="status_inactive">Неактивна</string>
     <string name="status_unknown">Неизвестно</string>

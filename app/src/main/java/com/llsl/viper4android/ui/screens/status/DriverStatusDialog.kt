@@ -73,6 +73,41 @@ fun DriverStatusDialog(
                                 stringResource(R.string.status_unknown)
                             },
                     )
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    StatusRow(
+                        label = stringResource(R.string.driver_audio_session),
+                        value =
+                            if (driverStatus.audioSessionId >= 0) {
+                                driverStatus.audioSessionId.toString()
+                            } else {
+                                stringResource(R.string.status_unknown)
+                            },
+                    )
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    StatusRow(
+                        label = stringResource(R.string.driver_pinned_global),
+                        value =
+                            if (driverStatus.pinnedGlobalActive) {
+                                stringResource(R.string.status_active)
+                            } else {
+                                stringResource(R.string.status_inactive)
+                            },
+                    )
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    StatusRow(
+                        label = stringResource(R.string.driver_cache_generation),
+                        value = driverStatus.session0CacheGeneration.toString(),
+                    )
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    StatusRow(
+                        label = stringResource(R.string.driver_context_instance),
+                        value = driverStatus.contextInstanceId.toString(),
+                    )
+                    ViperDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    StatusRow(
+                        label = stringResource(R.string.driver_live_session0_contexts),
+                        value = driverStatus.session0LiveContextCount.toString(),
+                    )
                 }
             }
         },
