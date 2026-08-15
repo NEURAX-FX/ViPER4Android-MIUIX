@@ -114,6 +114,10 @@ class ViperEffect(
         }
     }
 
+    fun setSession0Active(active: Boolean) {
+        setParameter(ViperParams.PARAM_DRIVER_SESSION0_ACTIVE, if (active) 1 else 0)
+    }
+
     fun setParameter(
         param: Int,
         val1: Int,

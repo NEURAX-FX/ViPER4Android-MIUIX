@@ -57,6 +57,8 @@ class IemDispatchTest {
 
     @Test
     fun exactPhaseOneIdsRemainStable() {
+        assertEquals(0x120F0, ViperParams.PARAM_DRIVER_SESSION0_ACTIVE)
+        assertEquals(0x120F0, ViperParams.PARAM_DRIVER_SESSION0_ACTIVE)
         assertEquals(0x12000, ViperParams.PARAM_IEM_ENABLE)
         assertEquals(0x12045, ViperParams.PARAM_IEM_GRANULAR_SAMPLE_WISE)
         assertEquals(0x12057, ViperParams.PARAM_IEM_ROTATION_SEQUENCE)

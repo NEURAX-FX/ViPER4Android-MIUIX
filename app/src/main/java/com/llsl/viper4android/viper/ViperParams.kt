@@ -1,6 +1,7 @@
 package com.llsl.viper4android.viper
 
 object ViperParams {
+    const val PARAM_DRIVER_SESSION0_ACTIVE = 0x120F0
     const val PARAM_GET_ENABLED = 1
     const val PARAM_GET_CONFIGURE = 2
     const val PARAM_GET_STREAMING = 3
