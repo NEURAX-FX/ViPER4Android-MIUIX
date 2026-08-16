@@ -80,13 +80,11 @@ class ViperService : LifecycleService() {
 
     private val binder = LocalBinder()
     private val sessions = SparseArray<ViperEffect>()
-    private var session0ControlEffect: ViperEffect? = null
     private var globalEffect: ViperEffect? = null
     @Volatile
     private var telemetryEffect: ViperEffect? = null
     private var useAidlTypeUuid: Boolean = true
     private var globalMode: Boolean = false
-    private var session0PreparedForGlobal: Boolean = false
     private var audioOutputDetector: AudioOutputDetector? = null
     private var sessionMonitor: AudioSessionMonitor? = null
     private var stateProvider: (() -> EffectState)? = null
@@ -131,15 +129,8 @@ class ViperService : LifecycleService() {
     }
 
     private fun initGlobalEffect() {
-        if (!useAidlTypeUuid) {
-            ensureSession0ControlEffect()
-            globalEffect = session0ControlEffect
-            selectTelemetryEffect()
-            FileLogger.i("Service", "Pinned legacy global effect selected")
-            return
-        }
         val typeUuid =
-            ViperEffect.EFFECT_TYPE_UUID_AIDL
+            if (useAidlTypeUuid) ViperEffect.EFFECT_TYPE_UUID_AIDL else ViperEffect.EFFECT_TYPE_UUID
         val effect = ViperEffect(0, typeUuid)
         if (!effect.create()) {
             FileLogger.e("Service", "Failed to create global effect")
@@ -150,36 +141,6 @@ class ViperService : LifecycleService() {
         FileLogger.i("Service", "Global effect created (aidlType=$useAidlTypeUuid)")
     }
 
-    private fun ensureSession0ControlEffect() {
-        if (session0ControlEffect?.isCreated == true) return
-        val effect = ViperEffect(0, ViperEffect.EFFECT_TYPE_UUID)
-        if (!effect.create()) {
-            FileLogger.e("Service", "Failed to create session 0 control effect")
-            return
-        }
-        effect.enabled = true
-        session0ControlEffect = effect
-        FileLogger.i("Service", "Session 0 control effect created")
-    }
-
-    private fun applyPinnedGlobalMode(state: EffectState) {
-        val effect = session0ControlEffect ?: return
-        val plan = session0ModePlan(
-            globalMode = globalMode,
-            useAidlTypeUuid = useAidlTypeUuid,
-            alreadyActive = session0PreparedForGlobal,
-        )
-        for (step in plan) {
-            when (step) {
-                Session0ModeStep.DEACTIVATE -> effect.setSession0Active(false)
-                Session0ModeStep.DISPATCH_FULL_STATE -> applyFullStateHidl(effect, state, true)
-                Session0ModeStep.ACTIVATE -> effect.setSession0Active(true)
-            }
-        }
-        session0PreparedForGlobal =
-            globalMode && !useAidlTypeUuid && effect.isCreated
-    }
-
     private fun applyState(
         state: EffectState,
         masterOn: Boolean,
@@ -187,35 +148,28 @@ class ViperService : LifecycleService() {
         if (!masterOn) {
             stopSessionMonitor()
             releaseAllSessions()
-            session0ControlEffect?.setSession0Active(false)
-            session0PreparedForGlobal = false
-            if (globalEffect != null && globalEffect !== session0ControlEffect) {
-                globalEffect?.release()
+            globalEffect?.let {
+                it.enabled = false
+                it.release()
             }
             globalEffect = null
             selectTelemetryEffect()
             return
         }
-        ensureSession0ControlEffect()
         if (globalMode) {
-            if (globalEffect == null || (!useAidlTypeUuid && globalEffect !== session0ControlEffect)) {
-                initGlobalEffect()
-            }
-            applyPinnedGlobalMode(state)
+            if (globalEffect == null) initGlobalEffect()
         } else {
-            session0ControlEffect?.setSession0Active(false)
-            session0PreparedForGlobal = false
-            if (globalEffect != null && globalEffect !== session0ControlEffect) {
-                globalEffect?.release()
-            }
-            globalEffect = null
             if (sessionMonitor == null) startSessionMonitor()
         }
         var shmWritten = false
-        if (useAidlTypeUuid) globalEffect?.let { effect ->
+        globalEffect?.let { effect ->
             effect.enabled = true
-            writeAidlFullState(state)
-            shmWritten = true
+            if (useAidlTypeUuid) {
+                writeAidlFullState(state)
+                shmWritten = true
+            } else {
+                applyFullStateHidl(effect, state, true)
+            }
         }
         for (i in 0 until sessions.size) {
             val effect = sessions.valueAt(i)
@@ -337,14 +291,11 @@ class ViperService : LifecycleService() {
 
             ACTION_STOP -> {
                 releaseAllSessions()
-                val controlEffect = session0ControlEffect
-                controlEffect?.setSession0Active(false)
-                if (globalEffect != null && globalEffect !== controlEffect) {
-                    globalEffect?.release()
+                globalEffect?.let {
+                    it.enabled = false
+                    it.release()
                 }
                 globalEffect = null
-                controlEffect?.release()
-                session0ControlEffect = null
                 selectTelemetryEffect()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -369,12 +320,11 @@ class ViperService : LifecycleService() {
         stopSessionMonitor()
         audioOutputDetector?.stop()
         audioOutputDetector = null
-        if (globalEffect != null && globalEffect !== session0ControlEffect) {
-            globalEffect?.release()
+        globalEffect?.let {
+            it.enabled = false
+            it.release()
         }
         globalEffect = null
-        session0ControlEffect?.release()
-        session0ControlEffect = null
         selectTelemetryEffect()
         releaseAllSessions()
         FileLogger.i("Service", "Service destroyed")
@@ -756,15 +706,13 @@ class ViperService : LifecycleService() {
             applyState(EffectState(), false)
             return
         }
-        ensureSession0ControlEffect()
-        session0ControlEffect?.setSession0Active(false)
-        session0PreparedForGlobal = false
         if (enabled) {
             stopSessionMonitor()
             releaseAllSessions()
         } else {
-            if (globalEffect != null && globalEffect !== session0ControlEffect) {
-                globalEffect?.release()
+            globalEffect?.let {
+                it.enabled = false
+                it.release()
             }
             globalEffect = null
         }
