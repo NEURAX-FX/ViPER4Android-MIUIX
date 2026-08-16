@@ -87,15 +87,10 @@ data class IemDriverTelemetry(
     val preparationResult: Int,
     val latencyMs: Float,
     val limiterGainReductionDb: Float,
-    val audioSessionId: Int,
-    val session0Active: Boolean,
-    val session0CacheGeneration: Long,
-    val contextInstanceId: Long,
-    val session0LiveContextCount: Int,
 ) {
     companion object {
-        const val VERSION = 4
-        const val WIRE_SIZE = 200
+        const val VERSION = 3
+        const val WIRE_SIZE = 168
 
         fun parse(payload: ByteArray): IemDriverTelemetry? {
             if (payload.size != WIRE_SIZE) return null
@@ -131,13 +126,7 @@ data class IemDriverTelemetry(
                     preparationResult = buffer.int,
                     latencyMs = buffer.float,
                     limiterGainReductionDb = buffer.float,
-                    audioSessionId = buffer.int,
-                    session0Active = buffer.int != 0,
-                    session0CacheGeneration = buffer.long,
-                    contextInstanceId = buffer.long,
-                    session0LiveContextCount = buffer.int,
                 )
-            buffer.int // reserved_session0
             if (telemetry.hostSampleRate <= 0 || telemetry.internalSampleRate != 96_000) return null
             if (telemetry.encoderMode !in 0..3 || telemetry.renderMode !in 0..2 || telemetry.ambisonicsOrder !in 1..3) return null
             if (!telemetry.latencyMs.isFinite() || !telemetry.limiterGainReductionDb.isFinite()) return null

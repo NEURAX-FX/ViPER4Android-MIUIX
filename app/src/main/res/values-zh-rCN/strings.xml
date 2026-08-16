@@ -403,11 +403,6 @@
     <string name="driver_architecture">架构</string>
     <string name="driver_streaming">音频流</string>
     <string name="driver_sampling_rate">采样率</string>
-    <string name="driver_audio_session">音频会话</string>
-    <string name="driver_pinned_global">全局驱动常驻</string>
-    <string name="driver_cache_generation">Session 0 缓存代数</string>
-    <string name="driver_context_instance">上下文实例</string>
-    <string name="driver_live_session0_contexts">存活的 Session 0 上下文</string>
     <string name="status_active">处理中</string>
     <string name="status_inactive">未处理</string>
     <string name="status_unknown">未知</string>

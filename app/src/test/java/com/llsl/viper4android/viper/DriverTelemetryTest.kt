@@ -74,7 +74,7 @@ class DriverTelemetryTest {
     }
 
     @Test
-    fun parsesIemTelemetryV4AndRejectsMalformedPayloads() {
+    fun parsesIemTelemetryV3AndRejectsMalformedPayloads() {
         val payload =
             ByteBuffer.allocate(IemDriverTelemetry.WIRE_SIZE)
                 .order(ByteOrder.LITTLE_ENDIAN)
@@ -99,12 +99,6 @@ class DriverTelemetryTest {
                     putInt(1)
                     putFloat(21.333334f)
                     putFloat(2.5f)
-                    putInt(0)
-                    putInt(1)
-                    putLong(44)
-                    putLong(12)
-                    putInt(1)
-                    putInt(0)
                 }.array()
 
         val telemetry = IemDriverTelemetry.parse(payload)!!
@@ -119,11 +113,6 @@ class DriverTelemetryTest {
         assertEquals(1, telemetry.dialogNetResult)
         assertTrue(telemetry.enabled)
         assertEquals(21.333334f, telemetry.latencyMs, 0f)
-        assertEquals(0, telemetry.audioSessionId)
-        assertTrue(telemetry.session0Active)
-        assertEquals(44L, telemetry.session0CacheGeneration)
-        assertEquals(12L, telemetry.contextInstanceId)
-        assertEquals(1, telemetry.session0LiveContextCount)
         assertNull(IemDriverTelemetry.parse(ByteArray(IemDriverTelemetry.WIRE_SIZE - 1)))
         payload[0] = 1
         assertNull(IemDriverTelemetry.parse(payload))
