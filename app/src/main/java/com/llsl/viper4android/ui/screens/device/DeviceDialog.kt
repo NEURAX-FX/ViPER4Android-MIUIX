@@ -1,6 +1,13 @@
 package com.llsl.viper4android.ui.screens.device
 
 import android.text.format.DateUtils
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +49,7 @@ import com.llsl.viper4android.data.model.DeviceSettings
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.components.viper.ViperIconButton
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
+import com.llsl.viper4android.ui.theme.ViperMotion
 import com.llsl.viper4android.ui.theme.ViperType
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -136,45 +144,73 @@ fun DeviceDialog(
         confirmText = stringResource(R.string.action_close),
         onConfirm = onDismiss,
         content = {
-            if (selectedDevice != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    ViperIconButton(onClick = { selectedDeviceId = null }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            AnimatedContent(
+                targetState = selectedDevice,
+                transitionSpec = {
+                    if (targetState != null) {
+                        (slideInHorizontally(
+                            animationSpec = ViperMotion.responsiveSpring,
+                            initialOffsetX = { fullWidth -> fullWidth / 3 }
+                        ) + fadeIn(animationSpec = tween(200))) togetherWith
+                        (slideOutHorizontally(
+                            animationSpec = ViperMotion.responsiveSpring,
+                            targetOffsetX = { fullWidth -> -fullWidth / 3 }
+                        ) + fadeOut(animationSpec = tween(150)))
+                    } else {
+                        (slideInHorizontally(
+                            animationSpec = ViperMotion.responsiveSpring,
+                            initialOffsetX = { fullWidth -> -fullWidth / 3 }
+                        ) + fadeIn(animationSpec = tween(200))) togetherWith
+                        (slideOutHorizontally(
+                            animationSpec = ViperMotion.responsiveSpring,
+                            targetOffsetX = { fullWidth -> fullWidth / 3 }
+                        ) + fadeOut(animationSpec = tween(150)))
                     }
-                    Text(
-                        text = selectedDevice.deviceName,
-                        style = ViperType.title,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    ViperIconButton(onClick = {
-                        renameInput = TextFieldValue(selectedDevice.deviceName)
-                        renamingDeviceId = selectedDevice.deviceId
-                    }) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.action_rename),
+                },
+                label = "device_dialog_screen_transition",
+            ) { targetDevice ->
+                if (targetDevice != null) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            ViperIconButton(onClick = { selectedDeviceId = null }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                            }
+                            Text(
+                                text = targetDevice.deviceName,
+                                style = ViperType.title,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            ViperIconButton(onClick = {
+                                renameInput = TextFieldValue(targetDevice.deviceName)
+                                renamingDeviceId = targetDevice.deviceId
+                            }) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.action_rename),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        DeviceDetailView(
+                            device = targetDevice,
+                            isActive = targetDevice.deviceId == activeDeviceId,
+                            onLoad = { loadTarget = targetDevice },
+                            onUpdate = { updateTarget = targetDevice },
+                            onDelete = { deleteTarget = targetDevice },
                         )
                     }
+                } else {
+                    DeviceListView(
+                        devices = devices,
+                        activeDeviceId = activeDeviceId,
+                        onSelect = { selectedDeviceId = it.deviceId },
+                    )
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                DeviceDetailView(
-                    device = selectedDevice,
-                    isActive = selectedDevice.deviceId == activeDeviceId,
-                    onLoad = { loadTarget = selectedDevice },
-                    onUpdate = { updateTarget = selectedDevice },
-                    onDelete = { deleteTarget = selectedDevice },
-                )
-            } else {
-                DeviceListView(
-                    devices = devices,
-                    activeDeviceId = activeDeviceId,
-                    onSelect = { selectedDeviceId = it.deviceId },
-                )
             }
         },
     )

@@ -60,6 +60,7 @@ import com.llsl.viper4android.ui.screens.settings.SettingsDialog
 import com.llsl.viper4android.ui.screens.status.DriverStatusDialog
 import com.llsl.viper4android.ui.screens.editor.EditorKind
 import com.llsl.viper4android.ui.theme.ViperType
+import com.llsl.viper4android.ui.theme.viperBounce
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -290,7 +291,7 @@ private fun MainActionButton(
                 .height(54.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MiuixTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.86f))
-                .clickable(onClick = onClick)
+                .viperBounce(pressedScale = 0.94f, onClick = onClick)
                 .padding(horizontal = 4.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

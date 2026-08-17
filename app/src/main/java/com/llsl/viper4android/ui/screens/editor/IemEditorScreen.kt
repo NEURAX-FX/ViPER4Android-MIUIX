@@ -2,6 +2,13 @@ package com.llsl.viper4android.ui.screens.editor
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +47,7 @@ import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
 import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperMotion
 import com.llsl.viper4android.ui.theme.ViperType
 import com.llsl.viper4android.viper.IemDriverTelemetry
 import kotlinx.coroutines.delay
@@ -168,17 +176,37 @@ fun IemEditorScreen(viewModel: EffectEditorViewModel, onBack: () -> Unit) {
                 onTabSelected = { tab = it },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
             )
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 18.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                when (tab) {
-                    0 -> EncoderTab(state, viewModel)
-                    1 -> RotationTab(state, viewModel)
-                    2 -> DecoderTab(state, viewModel)
-                    else -> OutputTab(state, telemetry, viewModel)
+            AnimatedContent(
+                targetState = tab,
+                transitionSpec = {
+                    val direction = if (targetState > initialState) 1 else -1
+                    (slideInHorizontally(
+                        animationSpec = ViperMotion.responsiveSpring,
+                        initialOffsetX = { fullWidth -> direction * (fullWidth / 4) }
+                    ) + fadeIn(animationSpec = tween(200))) togetherWith
+                    (slideOutHorizontally(
+                        animationSpec = ViperMotion.responsiveSpring,
+                        targetOffsetX = { fullWidth -> -direction * (fullWidth / 4) }
+                    ) + fadeOut(animationSpec = tween(150)))
+                },
+                label = "iem_tab_transition",
+                modifier = Modifier.fillMaxSize(),
+            ) { targetTab ->
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    when (targetTab) {
+                        0 -> EncoderTab(state, viewModel)
+                        1 -> RotationTab(state, viewModel)
+                        2 -> DecoderTab(state, viewModel)
+                        else -> OutputTab(state, telemetry, viewModel)
+                    }
+                    IemAttributionFooter()
                 }
-                IemAttributionFooter()
             }
         }
     }
