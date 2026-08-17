@@ -66,6 +66,12 @@ class EffectSectionsMaterialPolicyTest {
     }
 
     @Test
+    fun effectSectionsIsCompletelyMaterial3Free() {
+        val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
+        assertFalse("EffectSections.kt must not import any Material3 components", "androidx.compose.material3" in source)
+    }
+
+    @Test
     fun everyMainEffectCardHasAStatusSummary() {
         val source = readSource("app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt")
 

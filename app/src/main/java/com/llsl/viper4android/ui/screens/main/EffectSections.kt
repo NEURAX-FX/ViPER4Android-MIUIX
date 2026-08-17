@@ -39,13 +39,6 @@ import androidx.compose.material.icons.filled.SpeakerPhone
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.Waves
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -55,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.llsl.viper4android.R
@@ -73,8 +67,13 @@ import com.llsl.viper4android.ui.components.viper.ViperEffectCard
 import com.llsl.viper4android.ui.components.viper.ViperCurvePreview
 import com.llsl.viper4android.ui.components.viper.ViperEditorRow
 import com.llsl.viper4android.ui.components.viper.ViperTabs
+import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import com.llsl.viper4android.ui.components.EqCurveGraph
 import com.llsl.viper4android.ui.theme.ViperType
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.Locale
 import kotlin.math.log10
 import kotlin.math.pow
@@ -693,78 +692,6 @@ fun EqualizerSection(
             onClick = onOpenEditor,
         )
     }
-    return
-
-    val eqVals = state.eq
-    val enabled = eqVals.enable
-    val bandCount = eqVals.bandCount
-    val presetId = eqVals.presetId
-    val eqPresets = eqVals.presets
-
-    val bands: List<Float> =
-        remember(eqVals.bands) {
-            eqVals.bands.map { it.toFloat() }
-        }
-
-    val onEnabledChange = viewModel::setEqEnabled
-    val onBandCountChange = viewModel::setEqBandCount
-    val onPresetSelect = viewModel::setEqPreset
-    val onBandsChange = viewModel::setEqBands
-    val onPresetAdd = viewModel::addEqPreset
-    val onPresetDelete = viewModel::deleteEqPreset
-    val onReset = viewModel::resetEqBands
-
-    ViperEffectCard(
-        title = stringResource(R.string.section_equalizer),
-        enabled = enabled,
-        onEnabledChange = onEnabledChange,
-        icon = Icons.Default.Equalizer,
-    ) {
-        var showEqDialog by remember { mutableStateOf(false) }
-
-        val bandCounts = listOf(10, 15, 25, 31)
-        val bandCountOptions = bandCounts.map { stringResource(R.string.label_eq_n_bands, it) }
-        val bandCountIndex =
-            when (bandCount) {
-                15 -> 1
-                25 -> 2
-                31 -> 3
-                else -> 0
-            }
-        LabeledDropdown(
-            label = stringResource(R.string.label_eq_bands),
-            selectedValue = bandCountOptions[bandCountIndex],
-            options = bandCountOptions,
-            onOptionSelected = { index, _ -> onBandCountChange(bandCounts[index]) },
-        )
-
-        if (showCurvePreview && bands.size >= bandCount) {
-            EqCurveGraph(
-                bands = bands,
-                onClick = { showEqDialog = true },
-                bandCount = bandCount,
-            )
-        } else if (bands.size >= bandCount) {
-            TextButton(onClick = { showEqDialog = true }) {
-                Text(stringResource(R.string.action_edit_curve))
-            }
-        }
-
-        if (showEqDialog) {
-            EqEditDialog(
-                bands = bands,
-                onBandsChange = onBandsChange,
-                presetId = presetId,
-                presets = eqPresets,
-                onPresetSelect = onPresetSelect,
-                onPresetAdd = onPresetAdd,
-                onPresetDelete = onPresetDelete,
-                onReset = onReset,
-                onDismiss = { showEqDialog = false },
-                bandCount = bandCount,
-            )
-        }
-    }
 }
 
 @Composable
@@ -800,229 +727,6 @@ fun DynamicEqSection(
             icon = Icons.Default.GraphicEq,
             onClick = onOpenEditor,
         )
-    }
-    return
-
-    val dynVals = state.dynamicEq
-    val enabled = dynVals.enable
-    val bandCount = dynVals.bandCount
-
-    val freqs = dynVals.freqs.take(bandCount)
-    val qs = dynVals.qs.take(bandCount)
-    val gains = dynVals.gains.take(bandCount)
-    val thresholds = dynVals.thresholds.take(bandCount)
-    val attacks = dynVals.attacks.take(bandCount)
-    val releases = dynVals.releases.take(bandCount)
-    val filterTypes = dynVals.filterTypes.take(bandCount)
-
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val safeTab = if (bandCount > 0) selectedTab.coerceIn(0, bandCount - 1) else 0
-    var deleteBandIndex by remember { mutableIntStateOf(-1) }
-
-    fun formatFreq(hz: Int): String =
-        when {
-            hz >= 1000 -> "${hz / 1000}kHz"
-            else -> "${hz}Hz"
-        }
-
-    if (deleteBandIndex >= 0) {
-        AlertDialog(
-            onDismissRequest = { deleteBandIndex = -1 },
-            title = { Text(stringResource(R.string.dialog_delete_band)) },
-            text = { Text("Remove ${formatFreq(freqs.getOrElse(deleteBandIndex) { 1000 })} band?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    val i = deleteBandIndex
-                    deleteBandIndex = -1
-                    viewModel.removeDynamicEqBand(i)
-                    if (selectedTab >= bandCount - 1) selectedTab = maxOf(0, bandCount - 2)
-                }) { Text(stringResource(R.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    deleteBandIndex = -1
-                }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        )
-    }
-
-    ViperEffectCard(
-        title = stringResource(R.string.section_dynamic_eq),
-        enabled = enabled,
-        onEnabledChange = viewModel::setDynamicEqEnabled,
-        icon = Icons.Default.Insights,
-    ) {
-        PrimaryScrollableTabRow(
-            selectedTabIndex = safeTab,
-            edgePadding = 0.dp,
-        ) {
-            for (i in 0 until bandCount) {
-                val isSelected = safeTab == i
-                val color =
-                    if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .combinedClickable(
-                                onClick = { selectedTab = i },
-                                onLongClick = { if (bandCount > 1) deleteBandIndex = i },
-                            ).padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    Text(
-                        text = formatFreq(freqs.getOrElse(i) { 1000 }),
-                        color = color,
-                        style = ViperType.section,
-                    )
-                }
-            }
-            val lastFreq = if (bandCount > 0) freqs.getOrElse(bandCount - 1) { 0 } else 0
-            if (bandCount < 10 && lastFreq < 20000) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier =
-                        Modifier
-                            .clickable {
-                                viewModel.addDynamicEqBand()
-                                selectedTab = bandCount
-                            }.padding(horizontal = 16.dp, vertical = 12.dp),
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-
-        if (bandCount > 0) {
-            val freq = freqs.getOrElse(safeTab) { 1000 }
-            val q = qs.getOrElse(safeTab) { 150 }
-            val gain = gains.getOrElse(safeTab) { 0 }
-            val threshold = thresholds.getOrElse(safeTab) { -300 }
-            val attack = attacks.getOrElse(safeTab) { 10 }
-            val release = releases.getOrElse(safeTab) { 100 }
-            val filterType = filterTypes.getOrElse(safeTab) { 0 }.coerceIn(0, 2)
-
-            val minFreq =
-                if (safeTab > 0) (freqs.getOrElse(safeTab - 1) { 20 } + 5).toFloat() else 20f
-            val maxFreq =
-                if (safeTab < bandCount - 1) (freqs.getOrElse(safeTab + 1) { 20000 } - 5).toFloat() else 20000f
-
-            val onFreqChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.dynamicEq.freqs, safeTab, it, bandCount) }
-            val onQChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.dynamicEq.qs, safeTab, it, bandCount) }
-            val onGainChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.dynamicEq.gains, safeTab, it, bandCount) }
-            val onThresholdChange: (Int) -> Unit =
-                { viewModel.applyBandPref(Effects.dynamicEq.thresholds, safeTab, it, bandCount) }
-            val onAttackChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.dynamicEq.attacks, safeTab, it, bandCount) }
-            val onReleaseChange: (Int) -> Unit = { viewModel.applyBandPref(Effects.dynamicEq.releases, safeTab, it, bandCount) }
-            val onFilterTypeChange: (Int) -> Unit =
-                { viewModel.applyBandPref(Effects.dynamicEq.filterTypes, safeTab, it, bandCount) }
-
-            LabeledSlider(
-                label = stringResource(R.string.label_frequency),
-                value = freq.toFloat(),
-                onValueChange = { onFreqChange(it.roundToInt()) },
-                valueRange = minFreq..maxFreq,
-                steps = ((maxFreq - minFreq) / 5f).toInt().coerceAtLeast(1) - 1,
-                valueLabel = "$freq Hz",
-                edit =
-                    SliderEdit(
-                        displayValue = freq.toDouble(),
-                        displayRange = minFreq.toDouble()..maxFreq.toDouble(),
-                        decimals = 0,
-                        unit = "Hz",
-                        onCommit = { onFreqChange(it.roundToInt().coerceIn(minFreq.roundToInt(), maxFreq.roundToInt())) },
-                    ),
-            )
-            LabeledSlider(
-                label = stringResource(R.string.label_dynamic_eq_q_factor),
-                value = q.toFloat(),
-                onValueChange = { onQChange(it.roundToInt()) },
-                valueRange = 50f..800f,
-                valueLabel = String.format(Locale.US, "%.1f", q / 100f),
-                edit =
-                    SliderEdit(
-                        displayValue = q / 100.0,
-                        displayRange = 0.5..8.0,
-                        decimals = 1,
-                        onCommit = { onQChange((it * 100).roundToInt().coerceIn(50, 800)) },
-                    ),
-            )
-            LabeledSlider(
-                label = stringResource(R.string.label_dynamic_eq_target_gain),
-                value = gain.toFloat(),
-                onValueChange = { onGainChange(it.roundToInt()) },
-                valueRange = -120f..120f,
-                valueLabel = String.format(Locale.US, "%.1f dB", gain / 10f),
-                edit =
-                    SliderEdit(
-                        displayValue = gain / 10.0,
-                        displayRange = -12.0..12.0,
-                        decimals = 1,
-                        unit = "dB",
-                        onCommit = { onGainChange((it * 10).roundToInt().coerceIn(-120, 120)) },
-                    ),
-            )
-            LabeledSlider(
-                label = stringResource(R.string.label_threshold),
-                value = threshold.toFloat(),
-                onValueChange = { onThresholdChange(it.roundToInt()) },
-                valueRange = -800f..0f,
-                valueLabel = "${threshold / 10} dB",
-                edit =
-                    SliderEdit(
-                        displayValue = threshold / 10.0,
-                        displayRange = -80.0..0.0,
-                        decimals = 1,
-                        unit = "dB",
-                        onCommit = { onThresholdChange((it * 10).roundToInt().coerceIn(-800, 0)) },
-                    ),
-            )
-            LabeledSlider(
-                label = stringResource(R.string.label_attack),
-                value = attack.toFloat(),
-                onValueChange = { onAttackChange(it.roundToInt()) },
-                valueRange = 1f..100f,
-                valueLabel = "$attack ms",
-                edit =
-                    SliderEdit(
-                        displayValue = attack.toDouble(),
-                        displayRange = 1.0..100.0,
-                        decimals = 0,
-                        unit = "ms",
-                        onCommit = { onAttackChange(it.roundToInt().coerceIn(1, 100)) },
-                    ),
-            )
-            LabeledSlider(
-                label = stringResource(R.string.label_release),
-                value = release.toFloat(),
-                onValueChange = { onReleaseChange(it.roundToInt()) },
-                valueRange = 10f..500f,
-                valueLabel = "$release ms",
-                edit =
-                    SliderEdit(
-                        displayValue = release.toDouble(),
-                        displayRange = 10.0..500.0,
-                        decimals = 0,
-                        unit = "ms",
-                        onCommit = { onReleaseChange(it.roundToInt().coerceIn(10, 500)) },
-                    ),
-            )
-            val filterTypeNames =
-                listOf(
-                    stringResource(R.string.filter_peak),
-                    stringResource(R.string.filter_low_shelf),
-                    stringResource(R.string.filter_high_shelf),
-                )
-            LabeledDropdown(
-                label = stringResource(R.string.label_dynamic_eq_filter_type),
-                selectedValue = filterTypeNames[filterType],
-                options = filterTypeNames,
-                onOptionSelected = { index, _ -> onFilterTypeChange(index) },
-            )
-        }
     }
 }
 
@@ -1632,32 +1336,22 @@ fun DynamicSystemSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            TextButton(onClick = { showSaveDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_save))
-            }
             TextButton(
+                text = stringResource(R.string.action_save),
+                onClick = { showSaveDialog = true },
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = stringResource(R.string.action_delete),
                 onClick = { dsPresetId?.let { onPresetDelete(it) } },
                 enabled = dsPresetId != null,
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_delete))
-            }
-            TextButton(onClick = onReset) {
-                Icon(
-                    Icons.Default.RestartAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_reset))
-            }
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                text = stringResource(R.string.action_reset),
+                onClick = onReset,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         LabeledSlider(
@@ -1778,36 +1472,24 @@ fun DynamicSystemSection(
     }
 
     if (showSaveDialog) {
-        AlertDialog(
+        ViperTextFieldDialog(
+            show = true,
             onDismissRequest = { showSaveDialog = false },
-            title = { Text(stringResource(R.string.preset_save_title)) },
-            text = {
-                OutlinedTextField(
-                    value = presetNameInput,
-                    onValueChange = { presetNameInput = it },
-                    label = { Text(stringResource(R.string.preset_name_hint)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (presetNameInput.isNotBlank()) {
-                            onPresetAdd(presetNameInput.trim())
-                            presetNameInput = ""
-                            showSaveDialog = false
-                        }
-                    },
-                ) {
-                    Text(stringResource(android.R.string.ok))
+            title = stringResource(R.string.preset_save_title),
+            value = TextFieldValue(presetNameInput),
+            onValueChange = { presetNameInput = it.text },
+            label = stringResource(R.string.preset_name_hint),
+            confirmText = stringResource(android.R.string.ok),
+            onConfirm = {
+                if (presetNameInput.isNotBlank()) {
+                    onPresetAdd(presetNameInput.trim())
+                    presetNameInput = ""
+                    showSaveDialog = false
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { showSaveDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
+            confirmEnabled = presetNameInput.isNotBlank(),
+            dismissText = stringResource(android.R.string.cancel),
+            onDismiss = { showSaveDialog = false },
         )
     }
 }
