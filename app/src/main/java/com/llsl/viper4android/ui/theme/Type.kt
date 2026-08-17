@@ -11,31 +11,40 @@ data class ViperTypography(
     val display: TextStyle,
     val title: TextStyle,
     val section: TextStyle,
+    val cardTitle: TextStyle,
     val body: TextStyle,
     val caption: TextStyle,
     val value: TextStyle,
+    val badge: TextStyle,
     val micro: TextStyle,
     val mono: TextStyle,
 )
 
 val ViperType = ViperTypography(
     display = TextStyle(
-        fontSize = 40.sp,
-        lineHeight = 44.sp,
-        fontWeight = FontWeight.Medium,
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-0.5).sp,
     ),
     title = TextStyle(
         fontSize = 20.sp,
-        lineHeight = 24.sp,
-        fontWeight = FontWeight.Medium,
+        lineHeight = 26.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-0.2).sp,
     ),
     section = TextStyle(
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        fontWeight = FontWeight.SemiBold,
+    ),
+    cardTitle = TextStyle(
+        fontSize = 15.sp,
+        lineHeight = 20.sp,
         fontWeight = FontWeight.Medium,
     ),
     body = TextStyle(
-        fontSize = 15.sp,
+        fontSize = 14.sp,
         lineHeight = 20.sp,
         fontWeight = FontWeight.Normal,
     ),
@@ -45,19 +54,25 @@ val ViperType = ViperTypography(
         fontWeight = FontWeight.Normal,
     ),
     value = TextStyle(
-        fontSize = 15.sp,
-        lineHeight = 20.sp,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+        fontWeight = FontWeight.SemiBold,
+    ),
+    badge = TextStyle(
+        fontSize = 11.sp,
+        lineHeight = 14.sp,
         fontWeight = FontWeight.Medium,
     ),
     micro = TextStyle(
-        fontSize = 10.sp,
-        lineHeight = 13.sp,
+        fontSize = 12.sp,
+        lineHeight = 15.sp,
         fontWeight = FontWeight.Normal,
     ),
     mono = TextStyle(
         fontFamily = FontFamily.Monospace,
-        fontSize = 10.sp,
-        lineHeight = 13.sp,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
         fontWeight = FontWeight.Normal,
     ),
 )
+

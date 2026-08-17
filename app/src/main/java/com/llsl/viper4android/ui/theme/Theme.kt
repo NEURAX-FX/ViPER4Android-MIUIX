@@ -51,11 +51,17 @@ object ViperDesign {
 }
 
 private val LocalViperInk = staticCompositionLocalOf { ViperInkLight }
+private val LocalViperSecondaryInk = staticCompositionLocalOf { ViperSecondaryInkLight }
 
 val ViperInk: Color
     @Composable
     @ReadOnlyComposable
     get() = LocalViperInk.current
+
+val ViperSecondaryInk: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalViperSecondaryInk.current
 
 @Composable
 fun ViperTheme(
@@ -100,8 +106,13 @@ fun ViperTheme(
     ViperSystemBars(isDark = isDark)
 
     val ink = if (isDark) ViperInkDark else ViperInkLight
+    val secondaryInk = if (isDark) ViperSecondaryInkDark else ViperSecondaryInkLight
     MiuixTheme(controller = controller) {
-        CompositionLocalProvider(LocalViperInk provides ink, content = content)
+        CompositionLocalProvider(
+            LocalViperInk provides ink,
+            LocalViperSecondaryInk provides secondaryInk,
+            content = content
+        )
     }
 }
 
