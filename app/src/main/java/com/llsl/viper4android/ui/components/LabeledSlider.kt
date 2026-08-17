@@ -1,6 +1,7 @@
 package com.llsl.viper4android.ui.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
 import com.llsl.viper4android.ui.theme.ViperInk
 import com.llsl.viper4android.ui.theme.ViperType
+import com.llsl.viper4android.ui.theme.viperBounce
 import top.yukonga.miuix.kmp.basic.Slider
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -83,25 +85,31 @@ fun LabeledSlider(
         }
     }
 
-    val titleColor =
-        if (enabled) {
+    val titleColor by animateColorAsState(
+        targetValue = if (enabled) {
             ViperInk
         } else {
-            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
-        }
-    val valueColor =
-        if (enabled) {
+            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.5f)
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "slider_title_color",
+    )
+    val valueColor by animateColorAsState(
+        targetValue = if (enabled) {
             MiuixTheme.colorScheme.primary
         } else {
-            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
-        }
+            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.5f)
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "slider_value_color",
+    )
 
-    Column(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Text(
             text = label,
             style = ViperType.body,
             color = titleColor,
-            modifier = Modifier.padding(bottom = 6.dp),
+            modifier = Modifier.padding(bottom = 4.dp),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -125,8 +133,8 @@ fun LabeledSlider(
                 color = valueColor,
                 textAlign = TextAlign.End,
                 modifier = Modifier
-                    .widthIn(min = 72.dp)
-                    .clickable(enabled = enabled) { openPrecisionInput() },
+                    .widthIn(min = 68.dp)
+                    .viperBounce(enabled = enabled, pressedScale = 0.92f) { openPrecisionInput() },
             )
         }
     }

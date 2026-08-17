@@ -1,7 +1,14 @@
 package com.llsl.viper4android.ui.components.viper
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,7 +39,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperSecondaryInk
 import com.llsl.viper4android.ui.theme.ViperType
+import com.llsl.viper4android.ui.theme.viperBounce
 import top.yukonga.miuix.kmp.basic.Card as MiuixCard
 import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
 import top.yukonga.miuix.kmp.basic.Switch as MiuixSwitch
@@ -57,8 +66,23 @@ fun ViperEffectCard(
         if (toggleOnly) {
             Modifier
         } else {
-            Modifier.clickable { expanded = !expanded }
+            Modifier
+                .viperBounce(pressedScale = 0.985f) { expanded = !expanded }
         }
+
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (enabled) 1f else 0.45f,
+        animationSpec = tween(durationMillis = 200),
+        label = "card_content_alpha",
+    )
+
+    val iconBgColor by animateColorAsState(
+        targetValue = MiuixTheme.colorScheme.primary.copy(
+            alpha = if (enabled) 0.16f else 0.08f,
+        ),
+        animationSpec = tween(durationMillis = 200),
+        label = "card_icon_bg",
+    )
 
     MiuixCard(
         modifier =
@@ -66,7 +90,7 @@ fun ViperEffectCard(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp, vertical = 4.dp),
         insideMargin = PaddingValues(0.dp),
-        cornerRadius = 12.dp,
+        cornerRadius = 14.dp,
     ) {
         Row(
             modifier =
@@ -80,11 +104,9 @@ fun ViperEffectCard(
                 Box(
                     modifier =
                         Modifier
-                            .size(32.dp)
+                            .size(34.dp)
                             .background(
-                                MiuixTheme.colorScheme.primary.copy(
-                                    alpha = if (enabled) 0.16f else 0.08f,
-                                ),
+                                iconBgColor,
                                 RoundedCornerShape(10.dp),
                             ),
                     contentAlignment = Alignment.Center,
@@ -102,7 +124,7 @@ fun ViperEffectCard(
             Column(modifier = Modifier.weight(1f)) {
                 MiuixText(
                     text = title,
-                    style = ViperType.body,
+                    style = ViperType.cardTitle,
                     color = ViperInk,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -111,7 +133,7 @@ fun ViperEffectCard(
                     MiuixText(
                         text = it,
                         style = ViperType.caption,
-                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        color = ViperSecondaryInk,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -122,7 +144,7 @@ fun ViperEffectCard(
                 MiuixIcon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    tint = ViperSecondaryInk,
                     modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(6.dp))
@@ -138,18 +160,29 @@ fun ViperEffectCard(
         if (!toggleOnly) {
             AnimatedVisibility(
                 visible = expanded,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
+                enter = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.82f,
+                        stiffness = Spring.StiffnessMediumLow,
+                    )
+                ) + fadeIn(animationSpec = tween(180)),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = 0.82f,
+                        stiffness = Spring.StiffnessMediumLow,
+                    )
+                ) + fadeOut(animationSpec = tween(140)),
             ) {
                 Column(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .alpha(if (enabled) 1f else 0.45f),
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .alpha(contentAlpha),
                     content = content,
                 )
             }
         }
     }
 }
+

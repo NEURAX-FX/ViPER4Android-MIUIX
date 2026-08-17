@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperSecondaryInk
 import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
@@ -71,7 +72,7 @@ fun ViperTopBar(
                     Text(
                         text = deviceName,
                         style = ViperType.caption,
-                        color = MiuixTheme.colorScheme.outline,
+                        color = ViperSecondaryInk,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -140,7 +141,7 @@ fun ViperTopBar(
                     Text(
                         text = deviceName,
                         style = ViperType.caption,
-                        color = MiuixTheme.colorScheme.outline,
+                        color = ViperSecondaryInk,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )

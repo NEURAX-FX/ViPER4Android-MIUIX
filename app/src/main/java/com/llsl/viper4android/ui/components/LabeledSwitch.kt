@@ -1,18 +1,23 @@
 package com.llsl.viper4android.ui.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.ui.theme.ViperInk
+import com.llsl.viper4android.ui.theme.ViperSecondaryInk
 import com.llsl.viper4android.ui.theme.ViperType
+import com.llsl.viper4android.ui.theme.viperBounce
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -26,15 +31,19 @@ fun LabeledSwitch(
     subtitle: String? = null,
     enabled: Boolean = true,
 ) {
-    val titleColor =
-        if (enabled) {
+    val titleColor by animateColorAsState(
+        targetValue = if (enabled) {
             ViperInk
         } else {
-            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.62f)
-        }
+            MiuixTheme.colorScheme.onSurfaceVariantActions.copy(alpha = 0.5f)
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "switch_title_color",
+    )
+
     val rowModifier =
         if (enabled) {
-            Modifier.clickable { onCheckedChange(!checked) }
+            Modifier.viperBounce(pressedScale = 0.985f) { onCheckedChange(!checked) }
         } else {
             Modifier
         }
@@ -44,7 +53,7 @@ fun LabeledSwitch(
             .fillMaxWidth()
             .then(rowModifier)
             .heightIn(min = 56.dp)
-            .padding(vertical = 10.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -57,11 +66,11 @@ fun LabeledSwitch(
                 Text(
                     text = subtitle,
                     style = ViperType.caption,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    color = ViperSecondaryInk,
                 )
             }
         }
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
