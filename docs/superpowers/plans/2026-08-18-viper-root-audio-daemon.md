@@ -4,9 +4,9 @@
 
 **Goal:** Add a native root daemon that restores route-specific ViPER state before the App starts, tracks driver sessions without blocking the audio thread, and provides an App synchronization path with legacy fallback.
 
-**Architecture:** The driver publishes bounded observe-only lifecycle events over a non-blocking abstract `SOCK_SEQPACKET` bridge. The daemon owns route detection, composite device keys, atomic root-private snapshots, generation arbitration, and App IPC. The App remains the editable-state authority and connects through `ViperService`; actual AudioEffect creation/destruction remains in AudioFlinger and the driver/App legacy backend remains available during migration.
+**Architecture:** The driver publishes bounded observe-only lifecycle events over a non-blocking abstract `SOCK_SEQPACKET` bridge. This bridge is a project-private driver API and is the only daemon-to-driver control path; the daemon does not use HIDL/AIDL or AudioEffect Binder clients. The daemon owns route detection, composite device keys, atomic root-private snapshots, generation arbitration, and App IPC. The App remains the editable-state authority and connects through `ViperService`; actual AudioEffect creation/destruction remains in AudioFlinger and the driver/App legacy backend remains available during migration.
 
-**Tech Stack:** C++17-compatible native code, CMake/CTest, Android NDK, KernelSU module shell scripts, Kotlin `LocalSocket`, coroutines, Room/DataStore, existing `ViperContext`, `ConfigChannel`, and `ViperService`.
+**Tech Stack:** C++17 existing DSP libraries plus a C++20 daemon/protocol target, CMake/CTest, Android NDK, KernelSU module shell scripts, Kotlin `LocalSocket`, coroutines, Room/DataStore, existing `ViperContext`, `ConfigChannel`, and `ViperService`.
 
 ## Global Constraints
 
@@ -15,6 +15,8 @@
 - Keep the existing direct App-to-driver backend available until daemon health and protocol checks pass.
 - Device snapshots live under `/data/adb/viper4android/`, owned by root, with atomic writes and `current.snapshot`/`previous.snapshot` recovery.
 - Driver-to-daemon IPC uses a non-blocking abstract `SOCK_SEQPACKET` socket named `@viper4android.driver.v1`.
+- The daemon control plane must not depend on HIDL, AIDL, hidden AudioFlinger Binder APIs, or generated HAL interfaces.
+- The existing AudioEffect HAL is retained only as AudioFlinger's lifecycle boundary; `DriverDaemonBridge` is the daemon's private driver API.
 - App-to-daemon IPC uses a separate abstract socket named `@viper4android.app.v1`.
 - A lost driver event must trigger daemon rescan; event loss must not block or stall audio processing.
 - A route change applies the selected valid snapshot before App reconciliation.
@@ -66,7 +68,7 @@ Test valid complete snapshots, missing required metadata, resource hash mismatch
 
 - [ ] **Step 4: Implement bounded frame codec**
 
-Use a fixed 32-byte header, maximum frame size 1 MiB, CRC32 for payloads, and explicit `FrameError` values. Do not use exceptions in the protocol path.
+Use a fixed 36-byte header, maximum frame size 1 MiB, CRC32 for payloads, and explicit `FrameError` values. Do not use exceptions in the protocol path.
 
 - [ ] **Step 5: Implement device-key normalization**
 
@@ -155,6 +157,10 @@ Expected: PASS.
 - `DriverDaemonBridge::RequestRescan()`
 - `DriverDaemonBridge::Connected() const`
 - `DriverEvent` fields: `boot_id`, `event_sequence`, `context_instance_id`, `session_id`, `io_id`, `sample_rate`, `channel_mask`, `state`, and bounded telemetry.
+
+The bridge is implemented inside `libv4a_re.so` and communicates with the
+separate daemon through the private `@viper4android.driver.v1` protocol. It
+must not link to HIDL/AIDL generated code or create an AudioEffect client.
 
 - [ ] **Step 1: Write failing bridge tests**
 

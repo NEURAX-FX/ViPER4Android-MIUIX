@@ -6,7 +6,9 @@
 
 ## 1. Summary
 
-Introduce a native C++ root daemon supplied by the KernelSU module. The daemon
+Introduce a native C++20 root daemon supplied by the KernelSU module. Existing
+DSP libraries remain on their current C++ standard; the daemon and protocol
+targets are compiled separately with C++20. The daemon
 owns driver control, route-aware snapshot selection, logical session tracking,
 and recovery coordination. The Android App remains responsible for the UI,
 editable Room/DataStore state, resource selection, and user-facing lifecycle.
@@ -40,6 +42,10 @@ run in observe-only mode before it is allowed to apply snapshots.
 
 - The daemon will not replace AudioFlinger.
 - The daemon will not create or destroy real AudioEffect instances.
+- The daemon control plane will not use HIDL, AIDL, AudioEffect Binder
+  clients, or hidden AudioFlinger Binder APIs.
+- The daemon will communicate with `libv4a_re.so` only through the driver's
+  private `DriverDaemonBridge` protocol.
 - The first phase will not migrate all App Room/DataStore persistence into the
   daemon.
 - The daemon will not process or store audio samples.
@@ -119,6 +125,14 @@ their real-time processing. It exposes a control-thread bridge that:
 - atomically publishes a validated active snapshot;
 - retains the last valid immutable snapshot in process memory.
 
+The existing AudioEffect HAL boundary remains only for AudioFlinger. It is not
+the daemon control API. The daemon does not link against or invoke HIDL/AIDL
+interfaces, does not create an AudioEffect client, and does not try to discover
+driver contexts through hidden AudioFlinger Binder services. The bridge is a
+driver-private interprocess protocol implemented by `libv4a_re.so` and
+`viper-daemon`; this keeps daemon behavior independent of whether the device's
+AudioEffect integration uses a HIDL or AIDL HAL variant.
+
 ### 4.3 App
 
 The App remains the user-facing authority for desired editable state. It must
@@ -141,7 +155,9 @@ write through both backends.
 
 ## 5. IPC Architecture
 
-There are two independent abstract Unix socket protocols.
+There are two independent abstract Unix socket protocols. The driver socket is
+the private driver API; it is not an Android HAL API and has no HIDL/AIDL
+generated interface.
 
 ### 5.1 Driver-to-Daemon Socket
 
@@ -154,6 +170,10 @@ namespace:
 
 The driver connects as a client. The daemon may send control commands on the
 same connection.
+
+This is the only daemon-to-driver control path. The fixed binary frames are
+still serialized because the daemon and driver live in different processes,
+but the schema is project-private and stable across Android HAL variants.
 
 Driver-side rules:
 
