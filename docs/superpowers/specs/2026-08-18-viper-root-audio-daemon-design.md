@@ -53,7 +53,7 @@ run in observe-only mode before it is allowed to apply snapshots.
 
 ```text
 KernelSU module
-  \- service.sh
+  \- boot-completed.sh -> init: start viper_daemon
       \- viper-daemon (root, native C++)
           |- DriverEventServer
           |- AppControlServer
@@ -82,10 +82,19 @@ Android App
 
 ### 4.1 Daemon
 
-The daemon is a native C++ executable installed by the module and started by
-KernelSU's late-start `service.sh`. It should run in the foreground from the
-module script rather than double-forking. The script supervises it with bounded
-exponential backoff.
+The daemon is a native C++ executable installed by the module and owned by
+Android init. Its init service runs in the foreground; init owns the process
+lifecycle and restarts an unexpected exit. A boot-completed module hook only
+executes `start viper_daemon` and writes a diagnostic marker. It must not
+implement a second restart loop or double-fork the daemon.
+
+The init service is `disabled` and belongs to `class late_start`, so the daemon
+does not start before the module's boot-completed trigger requests it. The
+service is not `oneshot`; an unexpected daemon exit is therefore restartable by
+init. The module must verify that its init fragment is actually imported on the
+target ROM before enabling this backend. If the ROM does not import module
+`.rc` fragments, installation reports the daemon backend as unavailable and
+retains the legacy backend rather than guessing an init import mechanism.
 
 The daemon owns:
 
@@ -794,7 +803,8 @@ and atomic publish. Keep the App legacy backend as a fallback.
 ### Phase 4: Route-first restore
 
 Enable route watcher, device key selection, snapshot-first restoration, and
-on-demand App wake-up/reconciliation.
+on-demand App wake-up/reconciliation. Start the daemon through the verified
+init service and boot-completed trigger.
 
 ### Phase 5: Registry and rescan
 
