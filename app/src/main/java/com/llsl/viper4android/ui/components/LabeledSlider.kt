@@ -2,6 +2,7 @@ package com.llsl.viper4android.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -134,7 +135,8 @@ fun LabeledSlider(
                 textAlign = TextAlign.End,
                 modifier = Modifier
                     .widthIn(min = 68.dp)
-                    .viperBounce(enabled = enabled, pressedScale = 0.92f) { openPrecisionInput() },
+                    .clickable(enabled = enabled) { openPrecisionInput() }
+                    .viperBounce(enabled = enabled, pressedScale = 0.92f),
             )
         }
     }
@@ -165,10 +167,10 @@ fun LabeledSlider(
                 onDone = { confirmPrecisionInput() },
             ),
             textStyle = ViperType.body.copy(
-                color = ViperInk,
+                color = MiuixTheme.colorScheme.onBackground,
             ),
             backgroundColor = MiuixTheme.colorScheme.surfaceContainer,
-            labelColor = ViperInk,
+            labelColor = MiuixTheme.colorScheme.onBackground,
             borderColor = MiuixTheme.colorScheme.outline,
             modifier = Modifier.fillMaxWidth(),
         )

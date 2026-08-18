@@ -2,13 +2,6 @@ package com.llsl.viper4android.ui.screens.editor
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,11 +43,11 @@ import com.llsl.viper4android.ui.components.viper.ViperScaffold
 import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.viper.ViperTopBar
 import com.llsl.viper4android.ui.theme.ViperInk
-import com.llsl.viper4android.ui.theme.ViperMotion
 import com.llsl.viper4android.ui.theme.ViperType
 import com.llsl.viper4android.viper.IemDriverTelemetry
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
@@ -132,7 +128,8 @@ fun IemEditorScreen(viewModel: EffectEditorViewModel, onBack: () -> Unit) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val connected by viewModel.isServiceConnected.collectAsStateWithLifecycle()
     val telemetry by viewModel.iemTelemetry.collectAsStateWithLifecycle()
-    var tab by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { iemEditorTabs().size })
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(connected) {
         if (!connected) {
@@ -172,24 +169,15 @@ fun IemEditorScreen(viewModel: EffectEditorViewModel, onBack: () -> Unit) {
                     stringResource(R.string.iem_tab_encoder), stringResource(R.string.iem_tab_rotation),
                     stringResource(R.string.iem_tab_decoder), stringResource(R.string.iem_tab_output),
                 ),
-                selectedTabIndex = tab,
-                onTabSelected = { tab = it },
+                selectedTabIndex = pagerState.currentPage,
+                onTabSelected = { index ->
+                    coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
             )
-            AnimatedContent(
-                targetState = tab,
-                transitionSpec = {
-                    val direction = if (targetState > initialState) 1 else -1
-                    (slideInHorizontally(
-                        animationSpec = ViperMotion.responsiveSpring,
-                        initialOffsetX = { fullWidth -> direction * (fullWidth / 4) }
-                    ) + fadeIn(animationSpec = tween(200))) togetherWith
-                    (slideOutHorizontally(
-                        animationSpec = ViperMotion.responsiveSpring,
-                        targetOffsetX = { fullWidth -> -direction * (fullWidth / 4) }
-                    ) + fadeOut(animationSpec = tween(150)))
-                },
-                label = "iem_tab_transition",
+            HorizontalPager(
+                state = pagerState,
+                userScrollEnabled = true,
                 modifier = Modifier.fillMaxSize(),
             ) { targetTab ->
                 Column(

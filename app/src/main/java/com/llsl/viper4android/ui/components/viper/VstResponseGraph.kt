@@ -1,8 +1,8 @@
 package com.llsl.viper4android.ui.components.viper
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -337,67 +337,65 @@ fun VstResponseGraph(
             .semantics { this.contentDescription = semanticsLabel }
             .onSizeChanged { size = it }
             .pointerInput(size, interactive) {
-                detectTapGestures { point ->
-                    if (!interactive) {
-                        latestOnClick?.invoke()
-                        return@detectTapGestures
-                    }
-                    val grabbed = nearestHandleAt(
-                        handles = latestHandles,
-                        point = point,
-                        width = size.width.coerceAtLeast(1).toFloat(),
-                        height = size.height.coerceAtLeast(1).toFloat(),
-                        radiusPx = touchRadiusPx,
-                    )
-                    if (grabbed != null) {
-                        latestOnHandleSelected(grabbed.id)
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val w = size.width.coerceAtLeast(1).toFloat()
+                    val h = size.height.coerceAtLeast(1).toFloat()
+                    val grabbed = if (interactive) {
+                        nearestHandleAt(latestHandles, down.position, w, h, touchRadiusPx)
                     } else {
-                        val width = size.width.coerceAtLeast(1).toFloat()
-                        val region = bandRegionAt(latestBandRegions, point.x / width)
-                        if (region != null && latestOnBandRegionSelected != null) {
-                            latestOnBandRegionSelected?.invoke(region)
-                        } else {
-                            latestOnClick?.invoke()
-                        }
+                        null
                     }
-                }
-            }
-            .pointerInput(size, interactive) {
-                if (!interactive) return@pointerInput
-                detectDragGestures(
-                    onDragStart = { point ->
-                        val w = size.width.coerceAtLeast(1).toFloat()
-                        val h = size.height.coerceAtLeast(1).toFloat()
-                        val grabbed = nearestHandleAt(latestHandles, point, w, h, touchRadiusPx)
-                        grabbed?.let {
-                            val start = GraphDragSample(it.id, it.x, it.y)
-                            if (!dragReducer.begin(start, enabled = it.enabled)) return@let
-                            activeHandleId = it.id
-                            dragStart = start
-                            activeDragAxis = it.dragAxis
-                            dragX = it.x
-                            dragY = it.y
-                            latestOnHandleSelected(it.id)
-                            latestOnHandleDragStart(it.id)
+
+                    if (grabbed == null) {
+                        // Leave background drags available to parent scroll containers. A tap is
+                        // handled only after the pointer is released and never consumes movement.
+                        var moved = false
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id }
+                                ?: break
+                            if (!change.pressed) break
+                            if (change.position != change.previousPosition) moved = true
                         }
-                    },
-                    onDrag = { change, dragAmount ->
-                        val id = activeHandleId ?: return@detectDragGestures
-                        val start = dragStart ?: return@detectDragGestures
-                        val w = size.width.coerceAtLeast(1).toFloat()
-                        val h = size.height.coerceAtLeast(1).toFloat()
-                        dragX = (dragX + dragAmount.x / w).coerceIn(0f, 1f)
-                        dragY = (dragY + dragAmount.y / h).coerceIn(0f, 1f)
-                        val sample =
-                            applyGraphDragAxis(
+                        if (!moved) {
+                            val region = bandRegionAt(latestBandRegions, down.position.x / w)
+                            if (region != null && latestOnBandRegionSelected != null) {
+                                latestOnBandRegionSelected?.invoke(region)
+                            } else {
+                                latestOnClick?.invoke()
+                            }
+                        }
+                    } else {
+
+                        val start = GraphDragSample(grabbed.id, grabbed.x, grabbed.y)
+                        if (!dragReducer.begin(start, enabled = grabbed.enabled)) return@awaitEachGesture
+                        activeHandleId = grabbed.id
+                        dragStart = start
+                        activeDragAxis = grabbed.dragAxis
+                        dragX = grabbed.x
+                        dragY = grabbed.y
+                        latestOnHandleSelected(grabbed.id)
+                        latestOnHandleDragStart(grabbed.id)
+
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id }
+                                ?: break
+                            if (!change.pressed) break
+                            val dragAmount = change.position - change.previousPosition
+                            val id = activeHandleId ?: break
+                            val dragStartSample = dragStart ?: break
+                            dragX = (dragX + dragAmount.x / w).coerceIn(0f, 1f)
+                            dragY = (dragY + dragAmount.y / h).coerceIn(0f, 1f)
+                            val sample = applyGraphDragAxis(
                                 axis = activeDragAxis,
-                                start = start,
+                                start = dragStartSample,
                                 candidate = GraphDragSample(id, dragX, dragY),
                             )
-                        change.consume()
-                        if (dragReducer.offer(sample)) dragSignals.trySend(Unit)
-                    },
-                    onDragEnd = {
+                            change.consume()
+                            if (dragReducer.offer(sample)) dragSignals.trySend(Unit)
+                        }
                         dragReducer.finish()?.let { sample ->
                             latestOnHandleDrag(sample.handleId, sample.x, sample.y)
                             latestOnHandleDragSettled(sample.handleId, sample.x, sample.y)
@@ -405,17 +403,8 @@ fun VstResponseGraph(
                         }
                         activeHandleId = null
                         dragStart = null
-                    },
-                    onDragCancel = {
-                        dragReducer.cancel()?.let { sample ->
-                            latestOnHandleDrag(sample.handleId, sample.x, sample.y)
-                            latestOnHandleDragSettled(sample.handleId, sample.x, sample.y)
-                            latestOnHandleDragEnd(sample.handleId)
-                        }
-                        activeHandleId = null
-                        dragStart = null
-                    },
-                )
+                    }
+                }
             },
         ) {
         val width = size.width.toFloat()

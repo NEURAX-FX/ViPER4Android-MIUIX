@@ -50,6 +50,25 @@ class PredictiveBackPolicyTest {
         }
     }
 
+    @Test
+    fun activitiesDelegateCrossActivityBackToTheSystemDispatcher() {
+        val mainActivity = readSource("app/src/main/java/com/llsl/viper4android/ui/MainActivity.kt")
+        val editorActivity = readSource("app/src/main/java/com/llsl/viper4android/ui/EffectEditorActivity.kt")
+
+        assertFalse(
+            "MainActivity must not intercept the system cross-activity back transition",
+            "ViperPredictiveBackSurface(" in mainActivity,
+        )
+        assertFalse(
+            "EffectEditorActivity must not intercept the system cross-activity back transition",
+            "ViperPredictiveBackSurface(" in editorActivity,
+        )
+        assertTrue(
+            "Editor toolbar back should use the Activity dispatcher",
+            "onBack = { onBackPressedDispatcher.onBackPressed() }" in editorActivity,
+        )
+    }
+
     private fun readSource(relativePath: String): String =
         String(Files.readAllBytes(projectRoot().resolve(relativePath)), Charsets.UTF_8)
 

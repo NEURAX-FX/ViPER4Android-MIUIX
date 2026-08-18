@@ -149,20 +149,20 @@ fun DeviceDialog(
                 transitionSpec = {
                     if (targetState != null) {
                         (slideInHorizontally(
-                            animationSpec = ViperMotion.responsiveSpring,
+                            animationSpec = ViperMotion.responsiveOffsetSpring,
                             initialOffsetX = { fullWidth -> fullWidth / 3 }
                         ) + fadeIn(animationSpec = tween(200))) togetherWith
                         (slideOutHorizontally(
-                            animationSpec = ViperMotion.responsiveSpring,
+                            animationSpec = ViperMotion.responsiveOffsetSpring,
                             targetOffsetX = { fullWidth -> -fullWidth / 3 }
                         ) + fadeOut(animationSpec = tween(150)))
                     } else {
                         (slideInHorizontally(
-                            animationSpec = ViperMotion.responsiveSpring,
+                            animationSpec = ViperMotion.responsiveOffsetSpring,
                             initialOffsetX = { fullWidth -> -fullWidth / 3 }
                         ) + fadeIn(animationSpec = tween(200))) togetherWith
                         (slideOutHorizontally(
-                            animationSpec = ViperMotion.responsiveSpring,
+                            animationSpec = ViperMotion.responsiveOffsetSpring,
                             targetOffsetX = { fullWidth -> fullWidth / 3 }
                         ) + fadeOut(animationSpec = tween(150)))
                     }

@@ -11,14 +11,16 @@ import java.nio.file.Paths
 class ViperTypePolicyTest {
     @Test
     fun typeScaleDefinesSemanticGroups() {
-        assertEquals(40f, ViperType.display.fontSize.value)
+        assertEquals(28f, ViperType.display.fontSize.value)
         assertEquals(20f, ViperType.title.fontSize.value)
-        assertEquals(13f, ViperType.section.fontSize.value)
-        assertEquals(15f, ViperType.body.fontSize.value)
+        assertEquals(16f, ViperType.section.fontSize.value)
+        assertEquals(15f, ViperType.cardTitle.fontSize.value)
+        assertEquals(14f, ViperType.body.fontSize.value)
         assertEquals(12f, ViperType.caption.fontSize.value)
-        assertEquals(15f, ViperType.value.fontSize.value)
-        assertEquals(10f, ViperType.micro.fontSize.value)
-        assertEquals(10f, ViperType.mono.fontSize.value)
+        assertEquals(14f, ViperType.value.fontSize.value)
+        assertEquals(11f, ViperType.badge.fontSize.value)
+        assertEquals(12f, ViperType.micro.fontSize.value)
+        assertEquals(12f, ViperType.mono.fontSize.value)
         assertTrue(ViperDesign.type === ViperType)
     }
 
@@ -31,7 +33,6 @@ class ViperTypePolicyTest {
             "app/src/main/java/com/llsl/viper4android/ui/components/LabeledSlider.kt",
             "app/src/main/java/com/llsl/viper4android/ui/components/LabeledSwitch.kt",
             "app/src/main/java/com/llsl/viper4android/ui/components/viper/ViperEffectCard.kt",
-            "app/src/main/java/com/llsl/viper4android/ui/screens/main/EffectSections.kt",
             "app/src/main/java/com/llsl/viper4android/ui/components/viper/VstResponseGraph.kt",
         )
         files.forEach { path ->

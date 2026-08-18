@@ -69,7 +69,6 @@ import com.llsl.viper4android.ui.components.viper.ViperEditorRow
 import com.llsl.viper4android.ui.components.viper.ViperTabs
 import com.llsl.viper4android.ui.components.viper.ViperTextFieldDialog
 import com.llsl.viper4android.ui.components.EqCurveGraph
-import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -662,6 +661,8 @@ fun EqualizerSection(
 ) {
     val sampleRate by viewModel.graphSampleRate.collectAsStateWithLifecycle()
     val model = remember(state.eq, sampleRate) { firGraphModel(state, sampleRate) }
+    val bands = state.eq.bands
+    val bandCount = state.eq.bandCount
     val presetName =
         state.eq.presets
             .firstOrNull { it.id == state.eq.presetId }
@@ -678,7 +679,7 @@ fun EqualizerSection(
         onEnabledChange = viewModel::setEqEnabled,
         icon = Icons.Default.Equalizer,
     ) {
-        if (showCurvePreview) {
+        if (showCurvePreview && bands.size >= bandCount) {
             ViperCurvePreview(
                 curve = model.curve,
                 contentDescription = stringResource(R.string.section_equalizer),

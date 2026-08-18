@@ -43,8 +43,8 @@ class MainTopBarLayoutPolicyTest {
 
         assertTrue("ViperTopBar should accept a distinct expanded title", "largeTitle: String" in source)
         assertTrue("Custom top bar should restore scroll-driven title morphing", "collapsedFraction" in source)
-        assertTrue("Expanded ViperFX title should use 40sp", "fontSize = 40.sp" in source)
-        assertTrue("Collapsed app title should use 20sp", "fontSize = 20.sp" in source)
+        assertTrue("Expanded ViperFX title should use the semantic display style", "style = ViperType.display" in source)
+        assertTrue("Collapsed app title should use the semantic title style", "style = ViperType.title" in source)
         assertTrue("Top bar actions should fade out while collapsing", "actionsAlpha" in source)
         assertFalse("ViperTopBar should not use SmallTopAppBar", "SmallTopAppBar(" in source)
         assertFalse("ViperTopBar should not use the split large-title TopAppBar", "TopAppBar(" in source)

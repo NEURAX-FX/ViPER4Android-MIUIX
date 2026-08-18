@@ -1,7 +1,8 @@
 package com.llsl.viper4android.ui.theme
 
-import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -19,10 +20,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
 
 object ViperMotion {
     val responsiveSpring: AnimationSpec<Float> = spring(
         dampingRatio = 0.75f,
+        stiffness = Spring.StiffnessMediumLow,
+    )
+
+    val responsiveOffsetSpring: FiniteAnimationSpec<IntOffset> = spring(
+        dampingRatio = 0.82f,
         stiffness = Spring.StiffnessMediumLow,
     )
 

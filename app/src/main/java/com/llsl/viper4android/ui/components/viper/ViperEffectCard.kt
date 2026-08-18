@@ -66,8 +66,8 @@ fun ViperEffectCard(
         if (toggleOnly) {
             Modifier
         } else {
-            Modifier
-                .viperBounce(pressedScale = 0.985f) { expanded = !expanded }
+            Modifier.clickable { expanded = !expanded }
+                .viperBounce(pressedScale = 0.985f)
         }
 
     val contentAlpha by animateFloatAsState(
@@ -185,4 +185,3 @@ fun ViperEffectCard(
         }
     }
 }
-
