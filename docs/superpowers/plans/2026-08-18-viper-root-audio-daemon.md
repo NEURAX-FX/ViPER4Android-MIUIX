@@ -54,35 +54,35 @@
 - `bool EncodeSnapshot(const Snapshot &, std::vector<uint8_t> *out, std::string *error)`
 - `bool DecodeSnapshot(std::span<const uint8_t>, Snapshot *, std::string *error)`
 
-- [ ] **Step 1: Write failing frame tests**
+- [x] **Step 1: Write failing frame tests**
 
 Test round-trip encoding, little-endian header fields, CRC rejection, bad magic, unsupported version, oversized payload rejection, and trailing-byte rejection.
 
-- [ ] **Step 2: Write failing device-key tests**
+- [x] **Step 2: Write failing device-key tests**
 
 Test normalization of speaker, wired, USB, and Bluetooth identities, lowercasing, whitespace removal, stable ordering, and rejection of volatile session/process fields.
 
-- [ ] **Step 3: Write failing snapshot tests**
+- [x] **Step 3: Write failing snapshot tests**
 
 Test valid complete snapshots, missing required metadata, resource hash mismatch, invalid generation, unsupported schema, truncated payload, and deterministic round-trip bytes.
 
-- [ ] **Step 4: Implement bounded frame codec**
+- [x] **Step 4: Implement bounded frame codec**
 
 Use a fixed 36-byte header, maximum frame size 1 MiB, CRC32 for payloads, and explicit `FrameError` values. Do not use exceptions in the protocol path.
 
-- [ ] **Step 5: Implement device-key normalization**
+- [x] **Step 5: Implement device-key normalization**
 
 Canonicalize route type/address/product/format/channel fields and hash the normalized UTF-8 key with the existing SHA-256 helper or a small protocol-local implementation.
 
-- [ ] **Step 6: Implement snapshot schema codec**
+- [x] **Step 6: Implement snapshot schema codec**
 
 Use a versioned binary schema with explicit lengths and a canonical field order. Store resource references by ID/hash/size/kind instead of UI filesystem paths.
 
-- [ ] **Step 7: Register focused CTest targets**
+- [x] **Step 7: Register focused CTest targets**
 
 Add `viper_daemon_protocol_test`, `device_key_test`, and `snapshot_schema_test` under `BUILD_ANALYZER_TESTS=ON`.
 
-- [ ] **Step 8: Run the focused tests**
+- [x] **Step 8: Run the focused tests**
 
 ```bash
 cmake -S . -B build-host -DBUILD_ANALYZER_TESTS=ON
