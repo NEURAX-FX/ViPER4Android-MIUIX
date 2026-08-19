@@ -112,23 +112,23 @@ Expected: all selected tests PASS.
 - `bool Commit(std::string_view device_hash, const Snapshot &, std::string *error)`
 - `ApplyDecision Decide(uint64_t base_daemon_generation, uint64_t app_generation, uint64_t stored_app_generation, uint64_t stored_daemon_generation)`
 
-- [ ] **Step 1: Write failing store tests**
+- [x] **Step 1: Write failing store tests**
 
 Use a temporary directory. Test initial missing state, atomic current write, previous rotation, corrupt current fallback, truncated temporary file cleanup, permissions when supported, and per-device isolation.
 
-- [ ] **Step 2: Write failing generation tests**
+- [x] **Step 2: Write failing generation tests**
 
 Test first apply, newer App state acceptance, stale base rejection, daemon route restore, and equal-generation idempotence.
 
-- [ ] **Step 3: Implement atomic commit**
+- [x] **Step 3: Implement atomic commit**
 
 Write `current.snapshot.tmp`, flush and close it, rename current to previous, rename temp to current, and preserve the previous valid file when validation fails. Keep all file access on daemon control threads.
 
-- [ ] **Step 4: Implement generation decisions**
+- [x] **Step 4: Implement generation decisions**
 
 Return explicit `ACCEPT`, `IDEMPOTENT`, and `STALE_GENERATION` decisions with the reason and resulting generation values.
 
-- [ ] **Step 5: Run focused store tests**
+- [x] **Step 5: Run focused store tests**
 
 ```bash
 cmake --build build-host -j1 --target snapshot_store_test generation_arbiter_test
