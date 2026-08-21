@@ -388,6 +388,27 @@ final class SessionObserver {
     state, not by name: `/proc/net/unix` also lists live client connections under the
     same abstract name, so a raw name count moves when a peer connects and proves
     nothing about rebinding (it produced a false failure on the first run).
+- [x] Fix repeated `EFFECT_CMD_SET_CONFIG` before audio consumes the pending graph.
+  - Device evidence: the live A2DP effect instance was configured as 96000 Hz / 4096
+    frames / PCM_FLOAT, but `PARAM_GET_CONFIGURE=0`, `PARAM_GET_SAMPLING_RATE=0`, and
+    `PARAM_GET_ENABLED=1`. Host tracing reproduced the exact cause: the first rate
+    change stages a pending graph; a second SET_CONFIG arrives before `Process()` and
+    `DspGraphSlots::PreparePending()` rejects it because a pending graph already exists.
+    `HandleSetConfig()` then left `disable_reason_` at UNKNOWN, so the effect remained
+    enabled but bypassed.
+  - Fix: `ViperContext::HandleSetConfig()` calls `DspGraphSlots::RetractPending()`
+    before preparing the newest graph. The active graph continues processing until the
+    newest pending graph is consumed, so repeated route/rate notifications no longer
+    turn a valid effect into `configure=0`.
+  - `ViperContextConfigureTest` covers 48000/PCM16, initial 96000/PCM_FLOAT, a rate
+    change, and the repeated-pending sequence. Red-green verified: before the fix the
+    final assertion observed `configure=0 rate=48000`; after the fix it passes.
+  - Host result after the fix: 63/63 tests pass, excluding the known pre-existing
+    `iem_halo_stft_test` heap-corruption test from the full ctest command.
+  - A rebuilt zip was installed through KernelSU. The new library is staged in
+    `/data/adb/modules_update`, but the running AudioFlinger still maps the old
+    `/vendor/lib64/soundfx/libv4a_re.so` inode. The production 96 kHz/streaming
+    assertion therefore remains pending a reboot; no reboot was performed.
 - [x] Remove all probe artifacts and verify no temporary dex/process/socket remains. Confirmed: `PROBE_DIRS=0 OWNER_PROCS=0 PROBE_PROCS=0 STRAY_SOCKETS=0 MODULES=1`, `init.svc.viper_daemon=running`.
 - [x] Run the full applicable CTest and Kotlin test selections, then remote `assembleDebug`. 62/62 native, 131/131 Kotlin, `BUILD SUCCESSFUL`.
 
