@@ -14,6 +14,11 @@ import androidx.lifecycle.viewModelScope
 import com.llsl.viper4android.BULK_OP_CHANNEL_ID
 import com.llsl.viper4android.audio.AudioDevice
 import com.llsl.viper4android.audio.AudioOutputDetector
+import com.llsl.viper4android.daemon.DaemonBackendStatus
+import com.llsl.viper4android.daemon.DaemonConnectionState
+import com.llsl.viper4android.daemon.DaemonModePreference
+import com.llsl.viper4android.daemon.DaemonRuntimeStatus
+import com.llsl.viper4android.daemon.DaemonStatusReader
 import com.llsl.viper4android.data.model.DeviceSettings
 import com.llsl.viper4android.dsp.DEFAULT_GRAPH_SAMPLE_RATE
 import com.llsl.viper4android.dsp.sanitizeGraphSampleRate
@@ -64,6 +69,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -172,6 +178,23 @@ class MainViewModel
         private val _debugModeEnabled = MutableStateFlow(false)
         val debugModeEnabled: StateFlow<Boolean> = _debugModeEnabled.asStateFlow()
 
+        private val _daemonMode = MutableStateFlow(DaemonModePreference.DEFAULT)
+        val daemonMode: StateFlow<DaemonModePreference> = _daemonMode.asStateFlow()
+
+        /** Daemon-published state, or null when the daemon is not installed/running. */
+        private val _daemonRuntimeStatus = MutableStateFlow<DaemonRuntimeStatus?>(null)
+        val daemonRuntimeStatus: StateFlow<DaemonRuntimeStatus?> = _daemonRuntimeStatus.asStateFlow()
+
+        /** Null while the service has no daemon backend at all, i.e. nothing was ever probed. */
+        private val _daemonLinkState = MutableStateFlow<DaemonConnectionState?>(null)
+        val daemonLinkState: StateFlow<DaemonConnectionState?> = _daemonLinkState.asStateFlow()
+
+        private val _daemonBackendStatus = MutableStateFlow<DaemonBackendStatus?>(null)
+        val daemonBackendStatus: StateFlow<DaemonBackendStatus?> = _daemonBackendStatus.asStateFlow()
+
+        private val daemonStatusReader = DaemonStatusReader()
+        private var daemonObserverJob: Job? = null
+
         private var viperService: ViperService? = null
         private var serviceBound = false
         private val audioOutputDetector = AudioOutputDetector(application)
@@ -189,12 +212,14 @@ class MainViewModel
                     serviceBound = true
                     effectStateStore.attachService(viperService)
                     queryDriverStatus()
+                    attachDaemonObservers()
                 }
 
                 override fun onServiceDisconnected(name: ComponentName?) {
                     viperService = null
                     serviceBound = false
                     effectStateStore.attachService(null)
+                    detachDaemonObservers()
                 }
             }
 
@@ -235,6 +260,7 @@ class MainViewModel
             }
             viperService = null
             effectStateStore.attachService(null)
+            detachDaemonObservers()
         }
 
         private fun observeExternalMasterChanges() {
@@ -246,6 +272,54 @@ class MainViewModel
                         _uiState.update { it.copy(masterEnable = enabled) }
                     }
             }
+        }
+
+        /**
+         * Mirrors the service's daemon backend flows into UI state.
+         *
+         * The service creates its backend lazily, so both accessors stay null on an
+         * install without a daemon. Null is kept distinct from
+         * [DaemonConnectionState.Disconnected]: the latter claims a daemon exists and
+         * is merely offline, which would be a lie here.
+         */
+        private fun attachDaemonObservers() {
+            detachDaemonObservers()
+            val service = viperService ?: return
+            _daemonLinkState.value = service.daemonConnectionState?.value
+            _daemonBackendStatus.value = service.daemonBackendStatus?.value
+            daemonObserverJob =
+                viewModelScope.launch {
+                    service.daemonConnectionState?.let { flow ->
+                        launch { flow.collect { _daemonLinkState.value = it } }
+                    }
+                    service.daemonBackendStatus?.let { flow ->
+                        launch { flow.collect { _daemonBackendStatus.value = it } }
+                    }
+                }
+        }
+
+        private fun detachDaemonObservers() {
+            daemonObserverJob?.cancel()
+            daemonObserverJob = null
+            _daemonLinkState.value = null
+            _daemonBackendStatus.value = null
+        }
+
+        /**
+         * Rereads the daemon's published state file.
+         *
+         * The read shells out through root, so it must never run on the main thread.
+         */
+        fun refreshDaemonStatus() {
+            viewModelScope.launch {
+                _daemonRuntimeStatus.value = withContext(Dispatchers.IO) { daemonStatusReader.read() }
+            }
+        }
+
+        fun setDaemonMode(mode: DaemonModePreference) {
+            if (_daemonMode.value == mode) return
+            _daemonMode.value = mode
+            viewModelScope.launch { repository.setDaemonMode(mode) }
         }
 
         fun <T> applyPref(
@@ -284,6 +358,7 @@ class MainViewModel
             _globalModeEnabled.value = repository.getBooleanPreference(PREF_GLOBAL_MODE, false).first()
             _showCurvePreviews.value = repository.getBooleanPreference(PREF_SHOW_CURVE_PREVIEWS, true).first()
             _debugModeEnabled.value = repository.getBooleanPreference(PREF_DEBUG_MODE, false).first()
+            _daemonMode.value = repository.getDaemonMode().first()
             _aidlModeEnabled.value = repository.aidlMode
         }
 
@@ -1367,6 +1442,10 @@ class MainViewModel
             }
         }
 
+        // Reads driver identity through the frozen App-owned handle. This is a
+        // read-only probe, not state application, so it stays on the legacy path:
+        // the daemon publishes its own diagnostics via `DaemonStatusReader`.
+        @Suppress("DEPRECATION")
         fun queryDriverStatus() {
             if (_aidlModeEnabled.value) {
                 queryDriverStatusFromFile()
@@ -1405,6 +1484,7 @@ class MainViewModel
                 )
         }
 
+        @Suppress("DEPRECATION")
         private fun queryDriverStatusFrom(effect: ViperEffect) {
             val versionCode = effect.getDriverVersionCode()
             val archName = effect.getArchitectureString()

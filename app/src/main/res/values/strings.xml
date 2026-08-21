@@ -409,6 +409,52 @@
     <string name="status_active">Active</string>
     <string name="status_inactive">Inactive</string>
     <string name="status_unknown">Unknown</string>
+    <string name="status_yes">Yes</string>
+    <string name="status_no">No</string>
+
+    <!-- Root daemon -->
+    <string name="daemon_status_section">Root daemon</string>
+    <string name="daemon_selected_mode">Selected mode</string>
+    <string name="daemon_availability">Daemon</string>
+    <string name="daemon_running">Running</string>
+    <string name="daemon_not_running">Not running</string>
+    <string name="daemon_app_link">App link</string>
+    <string name="daemon_link_unavailable">No backend</string>
+    <string name="daemon_link_disconnected">Disconnected</string>
+    <string name="daemon_link_connecting">Connecting</string>
+    <string name="daemon_link_connected">Connected</string>
+    <string name="daemon_link_syncing">Syncing</string>
+    <string name="daemon_link_ready">Ready</string>
+    <string name="daemon_link_degraded">Degraded</string>
+    <string name="daemon_backend_owner">State owner</string>
+    <string name="daemon_backend_active">Daemon</string>
+    <string name="daemon_backend_fallback">Driver</string>
+    <string name="daemon_restore">Route restore</string>
+    <string name="daemon_driver_attached">Driver attached</string>
+    <string name="daemon_route_known">Route known</string>
+    <string name="daemon_route_key">Route key</string>
+    <string name="daemon_app_endpoint">App endpoint</string>
+    <string name="daemon_endpoint_listening">Listening</string>
+    <string name="daemon_endpoint_unbound">Not bound</string>
+    <string name="daemon_app_client">App client</string>
+    <string name="daemon_client_none">None</string>
+    <string name="daemon_route_source">Route source</string>
+    <string name="daemon_route_source_app">App report</string>
+    <string name="daemon_route_source_probe">System probe</string>
+    <string name="daemon_app_route_reports">Route reports</string>
+    <string name="daemon_app_snapshots">Snapshot commands</string>
+    <string name="daemon_rejected_peers">Rejected peers</string>
+    <string name="daemon_restores">Restores (ok / refused / bypassed)</string>
+    <string name="daemon_restores_value">%1$d / %2$d / %3$d</string>
+    <string name="daemon_owner_state">Effect owner</string>
+    <string name="daemon_owner_absent">None</string>
+    <string name="daemon_owner_starting">Starting</string>
+    <string name="daemon_owner_owned">Holding effect</string>
+    <string name="daemon_owner_failed">Failed</string>
+    <string name="daemon_owner_effect">Owner effect ID</string>
+    <string name="daemon_owner_effect_none">None</string>
+    <string name="daemon_owner_restarts">Owner restarts</string>
+    <string name="daemon_tracked_sessions">Tracked sessions</string>
 
     <!-- Settings -->
     <string name="settings_playback_section">Playback</string>
@@ -421,6 +467,13 @@
     <string name="settings_global_mode_summary">Apply the current profile across supported output devices.</string>
     <string name="settings_show_curve_previews">Show curve previews</string>
     <string name="settings_show_curve_previews_summary">Show EQ curve graphs on the main effects screen.</string>
+    <string name="settings_daemon_section">Audio backend</string>
+    <string name="settings_daemon_mode_auto">Auto</string>
+    <string name="settings_daemon_mode_auto_summary">Use the root daemon when it answers, otherwise the driver.</string>
+    <string name="settings_daemon_mode_daemon_only">Daemon only</string>
+    <string name="settings_daemon_mode_daemon_only_summary">Only the root daemon applies state; nothing is applied while it is unavailable.</string>
+    <string name="settings_daemon_mode_driver_only">Driver only</string>
+    <string name="settings_daemon_mode_driver_only_summary">Skip the daemon and send settings straight to the driver.</string>
     <string name="settings_driver_version">Driver version</string>
     <string name="settings_driver_arch">Driver architecture</string>
     <string name="settings_app_version">App version</string>

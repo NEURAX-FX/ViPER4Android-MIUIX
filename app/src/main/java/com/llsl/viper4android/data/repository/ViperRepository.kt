@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.llsl.viper4android.daemon.DaemonModePreference
 import com.llsl.viper4android.data.dao.DeviceSettingsDao
 import com.llsl.viper4android.data.dao.DsPresetDao
 import com.llsl.viper4android.data.dao.EqPresetDao
@@ -158,6 +159,20 @@ class ViperRepository
             dataStore.edit { it[stringPreferencesKey(key)] = value }
         }
 
+        /**
+         * Which backend may own audio state application.
+         *
+         * Stored as [DaemonModePreference.token] rather than an ordinal so the
+         * enum can be reordered without reinterpreting a user's saved mode.
+         */
+        fun getDaemonMode(): Flow<DaemonModePreference> =
+            getStringPreference(PREF_DAEMON_MODE, DaemonModePreference.DEFAULT.token)
+                .map { DaemonModePreference.fromToken(it) }
+
+        suspend fun setDaemonMode(mode: DaemonModePreference) {
+            setStringPreference(PREF_DAEMON_MODE, mode.token)
+        }
+
         suspend fun setPreferences(
             booleans: Map<String, Boolean> = emptyMap(),
             ints: Map<String, Int> = emptyMap(),
@@ -199,6 +214,7 @@ class ViperRepository
             const val PREF_GLOBAL_MODE = "global_mode"
             const val PREF_DEBUG_MODE = "debug_mode"
             const val PREF_SHOW_CURVE_PREVIEWS = "show_curve_previews"
+            const val PREF_DAEMON_MODE = "daemon_mode"
             const val PREF_V2_INITIALIZED = "v2_initialized"
         }
     }

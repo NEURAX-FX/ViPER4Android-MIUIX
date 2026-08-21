@@ -82,6 +82,10 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
     val aidlMode by viewModel.aidlModeEnabled.collectAsStateWithLifecycle()
     val debugMode by viewModel.debugModeEnabled.collectAsStateWithLifecycle()
     val showCurvePreviews by viewModel.showCurvePreviews.collectAsStateWithLifecycle()
+    val daemonMode by viewModel.daemonMode.collectAsStateWithLifecycle()
+    val daemonRuntimeStatus by viewModel.daemonRuntimeStatus.collectAsStateWithLifecycle()
+    val daemonLinkState by viewModel.daemonLinkState.collectAsStateWithLifecycle()
+    val daemonBackendStatus by viewModel.daemonBackendStatus.collectAsStateWithLifecycle()
 
     var showPresetDialog by remember { mutableStateOf(false) }
     var showDriverStatusDialog by remember { mutableStateOf(false) }
@@ -205,11 +209,16 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
             LaunchedEffect(Unit) {
                 while (true) {
                     viewModel.queryDriverStatus()
+                    viewModel.refreshDaemonStatus()
                     delay(500)
                 }
             }
             DriverStatusDialog(
                 driverStatus = driverStatus,
+                daemonMode = daemonMode,
+                daemonStatus = daemonRuntimeStatus,
+                daemonLinkState = daemonLinkState,
+                daemonBackendStatus = daemonBackendStatus,
                 onDismiss = { showDriverStatusDialog = false },
             )
         }
@@ -243,11 +252,13 @@ fun MainScreen(viewModel: MainViewModel = hiltViewModel()) {
                 globalModeEnabled = globalMode,
                 showCurvePreviews = showCurvePreviews,
                 aidlModeActive = aidlMode,
+                daemonMode = daemonMode,
                 driverStatus = driverStatus,
                 appVersionName = appVersionName,
                 onAutoStartChanged = viewModel::toggleAutoStart,
                 onGlobalModeChanged = viewModel::toggleGlobalMode,
                 onShowCurvePreviewsChanged = viewModel::setShowCurvePreviews,
+                onDaemonModeChanged = viewModel::setDaemonMode,
                 onImportPreset = { importPresetLauncher.launch(arrayOf("application/json", "*/*")) },
                 onImportKernel = {
                     importKernelLauncher.launch(arrayOf("audio/*", "application/octet-stream", "*/*"))

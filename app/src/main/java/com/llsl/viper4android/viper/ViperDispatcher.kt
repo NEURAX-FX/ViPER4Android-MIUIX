@@ -357,7 +357,7 @@ object ViperDispatcher {
     fun eqGraphLabelsForCount(count: Int): List<String> = EqBandSpec.labelsFor(count)
 
     fun dispatchFullState(
-        effect: ViperEffect,
+        effect: ParamSink,
         state: EffectState,
         masterEnabled: Boolean,
     ) {
@@ -369,7 +369,7 @@ object ViperDispatcher {
     }
 
     fun dispatchState(
-        effect: ViperEffect,
+        effect: ParamSink,
         state: EffectState,
     ) {
         // Output
@@ -665,7 +665,7 @@ object ViperDispatcher {
     }
 
     internal fun dispatchIemState(
-        effect: ViperEffect,
+        effect: ParamSink,
         state: EffectState,
     ) {
         iemWrites(state).forEach { write ->

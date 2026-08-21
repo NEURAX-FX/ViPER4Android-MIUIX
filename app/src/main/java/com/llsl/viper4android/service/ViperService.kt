@@ -16,6 +16,13 @@ import com.llsl.viper4android.SERVICE_CHANNEL_ID
 import com.llsl.viper4android.audio.AudioDevice
 import com.llsl.viper4android.audio.AudioOutputDetector
 import com.llsl.viper4android.audio.AudioSessionMonitor
+import com.llsl.viper4android.daemon.DaemonBackend
+import com.llsl.viper4android.daemon.DaemonBackendStatus
+import com.llsl.viper4android.daemon.DaemonClient
+import com.llsl.viper4android.daemon.DaemonConnectionState
+import com.llsl.viper4android.daemon.DaemonModePreference
+import com.llsl.viper4android.daemon.DaemonRouteMapper
+import com.llsl.viper4android.daemon.EffectOwnership
 import com.llsl.viper4android.data.model.DeviceSettings
 import com.llsl.viper4android.data.repository.ViperRepository
 import com.llsl.viper4android.effect.EffectState
@@ -31,6 +38,7 @@ import com.llsl.viper4android.viper.ViperDispatcher
 import com.llsl.viper4android.viper.ViperEffect
 import com.llsl.viper4android.viper.ViperParams
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -41,6 +49,11 @@ import java.util.zip.CRC32
 import javax.inject.Inject
 
 @AndroidEntryPoint
+// `ViperEffect` is the frozen App-owned fallback backend, and this service is its
+// only host, so its deprecation is acknowledged here once instead of at each of
+// the dozen members that touch a handle. New state application belongs on the
+// daemon snapshot path, not here.
+@Suppress("DEPRECATION")
 class ViperService : LifecycleService() {
     @Inject
     lateinit var repository: ViperRepository
@@ -53,10 +66,21 @@ class ViperService : LifecycleService() {
         const val ACTION_TOGGLE_MASTER = "com.llsl.viper4android.service.TOGGLE_MASTER"
         const val EXTRA_MASTER_ENABLED = "com.llsl.viper4android.service.EXTRA_MASTER_ENABLED"
 
+        /** Reconciles App state with the root daemon, e.g. after a daemon restart. */
+        const val ACTION_DAEMON_SYNC = "com.llsl.viper4android.service.DAEMON_SYNC"
+
         fun startService(context: Context) {
             val intent =
                 Intent(context, ViperService::class.java).apply {
                     action = ACTION_START
+                }
+            context.startForegroundService(intent)
+        }
+
+        fun requestDaemonSync(context: Context) {
+            val intent =
+                Intent(context, ViperService::class.java).apply {
+                    action = ACTION_DAEMON_SYNC
                 }
             context.startForegroundService(intent)
         }
@@ -92,6 +116,33 @@ class ViperService : LifecycleService() {
     private var lastBulkDdcKey: String? = null
     private var lastBulkConvolverKey: String? = null
     private var bootMasterEnabled: Boolean = false
+
+    // Daemon backend. Null until probed; the legacy AudioEffect/ConfigChannel path
+    // stays in charge unless the daemon actually accepts a snapshot.
+    private var daemonBackend: DaemonBackend? = null
+    private var currentRouteDevice: AudioDevice = AudioDevice.DEFAULT_SPEAKER
+    private var daemonMode: DaemonModePreference = DaemonModePreference.DEFAULT
+
+    // Who holds the session-0 handle. Defaults to the App so an install with no
+    // daemon behaves exactly as before; it is narrowed only on positive evidence
+    // that the daemon's owner process holds a real handle.
+    private var ownership: EffectOwnership.Decision =
+        EffectOwnership.Decision(
+            appOwnsEffect = true,
+            appTracksSessions = true,
+            reason = EffectOwnership.Reason.NoDaemon,
+        )
+    private var lastOwnershipReason: EffectOwnership.Reason? = null
+
+    // Null means there is no daemon backend at all: never probed, or the probe
+    // failed. A UI must show that as unavailable rather than as Disconnected,
+    // which would imply a daemon exists and is merely offline.
+    val daemonConnectionState: StateFlow<DaemonConnectionState>?
+        get() = daemonBackend?.connectionState
+
+    val daemonBackendStatus: StateFlow<DaemonBackendStatus>?
+        get() = daemonBackend?.status
+
     private val masterEnabled: Boolean
         get() = stateProvider?.invoke()?.masterEnable ?: lastUiState?.masterEnable ?: bootMasterEnabled
 
@@ -105,11 +156,13 @@ class ViperService : LifecycleService() {
         FileLogger.i("Service", "Service created")
         lifecycleScope.launch {
             ensureConfigLoaded()
+            startDaemonBackend()
             if (masterEnabled) {
                 val state = ViperDispatcher.loadFullStateFromPrefs(repository)
-                applyState(state, true)
+                applyStateWithDaemon(state, true)
             }
             startAudioOutputMonitor()
+            observeDaemonMode()
         }
     }
 
@@ -120,7 +173,70 @@ class ViperService : LifecycleService() {
         useAidlTypeUuid = repository.aidlMode
         globalMode = repository.getBooleanPreference(ViperRepository.PREF_GLOBAL_MODE).first()
         bootMasterEnabled = repository.getBooleanPreference(ViperRepository.PREF_MASTER_ENABLE).first()
+        daemonMode = repository.getDaemonMode().first()
         configLoaded = true
+    }
+
+    /**
+     * Applies a mode change without waiting for a service restart.
+     *
+     * Switching backend is the user asking for audio state to come from somewhere
+     * else, so it has to take effect now: leaving the old backend in charge until
+     * the next restart would make the setting look broken.
+     */
+    private fun observeDaemonMode() {
+        lifecycleScope.launch {
+            repository.getDaemonMode().collect { mode ->
+                if (mode == daemonMode) return@collect
+                FileLogger.i("Service", "daemon mode changed: $daemonMode -> $mode")
+                daemonMode = mode
+
+                if (mode == DaemonModePreference.DriverOnly) {
+                    // Release the socket rather than leaving a connected-but-unused
+                    // client, which would make the daemon's status file claim an App
+                    // is attached.
+                    daemonBackend?.let { backend ->
+                        daemonBackend = null
+                        backend.shutdown()
+                    }
+                } else {
+                    startDaemonBackend()
+                }
+
+                // Re-apply so the newly chosen backend actually owns the live state.
+                if (masterEnabled) {
+                    val state =
+                        stateProvider?.invoke()
+                            ?: lastUiState
+                            ?: ViperDispatcher.loadFullStateFromPrefs(repository)
+                    applyStateWithDaemon(state, true)
+                }
+            }
+        }
+    }
+
+    /**
+     * Probes the root daemon once per service start.
+     *
+     * A missing daemon is the normal case on an unmodified install, so failure is
+     * logged at debug level and the backend is dropped: every later apply then goes
+     * straight down the legacy path with no per-apply socket retry cost.
+     */
+    private suspend fun startDaemonBackend() {
+        if (daemonMode == DaemonModePreference.DriverOnly) {
+            // The user asked for driver passthrough, so the socket is never opened.
+            // Probing anyway would contradict the setting and log spurious failures.
+            FileLogger.i("Service", "daemon disabled by preference; driver passthrough only")
+            return
+        }
+        if (daemonBackend != null) return
+        val backend = DaemonBackend(DaemonClient())
+        if (!backend.probe()) {
+            FileLogger.d("Service", "root daemon not reachable; legacy backend only")
+            return
+        }
+        daemonBackend = backend
+        FileLogger.i("Service", "root daemon connected")
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -141,29 +257,105 @@ class ViperService : LifecycleService() {
         FileLogger.i("Service", "Global effect created (aidlType=$useAidlTypeUuid)")
     }
 
+    /**
+     * Applies `state` to the driver, honouring the user's backend mode.
+     *
+     * `Auto` offers the state to the daemon and still runs the legacy path, so a
+     * daemon refusal degrades persistence rather than playback. `DaemonOnly` skips
+     * the legacy path once the daemon has accepted, because running both would
+     * double-apply. `DriverOnly` never touches the daemon at all.
+     */
+    private suspend fun applyStateWithDaemon(
+        state: EffectState,
+        masterOn: Boolean,
+    ) {
+        val accepted = syncDaemonState(state)
+        // Ownership is re-decided on every apply rather than cached: the owner can
+        // die or come up between applies, and a stale decision would either leave
+        // two handles on session 0 or none at all.
+        //
+        // The state file is read even when the daemon refused. The owner process
+        // keeps its effect handle across a daemon restart, so discarding the status
+        // here would make the App create a second session-0 handle on every init
+        // respawn. `decide()` confirms the claim against the owner pid's liveness.
+        ownership =
+            EffectOwnership.decide(
+                mode = daemonMode,
+                daemonAccepted = accepted,
+                status = daemonBackend?.readStatus(),
+            )
+        if (ownership.reason != lastOwnershipReason) {
+            FileLogger.i("Service", "effect ownership: ${ownership.reason}")
+            lastOwnershipReason = ownership.reason
+        }
+
+        if (daemonMode == DaemonModePreference.DaemonOnly && accepted) {
+            // The daemon owns this apply. Effect lifecycle still runs, which
+            // applyState() does even when it skips parameter dispatch.
+            applyState(state, masterOn, dispatchParameters = false)
+            return
+        }
+        if (daemonMode == DaemonModePreference.DaemonOnly && !accepted) {
+            FileLogger.w(
+                "Service",
+                "daemon-only mode but daemon did not apply (${daemonBackend?.lastError}); " +
+                    "processing may be stale until the daemon recovers",
+            )
+        }
+        applyState(state, masterOn)
+    }
+
+    /** Returns true when the daemon accepted the state. */
+    private suspend fun syncDaemonState(state: EffectState): Boolean {
+        if (daemonMode == DaemonModePreference.DriverOnly) return false
+        val backend = daemonBackend ?: return false
+        val identity = DaemonRouteMapper.identityFor(currentRouteDevice) ?: return false
+        val accepted = backend.applyState(state, identity, globalMode)
+        if (!accepted) {
+            FileLogger.d("Service", "daemon apply refused (${backend.lastError}); legacy path applies")
+        }
+        return accepted
+    }
+
     private fun applyState(
         state: EffectState,
         masterOn: Boolean,
+        // False when the daemon already applied this state. Effect lifecycle still
+        // runs; only the parameter dispatch is skipped.
+        dispatchParameters: Boolean = true,
     ) {
         if (!masterOn) {
             stopSessionMonitor()
             releaseAllSessions()
-            globalEffect?.let {
-                it.enabled = false
-                it.release()
-            }
-            globalEffect = null
-            selectTelemetryEffect()
+            releaseGlobalEffect()
             return
         }
-        if (globalMode) {
-            if (globalEffect == null) initGlobalEffect()
-        } else {
-            if (sessionMonitor == null) startSessionMonitor()
+
+        // The daemon's owner process holds the session-0 handle. Creating one here
+        // too would put two effect modules on the same session, and killing the App
+        // would then appear to change nothing because the duplicate survives.
+        if (!ownership.appOwnsEffect) {
+            releaseGlobalEffect()
+            releaseAllSessions()
+        }
+        if (!ownership.appTracksSessions) {
+            // The owner observes sessions from a Context holding
+            // MODIFY_AUDIO_ROUTING, so the App's dumpsys-parsing monitor is both
+            // redundant and less accurate while an owner is live.
+            stopSessionMonitor()
+        }
+
+        if (ownership.appOwnsEffect) {
+            if (globalMode) {
+                if (globalEffect == null) initGlobalEffect()
+            } else if (sessionMonitor == null) {
+                startSessionMonitor()
+            }
         }
         var shmWritten = false
         globalEffect?.let { effect ->
             effect.enabled = true
+            if (!dispatchParameters) return@let
             if (useAidlTypeUuid) {
                 writeAidlFullState(state)
                 shmWritten = true
@@ -174,6 +366,7 @@ class ViperService : LifecycleService() {
         for (i in 0 until sessions.size) {
             val effect = sessions.valueAt(i)
             effect.enabled = true
+            if (!dispatchParameters) continue
             if (useAidlTypeUuid) {
                 if (!shmWritten) {
                     writeAidlFullState(state)
@@ -191,6 +384,7 @@ class ViperService : LifecycleService() {
         val detector = AudioOutputDetector(this)
         audioOutputDetector = detector
         currentServiceDeviceId = detector.activeDevice.value.id
+        currentRouteDevice = detector.activeDevice.value
         lifecycleScope.launch {
             detector.activeDevice.collect { device ->
                 if (device.id != currentServiceDeviceId) {
@@ -199,6 +393,9 @@ class ViperService : LifecycleService() {
                         "Device changed: $currentServiceDeviceId -> ${device.id} (${device.name})",
                     )
                     currentServiceDeviceId = device.id
+                    // Update the route before applying: the daemon keys snapshots by
+                    // route, so a stale identity would file this state under the old one.
+                    currentRouteDevice = device
                     reapplyForDevice(device)
                 }
             }
@@ -229,7 +426,7 @@ class ViperService : LifecycleService() {
                 )
                 s
             }
-        applyState(state, masterEnabled)
+        applyStateWithDaemon(state, masterEnabled)
     }
 
     private suspend fun dispatchFullStateToEffect(
@@ -291,12 +488,7 @@ class ViperService : LifecycleService() {
 
             ACTION_STOP -> {
                 releaseAllSessions()
-                globalEffect?.let {
-                    it.enabled = false
-                    it.release()
-                }
-                globalEffect = null
-                selectTelemetryEffect()
+                releaseGlobalEffect()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
@@ -309,7 +501,22 @@ class ViperService : LifecycleService() {
                     val state = ViperDispatcher.loadFullStateFromPrefs(repository)
                     stateProvider = null
                     lastUiState = state
-                    applyState(state, next)
+                    applyStateWithDaemon(state, next)
+                }
+            }
+
+            ACTION_DAEMON_SYNC -> {
+                // Explicit reconciliation, e.g. after the daemon restarts. START_STICKY
+                // can also redeliver this, so it must be safe to run repeatedly:
+                // startDaemonBackend() is a no-op once connected and the snapshot
+                // generation always moves forward.
+                lifecycleScope.launch {
+                    ensureConfigLoaded()
+                    startDaemonBackend()
+                    val state = stateProvider?.invoke()
+                        ?: lastUiState
+                        ?: ViperDispatcher.loadFullStateFromPrefs(repository)
+                    syncDaemonState(state)
                 }
             }
         }
@@ -320,12 +527,13 @@ class ViperService : LifecycleService() {
         stopSessionMonitor()
         audioOutputDetector?.stop()
         audioOutputDetector = null
-        globalEffect?.let {
-            it.enabled = false
-            it.release()
+        // Close the daemon socket before the service dies, otherwise the daemon keeps
+        // a dead peer until its own poll notices the hangup.
+        daemonBackend?.let { backend ->
+            daemonBackend = null
+            lifecycleScope.launch { backend.shutdown() }
         }
-        globalEffect = null
-        selectTelemetryEffect()
+        releaseGlobalEffect()
         releaseAllSessions()
         FileLogger.i("Service", "Service destroyed")
         super.onDestroy()
@@ -405,6 +613,22 @@ class ViperService : LifecycleService() {
             effect.release()
         }
         sessions.clear()
+        selectTelemetryEffect()
+    }
+
+    /**
+     * Drops the App-owned session-0 handle.
+     *
+     * Extracted because ownership can be conceded to the daemon's owner at any
+     * apply, and a handle left behind would keep a second effect module on session
+     * 0 that outlives the reason it was created.
+     */
+    private fun releaseGlobalEffect() {
+        globalEffect?.let {
+            it.enabled = false
+            it.release()
+        }
+        globalEffect = null
         selectTelemetryEffect()
     }
 
@@ -710,11 +934,7 @@ class ViperService : LifecycleService() {
             stopSessionMonitor()
             releaseAllSessions()
         } else {
-            globalEffect?.let {
-                it.enabled = false
-                it.release()
-            }
-            globalEffect = null
+            releaseGlobalEffect()
         }
         lifecycleScope.launch {
             applyState(ViperDispatcher.loadFullStateFromPrefs(repository), true)

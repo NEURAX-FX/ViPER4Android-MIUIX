@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -29,14 +30,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.llsl.viper4android.R
+import com.llsl.viper4android.daemon.DaemonModePreference
 import com.llsl.viper4android.ui.components.viper.ViperDialog
 import com.llsl.viper4android.ui.screens.main.DriverStatus
 import com.llsl.viper4android.ui.theme.ViperInk
 import com.llsl.viper4android.ui.theme.ViperType
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
+import top.yukonga.miuix.kmp.basic.RadioButton
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -47,11 +51,13 @@ fun SettingsDialog(
     globalModeEnabled: Boolean,
     showCurvePreviews: Boolean,
     aidlModeActive: Boolean,
+    daemonMode: DaemonModePreference,
     driverStatus: DriverStatus,
     appVersionName: String,
     onAutoStartChanged: (Boolean) -> Unit,
     onGlobalModeChanged: (Boolean) -> Unit,
     onShowCurvePreviewsChanged: (Boolean) -> Unit,
+    onDaemonModeChanged: (DaemonModePreference) -> Unit,
     onImportPreset: () -> Unit,
     onImportKernel: () -> Unit,
     onImportVdc: () -> Unit,
@@ -90,6 +96,18 @@ fun SettingsDialog(
                     checked = globalModeEnabled,
                     onCheckedChange = onGlobalModeChanged,
                 )
+            }
+
+            SettingsGroupCard(title = stringResource(R.string.settings_daemon_section)) {
+                DaemonModePreference.entries.forEachIndexed { index, mode ->
+                    if (index > 0) SettingsRowDivider()
+                    SettingsChoiceRow(
+                        title = stringResource(daemonModeTitle(mode)),
+                        summary = stringResource(daemonModeSummary(mode)),
+                        selected = mode == daemonMode,
+                        onSelect = { onDaemonModeChanged(mode) },
+                    )
+                }
             }
 
             SettingsGroupCard(title = stringResource(R.string.settings_display_section)) {
@@ -215,6 +233,54 @@ private fun SettingsSwitchRow(
         )
     }
 }
+
+/**
+ * Single-select row for a mutually exclusive setting.
+ *
+ * A switch per option would let the user select two backends at once, so the
+ * selected state is rendered with a radio indicator and the row itself is the
+ * hit target.
+ */
+@Composable
+private fun SettingsChoiceRow(
+    title: String,
+    summary: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SettingsTextBlock(
+            title = title,
+            summary = summary,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(16.dp))
+        RadioButton(
+            selected = selected,
+            onClick = null,
+        )
+    }
+}
+
+private fun daemonModeTitle(mode: DaemonModePreference): Int =
+    when (mode) {
+        DaemonModePreference.Auto -> R.string.settings_daemon_mode_auto
+        DaemonModePreference.DaemonOnly -> R.string.settings_daemon_mode_daemon_only
+        DaemonModePreference.DriverOnly -> R.string.settings_daemon_mode_driver_only
+    }
+
+private fun daemonModeSummary(mode: DaemonModePreference): Int =
+    when (mode) {
+        DaemonModePreference.Auto -> R.string.settings_daemon_mode_auto_summary
+        DaemonModePreference.DaemonOnly -> R.string.settings_daemon_mode_daemon_only_summary
+        DaemonModePreference.DriverOnly -> R.string.settings_daemon_mode_driver_only_summary
+    }
 
 @Composable
 private fun SettingsActionRow(

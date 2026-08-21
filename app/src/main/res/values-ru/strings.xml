@@ -406,6 +406,52 @@
     <string name="status_active">Активна</string>
     <string name="status_inactive">Неактивна</string>
     <string name="status_unknown">Неизвестно</string>
+    <string name="status_yes">Да</string>
+    <string name="status_no">Нет</string>
+
+    <!-- Root daemon -->
+    <string name="daemon_status_section">Root-демон</string>
+    <string name="daemon_selected_mode">Выбранный режим</string>
+    <string name="daemon_availability">Демон</string>
+    <string name="daemon_running">Запущен</string>
+    <string name="daemon_not_running">Не запущен</string>
+    <string name="daemon_app_link">Связь с приложением</string>
+    <string name="daemon_link_unavailable">Нет бэкенда</string>
+    <string name="daemon_link_disconnected">Отключено</string>
+    <string name="daemon_link_connecting">Подключение</string>
+    <string name="daemon_link_connected">Подключено</string>
+    <string name="daemon_link_syncing">Синхронизация</string>
+    <string name="daemon_link_ready">Готово</string>
+    <string name="daemon_link_degraded">Ограничено</string>
+    <string name="daemon_backend_owner">Источник состояния</string>
+    <string name="daemon_backend_active">Демон</string>
+    <string name="daemon_backend_fallback">Драйвер</string>
+    <string name="daemon_restore">Восстановление маршрута</string>
+    <string name="daemon_driver_attached">Драйвер подключён</string>
+    <string name="daemon_route_known">Маршрут известен</string>
+    <string name="daemon_route_key">Ключ маршрута</string>
+    <string name="daemon_app_endpoint">Точка подключения</string>
+    <string name="daemon_endpoint_listening">Слушает</string>
+    <string name="daemon_endpoint_unbound">Не привязана</string>
+    <string name="daemon_app_client">Клиент приложения</string>
+    <string name="daemon_client_none">Нет</string>
+    <string name="daemon_route_source">Источник маршрута</string>
+    <string name="daemon_route_source_app">Отчёт приложения</string>
+    <string name="daemon_route_source_probe">Системный опрос</string>
+    <string name="daemon_app_route_reports">Отчёты о маршруте</string>
+    <string name="daemon_app_snapshots">Команды снимков</string>
+    <string name="daemon_rejected_peers">Отклонённые клиенты</string>
+    <string name="daemon_restores">Восстановления (ок / отказ / пропуск)</string>
+    <string name="daemon_restores_value">%1$d / %2$d / %3$d</string>
+    <string name="daemon_owner_state">Владелец эффекта</string>
+    <string name="daemon_owner_absent">Нет</string>
+    <string name="daemon_owner_starting">Запускается</string>
+    <string name="daemon_owner_owned">Эффект удерживается</string>
+    <string name="daemon_owner_failed">Сбой</string>
+    <string name="daemon_owner_effect">ID эффекта владельца</string>
+    <string name="daemon_owner_effect_none">Нет</string>
+    <string name="daemon_owner_restarts">Перезапуски владельца</string>
+    <string name="daemon_tracked_sessions">Отслеживаемые сессии</string>
 
     <!-- Settings -->
     <string name="settings_playback_section">Воспроизведение</string>
@@ -418,6 +464,13 @@
     <string name="settings_global_mode_summary">Применять текущий профиль ко всем поддерживаемым устройствам вывода.</string>
     <string name="settings_show_curve_previews">Показывать кривые</string>
     <string name="settings_show_curve_previews_summary">Показывать графики эквалайзера на главном экране эффектов.</string>
+    <string name="settings_daemon_section">Аудиобэкенд</string>
+    <string name="settings_daemon_mode_auto">Авто</string>
+    <string name="settings_daemon_mode_auto_summary">Использовать root-демон, когда он доступен, иначе драйвер.</string>
+    <string name="settings_daemon_mode_daemon_only">Только демон</string>
+    <string name="settings_daemon_mode_daemon_only_summary">Настройки применяет только демон; пока он недоступен, ничего не применяется.</string>
+    <string name="settings_daemon_mode_driver_only">Только драйвер</string>
+    <string name="settings_daemon_mode_driver_only_summary">Пропустить демон и отправлять настройки напрямую драйверу.</string>
     <string name="settings_driver_version">Версия драйвера</string>
     <string name="settings_driver_arch">Архитектура драйвера</string>
     <string name="settings_app_version">Версия приложения</string>

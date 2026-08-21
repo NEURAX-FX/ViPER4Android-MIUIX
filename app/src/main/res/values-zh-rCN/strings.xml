@@ -406,6 +406,52 @@
     <string name="status_active">处理中</string>
     <string name="status_inactive">未处理</string>
     <string name="status_unknown">未知</string>
+    <string name="status_yes">是</string>
+    <string name="status_no">否</string>
+
+    <!-- Root daemon -->
+    <string name="daemon_status_section">Root 守护进程</string>
+    <string name="daemon_selected_mode">所选模式</string>
+    <string name="daemon_availability">守护进程</string>
+    <string name="daemon_running">运行中</string>
+    <string name="daemon_not_running">未运行</string>
+    <string name="daemon_app_link">应用连接</string>
+    <string name="daemon_link_unavailable">无后端</string>
+    <string name="daemon_link_disconnected">已断开</string>
+    <string name="daemon_link_connecting">连接中</string>
+    <string name="daemon_link_connected">已连接</string>
+    <string name="daemon_link_syncing">同步中</string>
+    <string name="daemon_link_ready">就绪</string>
+    <string name="daemon_link_degraded">降级</string>
+    <string name="daemon_backend_owner">状态来源</string>
+    <string name="daemon_backend_active">守护进程</string>
+    <string name="daemon_backend_fallback">驱动</string>
+    <string name="daemon_restore">线路恢复</string>
+    <string name="daemon_driver_attached">驱动已接入</string>
+    <string name="daemon_route_known">线路已识别</string>
+    <string name="daemon_route_key">线路标识</string>
+    <string name="daemon_app_endpoint">应用端点</string>
+    <string name="daemon_endpoint_listening">监听中</string>
+    <string name="daemon_endpoint_unbound">未绑定</string>
+    <string name="daemon_app_client">应用客户端</string>
+    <string name="daemon_client_none">无</string>
+    <string name="daemon_route_source">线路来源</string>
+    <string name="daemon_route_source_app">应用上报</string>
+    <string name="daemon_route_source_probe">系统探测</string>
+    <string name="daemon_app_route_reports">线路上报次数</string>
+    <string name="daemon_app_snapshots">快照命令数</string>
+    <string name="daemon_rejected_peers">被拒连接</string>
+    <string name="daemon_restores">恢复次数（成功 / 拒绝 / 跳过）</string>
+    <string name="daemon_restores_value">%1$d / %2$d / %3$d</string>
+    <string name="daemon_owner_state">音效持有者</string>
+    <string name="daemon_owner_absent">无</string>
+    <string name="daemon_owner_starting">启动中</string>
+    <string name="daemon_owner_owned">已持有音效</string>
+    <string name="daemon_owner_failed">失败</string>
+    <string name="daemon_owner_effect">持有者音效 ID</string>
+    <string name="daemon_owner_effect_none">无</string>
+    <string name="daemon_owner_restarts">持有者重启次数</string>
+    <string name="daemon_tracked_sessions">跟踪的会话数</string>
 
     <!-- Settings -->
     <string name="settings_playback_section">播放</string>
@@ -418,6 +464,13 @@
     <string name="settings_global_mode_summary">在支持的输出设备间套用当前配置。</string>
     <string name="settings_show_curve_previews">显示曲线预览</string>
     <string name="settings_show_curve_previews_summary">在主音效页面显示均衡器曲线图。</string>
+    <string name="settings_daemon_section">音频后端</string>
+    <string name="settings_daemon_mode_auto">自动</string>
+    <string name="settings_daemon_mode_auto_summary">守护进程可用时使用它，否则直接使用驱动。</string>
+    <string name="settings_daemon_mode_daemon_only">仅守护进程</string>
+    <string name="settings_daemon_mode_daemon_only_summary">仅由守护进程套用设置；其不可用时不会套用任何设置。</string>
+    <string name="settings_daemon_mode_driver_only">仅驱动</string>
+    <string name="settings_daemon_mode_driver_only_summary">跳过守护进程，直接将设置发送给驱动。</string>
     <string name="settings_driver_version">驱动版本</string>
     <string name="settings_driver_arch">驱动架构</string>
     <string name="settings_app_version">应用版本</string>

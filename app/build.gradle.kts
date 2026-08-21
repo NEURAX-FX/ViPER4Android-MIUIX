@@ -84,6 +84,15 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests {
+            // FileLogger calls android.util.Log, which has no JVM implementation.
+            // Returning defaults keeps logging calls harmless in unit tests instead
+            // of forcing production code to be logging-free.
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 tasks.withType<com.android.build.gradle.internal.tasks.CheckAarMetadataTask>().configureEach {
@@ -131,6 +140,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.json)
+    testImplementation(libs.coroutines.test)
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")

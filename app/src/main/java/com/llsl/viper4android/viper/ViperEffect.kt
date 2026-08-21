@@ -8,10 +8,28 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.UUID
 
+/**
+ * Legacy App-owned `AudioEffect` client. Frozen: no longer maintained.
+ *
+ * An effect handle created here dies with the App process, so AudioFlinger tears
+ * the module down whenever the App is evicted. Processing therefore cannot
+ * outlive the UI, which is the defect this path can never fix from inside the
+ * App: handle ownership, not handle usage, is the problem.
+ *
+ * The maintained path is the root daemon, which owns the session 0 handle from a
+ * process whose lifetime init controls. This class stays only as the fallback for
+ * installs with no daemon (`DaemonModePreference.DriverOnly`, or a probe that
+ * found no daemon). Fix bugs here only when they break that fallback; route new
+ * behaviour through the daemon snapshot path instead.
+ */
+@Deprecated(
+    "App-owned effect handles die with the App process. Use the root daemon " +
+        "snapshot path; this remains only as the no-daemon fallback.",
+)
 class ViperEffect(
     private val audioSessionId: Int,
     private val typeUuid: UUID = EFFECT_TYPE_UUID,
-) {
+) : ParamSink {
     companion object {
         val EFFECT_TYPE_UUID: UUID = UUID.fromString("ec7178ec-e5e1-4432-a3f4-4657e6795210")
         val EFFECT_TYPE_UUID_AIDL: UUID = UUID.fromString("7261676f-6d75-7369-6364-28e2fd3ac39e")
@@ -96,7 +114,7 @@ class ViperEffect(
             effect?.enabled = value
         }
 
-    fun setParameter(
+    override fun setParameter(
         param: Int,
         value: Int,
     ) {
@@ -114,7 +132,7 @@ class ViperEffect(
         }
     }
 
-    fun setParameter(
+    override fun setParameter(
         param: Int,
         val1: Int,
         val2: Int,
@@ -139,7 +157,7 @@ class ViperEffect(
         }
     }
 
-    fun setParameter(
+    override fun setParameter(
         param: Int,
         val1: Int,
         val2: Int,
@@ -166,7 +184,7 @@ class ViperEffect(
         }
     }
 
-    fun setParameter(
+    override fun setParameter(
         param: Int,
         value: ByteArray,
     ) {
